@@ -1,5 +1,6 @@
 package linknan.soc.uncore
 
+import aia.{APLICParams, IMSICParams, TLAPLIC}
 import chisel3._
 import chisel3.util._
 import freechips.rocketchip.devices.debug._
@@ -8,6 +9,7 @@ import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.interrupts._
 import freechips.rocketchip.tile.MaxHartIdBits
 import freechips.rocketchip.tilelink._
+import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
 import zhujiang.ZJParametersKey
 
@@ -47,6 +49,7 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
   )
   private val sbaNode = TLManagerNode(Seq(sbaParameters))
 
+  private val lnParams = p(LinkNanParamsKey)
   private val xbar = LazyModule(new TLXbar)
   private val plic = LazyModule(new TLPLIC(PLICParams(baseAddress = 0x3c000000L), 8))
   private val clint = LazyModule(new CLINT(CLINTParams(0x38000000L), 8))
@@ -56,6 +59,20 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
     case ExportDebug => DebugAttachParams(protocols = Set(JTAG))
     case JtagDTMKey => JtagDTMKey
   })))
+  private val aplic = LazyModule(new TLAPLIC(
+    APLICParams(
+      intSrcWidth = log2Ceil(extIntrNum),
+      baseAddr = 0x3805_0000
+    ),
+    IMSICParams(
+      groupsNum = 1,
+      membersNum = coreNum,
+      mBaseAddr = lnParams.finalMBase,
+      sgBaseAddr = lnParams.finalSgBase
+    ),
+    beatBytes = 8
+  ))
+  private val sbaXBar = LazyModule(new TLXbar)
 
   private val intSourceNode = IntSourceNode(IntSourcePortSimple(extIntrNum, ports = 1, sources = 1))
   private val clintIntSink = IntSinkNode(IntSinkPortSimple(coreNum, 2))
@@ -66,13 +83,16 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
   plic.node :*= xbar.node
   clint.node :*= xbar.node
   debug.debug.node :*= xbar.node
+  aplic.fromCPU :*= xbar.node
   plic.intnode := intSourceNode
 
   clintIntSink :*= clint.intnode
   debugIntSink :*= debug.debug.dmOuter.dmOuter.intnode
   plicIntSink :*= plic.intnode
 
-  sbaNode :=* TLBuffer() :=* TLWidthWidget(1) :=* debug.debug.dmInner.dmInner.sb2tlOpt.get.node
+  sbaXBar.node :=* TLBuffer() :=* TLWidthWidget(1) :=* debug.debug.dmInner.dmInner.sb2tlOpt.get.node
+  sbaXBar.node :=* TLBuffer() :=* TLWidthWidget(8) :=* aplic.toIMSIC
+  sbaNode :*= sbaXBar.node
 
   lazy val module = new Impl
 
@@ -91,6 +111,7 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
       val intrSyncReg = RegInit(0.U(3.W))
       intrSyncReg := Cat(io.extIntr(idx), intrSyncReg)(intrSyncReg.getWidth, 1)
       intSourceNode.out.head._1(idx) := intrSyncReg(0)
+      aplic.module.intSrcs(idx) := intrSyncReg(0)
       intrSyncReg.suggestName(s"intrSyncReg${idx}")
     }
     clint.module.io.rtcTick := io.timerTick

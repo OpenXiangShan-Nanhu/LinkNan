@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util.Cat
 import zhujiang.axi._
 import freechips.rocketchip.diplomacy._
-import linknan.soc.PeripheralRemapper
+import linknan.soc.{LinkNanParamsKey, PeripheralRemapper}
 import org.chipsalliance.cde.config.Parameters
 import xijiang.{Node, NodeType}
 import xs.utils.ResetGen
@@ -42,7 +42,7 @@ class UncoreComplex(cfgNode: Node, dmaNode: Node)(implicit p: Parameters) extend
   val implicitReset = Wire(AsyncReset())
 
   private val coreNum = zjParams.localRing.filter(_.nodeType == NodeType.CC).map(_.cpuNum).sum
-  private val extIntrNum = zjParams.externalInterruptNum
+  private val extIntrNum = p(LinkNanParamsKey).nrExtIntr
   private val cfgAsyncModule = Module(new DeviceSideAsyncModule(cfgNode))
   private val dmaAsyncModule = Module(new DeviceSideAsyncModule(dmaNode))
   private val cfgBridge = Module(new AxiLiteBridge(cfgNode, 64, 3))

@@ -1,8 +1,10 @@
 package linknan.soc
+import aia.IMSICParams
 import chisel3._
 import chisel3.util._
 import linknan.cluster.interconnect.ClusterAddrBundle
 import org.chipsalliance.cde.config.Parameters
+import xijiang.NodeType
 import zhujiang.{ZJBundle, ZJModule}
 
 /*
@@ -20,10 +22,12 @@ IMSIC M_PA:     0x80_0000_0000 + chip * 0x10_0000_0000 + cpu * 0x10_0000 + 0x800
 */
 
 class LogicAddrBundle(implicit p:Parameters) extends ZJBundle {
+  private val remapBaseMaskBits = p(LinkNanParamsKey).remapBaseMaskBits
   val mmio = Bool()
   val chip = UInt(nodeAidBits.W)
-  val tag = UInt((raw - 1 - nodeAidBits - 29).W)
-  val dev = UInt(29.W)
+  val tag = UInt((raw - 1 - nodeAidBits - remapBaseMaskBits).W)
+  val dev = UInt(remapBaseMaskBits.W)
+  require(remapBaseMaskBits + nodeAidBits + 1 < raw)
 }
 
 class PeripheralRemapper(implicit p:Parameters) extends ZJModule {
@@ -31,10 +35,18 @@ class PeripheralRemapper(implicit p:Parameters) extends ZJModule {
     val la = Input(UInt(raw.W))
     val pa = Output(UInt(raw.W))
   })
+  private val coreNum = zjParams.localRing.filter(_.nodeType == NodeType.CC).map(_.cpuNum).sum
   require(zjParams.cpuSpaceBits >= 20)
+  private val lnParams = p(LinkNanParamsKey)
+  private val imiscParams = IMSICParams(
+    groupsNum = 1,
+    membersNum = coreNum,
+    mBaseAddr = lnParams.finalMBase,
+    sgBaseAddr = lnParams.finalSgBase
+  )
   private val la = io.la.asTypeOf(new LogicAddrBundle)
   private val nla = Wire(UInt(raw.W))
-  private val remap = la.mmio & 6.U === la.chip & 0.U === la.tag
+  private val remap = la.mmio & lnParams.iodChipId.U === la.chip & 0.U === la.tag
   io.pa := Mux(remap, nla, io.la)
 
   private def AddrMapper(base:Int, hartOff:Int, clusterBase:Int)(devAddr:UInt): (Bool, UInt) = {
@@ -55,8 +67,8 @@ class PeripheralRemapper(implicit p:Parameters) extends ZJModule {
   }
 
   private val mapperSeq = Seq[UInt => (Bool, UInt)](
-    AddrMapper(0x00_0000, 15, 0x0_0000), //IMSIC SG_LA
-    AddrMapper(0x80_0000, 12, 0x0_8000), //IMSIC M_LA
+    AddrMapper(lnParams.imiscSgBase, imiscParams.sgStrideWidth, 0x0_0000), //IMSIC SG_LA
+    AddrMapper(lnParams.imsicMBase, imiscParams.mStrideWidth, 0x0_8000), //IMSIC M_LA
   )
   private val mapRes = mapperSeq.map(m => m(la.dev))
   nla := Mux1H(mapRes)

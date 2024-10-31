@@ -29,3 +29,7 @@
 	path = dependencies/dramsim
 	url = https://github.com/OpenXiangShan/DRAMsim3
 	branch = cosim-kmh
+[submodule "dependencies/aia"]
+	path = dependencies/aia
+	url = https://github.com/OpenXiangShan-Nanhu/ChiselAIA
+	branch = main

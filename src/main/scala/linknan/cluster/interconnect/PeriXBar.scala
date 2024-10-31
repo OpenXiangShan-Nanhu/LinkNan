@@ -4,9 +4,19 @@ import chisel3._
 import chisel3.util._
 import org.chipsalliance.cde.config.Parameters
 import zhujiang.ZJParametersKey
-import zhujiang.tilelink.{BaseTLULXbar, TLULBundle, TilelinkParams}
+import zhujiang.tilelink.{BaseTLULPeripheral, BaseTLULXbar, TLULBundle, TilelinkParams}
 
-class PeriXBar(tlParams: Seq[TilelinkParams], sharePeriNum: Int, coreNum: Int, privatePeriPerCore: Int)(implicit p: Parameters) extends BaseTLULXbar {
+case class ClusterPeriParams(
+  name: String,
+  addrSet: Seq[(Int, Int)]
+) {
+  def matcher(slvAddrBits:Int)(addr:UInt):Bool = {
+    val devAddr = addr(slvAddrBits - 1, 0)
+    Cat(addrSet.map(as => as._1.U <= devAddr && devAddr < as._2.U)).orR
+  }
+}
+
+class PeriXBar(tlParams: Seq[TilelinkParams], periParams: Seq[ClusterPeriParams])(implicit p: Parameters) extends BaseTLULXbar {
   private val coreIdBits = clusterIdBits - nodeAidBits
   private val cpuSpaceBits = p(ZJParametersKey).cpuSpaceBits
   private val devSpaceBits = p(ZJParametersKey).cpuDevSpaceBits
@@ -14,24 +24,6 @@ class PeriXBar(tlParams: Seq[TilelinkParams], sharePeriNum: Int, coreNum: Int, p
   val mstParams = tlParams.map(_.copy(addrBits = mstAddrBits))
   val slvAddrBits = devSpaceBits
 
-  val misc = IO(new Bundle {
-    val core = Input(Vec(coreNum, UInt(coreIdBits.W)))
-  })
-  private val sharedAddrMatcher = Seq.tabulate(sharePeriNum)(i => (addr: UInt) => {
-    val matchRes = Wire(Bool())
-    matchRes := addr(cpuSpaceBits - 1) && addr(cpuSpaceBits - 2, devSpaceBits) === i.U
-    matchRes
-  })
-  private val privateAddrMatcher = Seq.tabulate(coreNum, privatePeriPerCore)(
-    (c, i) => (addr: UInt) => {
-      val matchRes = Wire(Bool())
-      matchRes := addr(mstAddrBits - 1, cpuSpaceBits) === misc.core(c) && !addr(cpuSpaceBits - 1) && addr(cpuSpaceBits - 2, devSpaceBits) === i.U
-      matchRes
-    }
-  )
-
-  val slvMatchersSeq = sharedAddrMatcher ++ privateAddrMatcher.flatten
-  private val slvMax = 1 << (cpuSpaceBits - 1 - devSpaceBits)
-  require(slvMatchersSeq.length < slvMax)
+  val slvMatchersSeq = periParams.map(_.matcher(slvAddrBits))
   initialize()
 }

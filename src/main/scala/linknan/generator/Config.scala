@@ -1,6 +1,7 @@
 package linknan.generator
 
 import SimpleL2.Configs.{L2Param, L2ParamKey}
+import linknan.soc.{LinkNanParams, LinkNanParamsKey}
 import org.chipsalliance.cde.config.{Config, _}
 import xiangshan.cache.DCacheParameters
 import xiangshan.{XSCoreParameters, XSCoreParamsKey}
@@ -18,6 +19,7 @@ class FullNocConfig extends Config((site, here, up) => {
   case L2ParamKey => L2Param(useDiplomacy = true)
   case PrefixKey => ""
   case RemoveCoreKey => false
+  case LinkNanParamsKey => LinkNanParams()
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
