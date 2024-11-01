@@ -61,16 +61,20 @@ class CpuCluster(node:Node)(implicit p:Parameters) extends ZJRawModule {
   @public val icn = IO(new ClusterDeviceBundle(node))
   @public val core = if(removeCore) Some(IO(Vec(node.cpuNum, new CoreBlockTestIO(coreIoParams)))) else None
 
-  private val pll = Module(new ClockManagerWrapper)
-  private val resetSync = withClockAndReset(pll.io.cpu_clock, icn.async.resetRx) { ResetGen(dft = Some(icn.dft.reset)) }
+  private val pll = if(p(ZJParametersKey).cpuAsync) Some(Module(new ClockManagerWrapper)) else None
+  private val resetSync = withClockAndReset(_csu.io.clock, icn.ccn.reset) { ResetGen(dft = Some(icn.dft.reset)) }
 
   icn <> _csu.io.icn
 
-  _csu.io.pllLock := pll.io.lock
-  pll.io.cfg := _csu.io.pllCfg
-  pll.io.in_clock := icn.osc_clock
-
-  _csu.io.clock := pll.io.cpu_clock
+  if(pll.isDefined) {
+    _csu.io.pllLock := pll.get.io.lock
+    pll.get.io.cfg := _csu.io.pllCfg
+    pll.get.io.in_clock := icn.osc_clock
+    _csu.io.clock := pll.get.io.cpu_clock
+  } else {
+    _csu.io.pllLock := true.B
+    _csu.io.clock := icn.osc_clock
+  }
   _csu.io.reset := resetSync
 
   if(removeCore) {

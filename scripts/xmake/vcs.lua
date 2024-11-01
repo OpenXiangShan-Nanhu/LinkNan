@@ -17,7 +17,10 @@ function simv_comp()
   depend.on_changed(function ()
     local build_dir = path.join(abs_base, "build")
     if os.exists(build_dir) then os.rmdir(build_dir) end
-    task.run("soc", {vcs = true, sim = true, config = option.get("config")}) 
+    task.run("soc", {
+      vcs = true, sim = true, config = option.get("config"),
+      cpu_sync = option.get("cpu_sync")
+    })
   end,{
     files = chisel_dep_srcs,
     dependfile = path.join("out", "chisel.simv.dep"),

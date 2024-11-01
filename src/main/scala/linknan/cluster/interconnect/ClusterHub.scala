@@ -4,12 +4,11 @@ import chisel3._
 import chisel3.util._
 import org.chipsalliance.cde.config.Parameters
 import xijiang.{Node, NodeType}
-import xijiang.router.base.{DeviceIcnBundle, IcnBundle}
-import xs.utils.{DFTResetSignals, ResetRRArbiter}
-import xs.utils.sram.SramBroadcastBundle
+import xijiang.router.base.IcnBundle
+import xs.utils.ResetRRArbiter
 import zhujiang.chi._
-import zhujiang.device.async.{DeviceIcnAsyncBundle, DeviceSideAsyncModule, IcnAsyncBundle}
-import zhujiang.{DftWires, ZJBundle, ZJModule}
+import zhujiang.device.async.DeviceSideAsyncModule
+import zhujiang.{CcnDevBundle, DftWires, ZJBundle, ZJModule, ZJParametersKey}
 
 class ClusterAddrBundle(implicit p:Parameters) extends ZJBundle {
   val mmio = Bool()
@@ -34,7 +33,7 @@ class ClusterMiscWires(node: Node)(implicit p: Parameters) extends ZJBundle {
 }
 
 class ClusterDeviceBundle(node: Node)(implicit p: Parameters) extends ZJBundle {
-  val async = new DeviceIcnAsyncBundle(node)
+  val ccn = new CcnDevBundle(node)
   val misc = new ClusterMiscWires(node)
   val osc_clock = Input(Clock())
   val dft = Input(new DftWires)
@@ -53,11 +52,20 @@ class ClusterHub(node: Node)(implicit p: Parameters) extends ZJModule {
   io.peripheral.rx.req.get.ready := false.B
   io.cpu <> io.icn.misc
   io.dft := io.icn.dft
-  private val asyncModule = Module(new DeviceSideAsyncModule(node))
-  asyncModule.io.async <> io.icn.async
+  private val clusterIcn = if(!p(ZJParametersKey).cpuAsync) {
+    val bufferOut = Wire(new IcnBundle(node))
+    val icnBuffer = Module(new ChiBuffer(node))
+    icnBuffer.io.in <> io.icn.ccn.sync.get
+    bufferOut <> icnBuffer.io.out
+    bufferOut
+  } else {
+    val asyncSink = Module(new DeviceSideAsyncModule(node))
+    asyncSink.io.async <> io.icn.ccn.async.get
+    asyncSink.io.icn
+  }
 
   private val rxChnMap = node.ejects.map({ chn =>
-    val eject = asyncModule.io.icn.tx.getBundle(chn).get
+    val eject = clusterIcn.tx.getBundle(chn).get
     val pipe = Module(new Queue(UInt(eject.bits.getWidth.W), entries = 2))
     pipe.suggestName(s"rxPipe$chn")
     pipe.io.enq.valid := eject.valid
@@ -106,7 +114,7 @@ class ClusterHub(node: Node)(implicit p: Parameters) extends ZJModule {
   ))
 
   private val txChnMap = node.injects.map({ chn =>
-    val inject = asyncModule.io.icn.rx.getBundle(chn).get
+    val inject = clusterIcn.rx.getBundle(chn).get
     val pipe = Module(new Queue(UInt(inject.bits.getWidth.W), entries = 2))
     pipe.suggestName(s"txPipe$chn")
     inject.valid := pipe.io.deq.valid

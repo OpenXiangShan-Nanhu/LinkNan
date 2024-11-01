@@ -11,7 +11,11 @@ function emu_comp()
   local build_dir = path.join(abs_base, "build")
   depend.on_changed(function ()
     if os.exists(build_dir) then os.rmdir(build_dir) end
-    task.run("soc", {sim = true, config = option.get("config"), dramsim3 = option.get("dramsim3"), enable_perf = not option.get("no_perf")})
+    task.run("soc", {
+      sim = true, config = option.get("config"),
+      dramsim3 = option.get("dramsim3"), enable_perf = not option.get("no_perf"),
+      cpu_sync = option.get("cpu_sync")
+    })
   end,{
     files = chisel_dep_srcs,
     dependfile = path.join("out", "chisel.verilator.dep"),

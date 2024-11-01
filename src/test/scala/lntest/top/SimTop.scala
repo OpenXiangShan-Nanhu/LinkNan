@@ -103,7 +103,7 @@ class SimTop(implicit p: Parameters) extends Module {
 
   soc.io.rtc_clock := tick
   soc.io.noc_clock := clock
-  soc.io.cluster_clocks.foreach(_ := clock)
+  soc.io.cluster_clocks.foreach(_.foreach(_ := clock))
   soc.io.soc_clock := clock
   soc.io.reset := (reset.asBool || soc.io.ndreset).asAsyncReset
   soc.dft := DontCare

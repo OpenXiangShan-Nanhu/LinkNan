@@ -11,8 +11,7 @@ import xs.utils.ResetGen
 import zhujiang.device.async.{DeviceIcnAsyncBundle, DeviceSideAsyncModule}
 import zhujiang.device.bridge.axilite.AxiLiteBridge
 import zhujiang.device.dma.Axi2Chi
-import zhujiang.{ZJModule, ZJRawModule}
-import zhujiang.DftWires
+import zhujiang.{DftWires, SocDevBundle, ZJModule, ZJRawModule}
 
 class ShiftSync[T <: Data](gen:T, sync:Int = 3) extends Module {
   val io = IO(new Bundle{
@@ -49,7 +48,6 @@ class UncoreComplex(cfgNode: Node, dmaNode: Node)(implicit p: Parameters) extend
   private val dmaBridge = Module(new Axi2Chi(dmaNode))
   private val resetGen = Module(new ResetGen)
   resetGen.clock := clock
-  resetGen.reset := cfgAsyncModule.io.async.resetRx
   resetGen.dft := dft.reset
   implicitReset := resetGen.o_reset
 
@@ -76,10 +74,7 @@ class UncoreComplex(cfgNode: Node, dmaNode: Node)(implicit p: Parameters) extend
   private val pb = Module(tlDevBlock.module)
 
   val io = IO(new Bundle {
-    val async = new Bundle {
-      val cfg = new DeviceIcnAsyncBundle(cfgNode)
-      val dma = new DeviceIcnAsyncBundle(dmaNode)
-    }
+    val icn = new SocDevBundle(cfgNode, dmaNode)
     val ext = new Bundle {
       val cfg = new AxiBundle(cfgXBar.io.downstream.last.params)
       val dma = Flipped(new AxiBundle(dmaXBar.io.upstream.last.params))
@@ -97,11 +92,11 @@ class UncoreComplex(cfgNode: Node, dmaNode: Node)(implicit p: Parameters) extend
     val debug = pb.io.debug.cloneType
     val resetCtrl = pb.io.resetCtrl.cloneType
   })
-
+  resetGen.reset := io.icn.reset
   dontTouch(io)
 
   cfgXBar.misc.chip := io.chip
-  cfgAsyncModule.io.async <> io.async.cfg
+  cfgAsyncModule.io.async <> io.icn.cfg
   cfgBridge.icn <> cfgAsyncModule.io.icn
   cfgXBar.io.upstream.head <> AxiBuffer(cfgBridge.axi, name = Some("cfgBridgeBuffer"))
   axi2tl.io.axi <> cfgXBar.io.downstream.head
@@ -116,7 +111,7 @@ class UncoreComplex(cfgNode: Node, dmaNode: Node)(implicit p: Parameters) extend
   dmaBridge.axi.aw.bits.addr := PeripheralRemapper(dmaAxi.aw.bits.addr, p)
   dmaBridge.axi.ar.bits.addr := PeripheralRemapper(dmaAxi.ar.bits.addr, p)
   dmaAsyncModule.io.icn <> dmaBridge.icn
-  io.async.dma <> dmaAsyncModule.io.async
+  io.icn.dma <> dmaAsyncModule.io.async
 
   pb.tlm.foreach(tlm => {
     tlm.a.valid := axi2tl.io.tl.a.valid

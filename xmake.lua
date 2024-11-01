@@ -14,6 +14,7 @@ task("soc" , function()
       {'r', "release", "k", nil, "export release pack"},
       {'s', "sim", "k", nil, "generate simulation top"},
       {'p', "pldm_verilog", "k", nil, "enable only basic difftest function"},
+      {'S', "cpu_sync", "k", nil, "use same clock to cpu cluster and noc"},
       {'f', "config", "kv", nil, "soc config selection"},
       {'o', "out_dir", "kv", "build/rtl", "assign build dir"},
       {'j', "jobs", "kv", "16", "post-compile process jobs"}
@@ -31,6 +32,7 @@ task("soc" , function()
     if not option.get("clean_difftest") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--basic-difftest"}) end
     if not option.get("clean_difftest") and not option.get("pldm_verilog") then table.join2(chisel_opts, {"--enable-difftest"}) end
     if not option.get("enable_perf") then table.join2(chisel_opts, {"--fpga-platform"}) end
+    if option.get("cpu_sync") then table.join2(chisel_opts, {"--cpu-sync"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
     if option.get("config") then table.join2(chisel_opts, {"--config", option.get("config")}) end
     local build_dir = path.join("build", "rtl")
@@ -66,6 +68,7 @@ task("emu", function()
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'d', "dramsim3", "k", nil, "use dramsim3"},
       {'p', "no_perf", "k", nil, "disable perf counter"},
+      {'S', "cpu_sync", "k", nil, "use same clock to cpu cluster and noc"},
       {'h', "dramsim3_home", "kv", path.join(os.curdir(), "dependencies", "dramsim"), "dramsim3 home dir"},
       {'t', "threads", "kv", "16", "simulation threads"},
       {'j', "jobs", "kv", "16", "compilation jobs"},
@@ -107,6 +110,7 @@ task("simv", function()
       {'b', "rebuild", "k", nil, "forcely rebuild"},
       {'d', "no_fsdb", "k", nil, "do not dump wave"},
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
+      {'S', "cpu_sync", "k", nil, "use same clock to cpu cluster and noc"},
       {'r', "ref", "kv", "Spike", "reference model"},
       {'c', "config", "kv", "minimal", "rtl config"}
     }

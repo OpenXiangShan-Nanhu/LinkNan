@@ -7,11 +7,10 @@ import chisel3.util._
 import linknan.cluster.{CoreBlockTestIO, CpuCluster}
 import linknan.generator.{PrefixKey, RemoveCoreKey}
 import linknan.soc.uncore.UncoreComplex
-import zhujiang.{ZJRawModule, Zhujiang}
+import zhujiang.{DftWires, ZJParametersKey, ZJRawModule, Zhujiang}
 import org.chipsalliance.cde.config.Parameters
 import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
 import zhujiang.axi.AxiBundle
-import zhujiang.DftWires
 
 class LNTop(implicit p:Parameters) extends ZJRawModule with ImplicitClock with ImplicitReset {
   override protected val implicitClock = Wire(Clock())
@@ -22,14 +21,13 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with ImplicitClock with I
     def toFirrtl = NestedPrefixModulesAnnotation(mod, p(PrefixKey), inclusive = true)
   })
   private val noc = Module(new Zhujiang)
-  private val clusterNum = noc.io.cluster.length
+  private val clusterNum = noc.io.ccn.length
   private val uncore = Module(new UncoreComplex(noc.io.soc.cfg.node, noc.io.soc.dma.node))
-  uncore.io.async.cfg <> noc.io.soc.cfg
-  noc.io.soc.dma <> uncore.io.async.dma
+  uncore.io.icn <> noc.io.soc
 
   val io = IO(new Bundle{
     val reset = Input(AsyncReset())
-    val cluster_clocks = Input(Vec(clusterNum, Clock()))
+    val cluster_clocks = if(p(ZJParametersKey).cpuAsync) Some(Input(Vec(clusterNum, Clock()))) else None
     val soc_clock = Input(Clock())
     val noc_clock = Input(Clock())
     val rtc_clock = Input(Bool())
@@ -63,19 +61,23 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with ImplicitClock with I
   uncore.io.debug.reset := DontCare
   io.ndreset := uncore.io.debug.ndreset
 
-  private val nanhuNode = noc.io.cluster.groupBy(_.node.attr)("nanhu").head.node
+  private val nanhuNode = noc.io.ccn.groupBy(_.node.attr)("nanhu").head.node
   private val nanhuClusterDef = Definition(new CpuCluster(nanhuNode))
-  private val cpuNum = noc.io.cluster.map(_.node.cpuNum).sum
+  private val cpuNum = noc.io.ccn.map(_.node.cpuNum).sum
 
   val core = if(p(RemoveCoreKey)) Some(IO(Vec(cpuNum, new CoreBlockTestIO(nanhuClusterDef.coreIoParams)))) else None
 
-  for((icn, i) <- noc.io.cluster.zipWithIndex) {
-    val clusterId = icn.node.clusterId
+  for((ccn, i) <- noc.io.ccn.zipWithIndex) {
+    val clusterId = ccn.node.clusterId
     val cc = Instance(nanhuClusterDef)
-    cc.icn.async <> icn
-    cc.icn.osc_clock := io.cluster_clocks(i)
+    cc.icn.ccn <> ccn
+    if(p(ZJParametersKey).cpuAsync) {
+      cc.icn.osc_clock := io.cluster_clocks.get(i)
+    } else {
+      cc.icn.osc_clock := io.noc_clock
+    }
     cc.icn.dft := dft
-    for(i <- 0 until icn.node.cpuNum) {
+    for(i <- 0 until ccn.node.cpuNum) {
       val cid = clusterId + i
       cc.icn.misc.msip(i) := uncore.io.cpu.msip(cid)
       cc.icn.misc.mtip(i) := uncore.io.cpu.mtip(cid)

@@ -2,6 +2,7 @@ package linknan.generator
 
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.perf.DebugOptionsKey
+import zhujiang.ZJParametersKey
 
 object ArgParser {
   def apply(args: Array[String]): (Parameters, Array[String]) = {
@@ -36,6 +37,11 @@ object ArgParser {
         case "--fpga-platform" :: tail =>
           parse(config.alter((site, here, up) => {
             case DebugOptionsKey => up(DebugOptionsKey).copy(FPGAPlatform = true)
+          }), tail)
+
+        case "--cpu-sync" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case ZJParametersKey => up(ZJParametersKey).copy(cpuAsync = false)
           }), tail)
 
         case "--enable-difftest" :: tail =>

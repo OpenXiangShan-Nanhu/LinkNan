@@ -3,6 +3,7 @@ package lntest.top
 import linknan.generator._
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.perf.DebugOptionsKey
+import zhujiang.ZJParametersKey
 
 object SimArgParser {
   def apply(args: Array[String]): (Parameters, Array[String]) = {
@@ -33,6 +34,11 @@ object SimArgParser {
         case "--dramsim3" :: tail =>
           parse(config.alter((site, here, up) => {
             case DebugOptionsKey => up(DebugOptionsKey).copy(UseDRAMSim = true)
+          }), tail)
+
+        case "--cpu-sync" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case ZJParametersKey => up(ZJParametersKey).copy(cpuAsync = false)
           }), tail)
 
         case "--fpga-platform" :: tail =>
