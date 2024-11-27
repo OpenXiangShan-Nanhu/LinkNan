@@ -37,13 +37,15 @@ class ClusterSharedUnit(cioEdge: TLEdgeIn, l2EdgeIn: TLEdgeIn, node:Node)(implic
       ))
     )
   })))
-  private val l2Xbar = LazyModule(new TLXbar)
+  private val l2XbarUp = LazyModule(new TLXbar)
+  private val l2XbarDn = LazyModule(new TLXbar)
   private val l2binder = LazyModule(new BankBinder(64 * (coreParams.L2NBanks - 1)))
   private val l2EccIntSink = IntSinkNode(IntSinkPortSimple(1, 1))
   private val l2param = p(L2ParamKey)
   private val cachePortNodes = Seq.fill(node.cpuNum)(TLClientNode(Seq(l2EdgeIn.master)))
-  cachePortNodes.zipWithIndex.foreach(n => l2Xbar.node :*= TLBuffer.chainNode(1, Some(s"l2_in_buffer_${n._2}")) :*= n._1)
-  l2binder.node :*= l2Xbar.node
+  cachePortNodes.zipWithIndex.foreach(n => l2XbarUp.node :*= TLBuffer.chainNode(1, Some(s"l2_in_buffer_${n._2}")) :*= n._1)
+  l2XbarDn.node :*= l2XbarUp.node
+  l2binder.node :*= l2XbarDn.node
   for(i <- 0 until l2param.nrSlice) l2cache.sinkNodes(i) :*= TLBuffer.chainNode(2, Some(s"l2_bank_buffer")) :*= l2binder.node
   l2EccIntSink := l2cache.eccIntNode
 
