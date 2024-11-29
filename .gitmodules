@@ -38,3 +38,7 @@
 [submodule "dependencies/diplomacy"]
 	path = dependencies/diplomacy
 	url = https://github.com/chipsalliance/diplomacy
+[submodule "dependencies/boom"]
+	path = dependencies/boom
+	url = https://github.com/Siudya/riscv-boom
+	branch = linknan

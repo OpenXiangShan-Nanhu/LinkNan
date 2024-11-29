@@ -98,9 +98,14 @@ object aia extends SbtModule with CommonModule {
   override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils)
 }
 
+object boom extends CommonModule {
+  override def millSourcePath = os.pwd / "dependencies" / "boom"
+  override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, cde, xsutils)
+}
+
 object linknan extends SbtModule with CommonModule {
   override def millSourcePath = os.pwd
-  override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, nhl2, zhujiang, nanhu, aia)
+  override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, nhl2, zhujiang, nanhu, aia, boom)
 
   object test extends SbtModuleTests with TestModule.ScalaTest {
     override def ivyDeps = super.ivyDeps() ++ Agg(

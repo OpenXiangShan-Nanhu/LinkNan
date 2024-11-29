@@ -4,13 +4,13 @@ import SimpleL2.Configs.{L2Param, L2ParamKey}
 import linknan.soc.{LinkNanParams, LinkNanParamsKey}
 import org.chipsalliance.cde.config.{Config, _}
 import xiangshan.cache.DCacheParameters
-import xiangshan.{XSCoreParameters, XSCoreParamsKey}
 import xijiang.{NodeParam, NodeType}
 import xs.utils.perf.{DebugOptions, DebugOptionsKey}
 import zhujiang.{ZJParameters, ZJParametersKey}
 
 case object PrefixKey extends Field[String]
 case object TestIoOptionsKey extends Field[TestIoOptions]
+case object DcacheKey extends Field[DCacheParameters]
 
 case class TestIoOptions(
   removeCore: Boolean = false,
@@ -21,9 +21,9 @@ case class TestIoOptions(
   val hasCsu = !removeCsu
 }
 
-class FullNocConfig extends Config((site, here, up) => {
+class FullNocConfig(core:String) extends Config((site, here, up) => {
   case DebugOptionsKey => DebugOptions()
-  case XSCoreParamsKey => XSCoreParameters()
+  case DcacheKey => DCacheParameters()
   case L2ParamKey => L2Param(useDiplomacy = true)
   case PrefixKey => ""
   case TestIoOptionsKey => TestIoOptions()
@@ -31,11 +31,11 @@ class FullNocConfig extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true, dpId = 0),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = "nanhu"),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
       NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true, dpId = 0),
       NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
       NodeParam(nodeType = NodeType.S, bankId = 2, splitFlit = true, dpId = 0),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = "nanhu"),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
       NodeParam(nodeType = NodeType.S, bankId = 3, splitFlit = true, dpId = 0),
 
       NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "cfg"),
@@ -43,11 +43,11 @@ class FullNocConfig extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.RI, attr = "dma", splitFlit = true),
 
       NodeParam(nodeType = NodeType.S, bankId = 3, splitFlit = true, dpId = 1),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = "nanhu"),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
       NodeParam(nodeType = NodeType.S, bankId = 2, splitFlit = true, dpId = 1),
       NodeParam(nodeType = NodeType.HF, bankId = 1, splitFlit = true),
       NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true, dpId = 1),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = "nanhu"),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true, dpId = 1),
 
       NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data"),
@@ -57,9 +57,9 @@ class FullNocConfig extends Config((site, here, up) => {
   )
 })
 
-class ReducedNocConfig extends Config((site, here, up) => {
+class ReducedNocConfig(core:String) extends Config((site, here, up) => {
   case DebugOptionsKey => DebugOptions()
-  case XSCoreParamsKey => XSCoreParameters()
+  case DcacheKey => DCacheParameters()
   case L2ParamKey => L2Param(useDiplomacy = true)
   case PrefixKey => ""
   case TestIoOptionsKey => TestIoOptions()
@@ -67,9 +67,9 @@ class ReducedNocConfig extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = "nanhu"),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
       NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = "nanhu"),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
       NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "cfg"),
       NodeParam(nodeType = NodeType.RI, attr = "dma", splitFlit = true),
@@ -79,9 +79,9 @@ class ReducedNocConfig extends Config((site, here, up) => {
   )
 })
 
-class MinimalNocConfig extends Config((site, here, up) => {
+class MinimalNocConfig(core:String) extends Config((site, here, up) => {
   case DebugOptionsKey => DebugOptions()
-  case XSCoreParamsKey => XSCoreParameters()
+  case DcacheKey => DCacheParameters()
   case L2ParamKey => L2Param(useDiplomacy = true)
   case PrefixKey => ""
   case TestIoOptionsKey => TestIoOptions()
@@ -89,7 +89,7 @@ class MinimalNocConfig extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 1, splitFlit = true, outstanding = 8, attr = "nanhu"),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 1, splitFlit = true, outstanding = 8, attr = core),
       NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
       NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "cfg"),
@@ -117,15 +117,11 @@ class L2Config(sizeInKiB:Int = 1024, ways:Int = 8, slices:Int = 2) extends Confi
   case ZJParametersKey => up(ZJParametersKey).copy(
       clusterCacheSizeInKiB = sizeInKiB
     )
-  case XSCoreParamsKey => up(XSCoreParamsKey).copy(
-    L2NBanks = slices
-  )
 })
 
 class L1DConfig(sizeInKiB:Int = 64, ways:Int = 4) extends Config((site, here, up) => {
-  case XSCoreParamsKey =>
-    up(XSCoreParamsKey).copy(
-    dcacheParametersOpt = Some(DCacheParameters(
+  case DcacheKey =>
+    up(DcacheKey).copy(
       nSets = sizeInKiB * 1024 / ways / 64,
       nWays = ways,
       tagECC = Some("secded"),
@@ -134,30 +130,29 @@ class L1DConfig(sizeInKiB:Int = 64, ways:Int = 4) extends Config((site, here, up
       nMissEntries = 16,
       nProbeEntries = 8,
       nReleaseEntries = 18
-    ))
-  )
+    )
 })
 
-class FullConfig extends Config(
-  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new FullNocConfig
+class FullConfig(core:String) extends Config(
+  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new FullNocConfig(core)
 )
 
-class ReducedConfig extends Config(
-  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(4, 8) ++ new ReducedNocConfig
+class ReducedConfig(core:String) extends Config(
+  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(4, 8) ++ new ReducedNocConfig(core)
 )
 
-class MinimalConfig extends Config(
-  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(2, 8) ++ new MinimalNocConfig
+class MinimalConfig(core:String) extends Config(
+  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(2, 8) ++ new MinimalNocConfig(core)
 )
 
-class SpecConfig extends Config(
-  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new MinimalNocConfig
+class SpecConfig(core:String) extends Config(
+  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new MinimalNocConfig(core)
 )
 
-class FpgaConfig extends Config(
-  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(8, 8) ++ new FullNocConfig
+class FpgaConfig(core:String) extends Config(
+  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(8, 8) ++ new FullNocConfig(core)
 )
 
-class BtestConfig extends Config(
-  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(1, 8) ++ new ReducedNocConfig
+class BtestConfig(core:String) extends Config(
+  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(1, 8) ++ new ReducedNocConfig(core)
 )
