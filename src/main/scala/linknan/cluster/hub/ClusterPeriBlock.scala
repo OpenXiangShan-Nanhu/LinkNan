@@ -149,7 +149,7 @@ class ClusterPeriBlock(tlParams: Seq[TilelinkParams], coreNum:Int)(implicit p:Pa
     io.cpu(i).bootAddr := cpuBootCtlSeq(i)._2.io.cpuBootAddr
     io.cpu(i).pchn <> cpuPwrCtlSeq(i)._2.io.pChnMst
     io.cpu(i).pcsm <> cpuPwrCtlSeq(i)._2.io.pcsmCtrl
-    io.cpu(i).blockProbe := RegNext(cpuPwrCtlSeq(i)._2.io.changing || cpuPwrCtlSeq(i)._2.io.mode < PowerMode.ON)
+    io.cpu(i).blockProbe := RegNext(cpuPwrCtlSeq(i)._2.io.blockProbe)
     cpuBootCtlSeq(i)._2.io.defaultBootAddr := io.cpu(i).defaultBootAddr
     cpuPwrCtlSeq(i)._2.io.powerOnState := Mux(io.cpu(i).defaultEnable, PowerMode.ON, PowerMode.OFF)
     cpuPwrCtlSeq(i)._2.io.deactivate := csuPwrCtl.io.mode === PowerMode.OFF

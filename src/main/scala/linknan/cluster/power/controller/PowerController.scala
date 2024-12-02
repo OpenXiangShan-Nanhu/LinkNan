@@ -89,9 +89,9 @@ class PowerController(tlParams:TilelinkParams) extends Module {
     val dev = new PChannel(devActiveBits, PowerMode.powerModeBits)
     val powerOnState = Input(UInt(PowerMode.powerModeBits.W))
     val intr = Output(Bool())
-    val changing = Output(Bool())
-    val mode = Output(UInt(PowerMode.powerModeBits.W))
     val deactivate = Input(Bool())
+    val blockProbe = Output(Bool())
+    val mode = Output(UInt(PowerMode.powerModeBits.W))
   })
   private val pwrOnRstReg = RegInit(3.U(2.W))
   pwrOnRstReg := Cat(false.B, pwrOnRstReg) >> 1
@@ -142,12 +142,12 @@ class PowerController(tlParams:TilelinkParams) extends Module {
   pcsmMst.io.defaultPState := currentMode
   devMst.io.defaultPState := currentMode
 
-  io.changing := RegNext(!fsm(idleBit))
   io.mode := RegNext(currentMode)
 
   when(fsm(compBit)) {
     currentMode := nextModeReg
   }
+  io.blockProbe := !fsm(idleBit) && nextModeReg === PowerMode.RET || currentMode < PowerMode.ON
 
   pcsmMst.io.req.valid := fsm(upUpPcsmBit) | fsm(dnPcsmBit) | fsm(restorePcsmBit)
   pcsmMst.io.req.bits := Mux(fsm(restorePcsmBit), currentMode, nextModeReg)
