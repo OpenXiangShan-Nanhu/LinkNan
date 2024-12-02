@@ -17,20 +17,22 @@
 package lntest.top
 
 import SimpleL2.Configs.L2ParamKey
-import SimpleL2.chi.CHIBundleParameters
 import org.chipsalliance.cde.config.Parameters
 import chisel3.stage.ChiselGeneratorAnnotation
 import chisel3._
 import chisel3.util.ReadyValidIO
 import lntest.peripheral.SimJTAG
-import freechips.rocketchip.diplomacy.{DisableMonitors, LazyModule, MonitorsEnabled}
+import org.chipsalliance.diplomacy.lazymodule._
 import xs.utils.{FileRegisters, GTimer}
 import difftest._
 import circt.stage.ChiselStage
-import linknan.cluster.{BlockTestIO, BlockTestIOParams}
-import linknan.generator.{Generator, PrefixKey, TestIoOptionsKey}
+import linknan.cluster.BlockTestIO
+import linknan.generator.{DcacheKey, Generator, PrefixKey, TestIoOptionsKey}
 import linknan.soc.LNTop
+import org.chipsalliance.diplomacy.DisableMonitors
+import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import xiangshan.XSCoreParamsKey
+import xijiang.NodeType
 import xijiang.tfb.TrafficBoardFileManager
 import xs.utils.perf.DebugOptionsKey
 import xs.utils.tl.{TLUserKey, TLUserParams}
@@ -128,7 +130,11 @@ class SimTop(implicit p: Parameters) extends Module {
   }
 
   if(hasCsu && p(DebugOptionsKey).EnableLuaScoreBoard) {
-    val luaScb = Module(new LuaScoreboard)
+    val nrL2 = p(ZJParametersKey).localRing.count(_.nodeType == NodeType.CC)
+    val nrL2Bank = p(L2ParamKey).nrSlice
+    val nrPcu = p(ZJParametersKey).localRing.count(_.nodeType == NodeType.HF)
+    val nrDcu = p(ZJParametersKey).localRing.count(n => n.nodeType == NodeType.HF && !n.mainMemory)
+    val luaScb = Module(new LuaScoreboard(nrL2, nrL2Bank, nrPcu, nrDcu))
     luaScb.io.clock := clock
     luaScb.io.reset := reset
     luaScb.io.sim_final := io.simFinal.get
@@ -145,9 +151,7 @@ class SimTop(implicit p: Parameters) extends Module {
       val noc = soc.core.get(i)
       val hub = LazyModule(new SimCoreHub(noc.params)(p.alterPartial({
         case MonitorsEnabled => false
-        case TLUserKey =>
-          val dcacheParams = p(XSCoreParamsKey).dcacheParametersOpt.get
-          TLUserParams(aliasBits = dcacheParams.aliasBitsOpt.getOrElse(0))
+        case TLUserKey => TLUserParams(aliasBits = p(DcacheKey).aliasBitsOpt.getOrElse(0))
       })))
       val _hub = Module(hub.module)
       val ext = IO(new SimCoreHubExtIO(_hub.io.ext.cio.params, _hub.io.ext.dcache.params, _hub.io.ext.icache.params))

@@ -3,7 +3,14 @@ package lntest.top
 import chisel3._
 import chisel3.util._
 
-class LuaScoreboard extends BlackBox with HasBlackBoxInline {
+class LuaScoreboard(nrL2:Int, nrL2Bank:Int, nrPcu:Int, nrDcu:Int) extends BlackBox(
+  Map(
+    "NR_L2" -> nrL2,
+    "NR_L2_BANK" -> nrL2Bank,
+    "NR_PCU" -> nrPcu,
+    "NR_DCU" -> nrDcu
+  )
+) with HasBlackBoxInline {
   val io = IO(new Bundle {
     val clock = Input(Clock())
     val reset = Input(Bool())
@@ -11,7 +18,12 @@ class LuaScoreboard extends BlackBox with HasBlackBoxInline {
   })
   setInline(s"LuaScoreboard.sv",
     s"""
-       |module LuaScoreboard (
+       |module LuaScoreboard #(
+       |  parameter NR_L2,
+       |  parameter NR_L2_BANK,
+       |  parameter NR_PCU,
+       |  parameter NR_DCU
+       |)(
        |  input  wire clock,
        |  input  wire reset,
        |  input  wire sim_final
