@@ -17,6 +17,7 @@ task("soc" , function()
       {'p', "pldm_verilog", "k", nil, "enable only basic difftest function"},
       {'S', "cpu_sync", "k", nil, "use same clock to cpu cluster and noc"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
+      {'C', "core", "kv", nil, "cpu core in soc"},
       {'f', "config", "kv", nil, "soc config selection"},
       {'o', "out_dir", "kv", "build/rtl", "assign build dir"},
       {'j', "jobs", "kv", "16", "post-compile process jobs"}
@@ -39,6 +40,7 @@ task("soc" , function()
     if option.get("lua_scoreboard") then table.join2(chisel_opts, {"--lua-scoreboard"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
     if option.get("config") then table.join2(chisel_opts, {"--config", option.get("config")}) end
+    if option.get("core") then table.join2(chisel_opts, {"--core", option.get("core")}) end
     local build_dir = path.join("build", "rtl")
     if not option.get("sim") and not option.get("release") then build_dir = option.get("out_dir") end
     if option.get("sim") then os.setenv("NOOP_HOME", os.curdir()) end 
@@ -76,6 +78,7 @@ task("emu", function()
       {'S', "cpu_sync", "k", nil, "use same clock to cpu cluster and noc"},
       {'f', "fast", "k", nil, "disable trace to improve simulation speed"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
+      {'C', "core", "kv", nil, "cpu core in soc"},
       {'h', "dramsim3_home", "kv", path.join(os.curdir(), "dependencies", "dramsim"), "dramsim3 home dir"},
       {'t', "threads", "kv", "16", "simulation threads"},
       {'j', "jobs", "kv", "16", "compilation jobs"},
@@ -128,6 +131,7 @@ task("simv", function()
       {'d', "no_fsdb", "k", nil, "do not dump wave"},
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'S', "cpu_sync", "k", nil, "use same clock to cpu cluster and noc"},
+      {'C', "core", "kv", nil, "cpu core in soc"},
       {'r', "ref", "kv", "Spike", "reference model"},
       {'c', "config", "kv", "minimal", "rtl config"}
     }

@@ -19,7 +19,7 @@ function simv_comp(num_cores)
     if os.exists(build_dir) then os.rmdir(build_dir) end
     task.run("soc", {
       vcs = true, sim = true, config = option.get("config"),
-      cpu_sync = option.get("cpu_sync")
+      cpu_sync = option.get("cpu_sync"), core = option.get("core")
     })
   end,{
     files = chisel_dep_srcs,

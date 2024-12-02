@@ -1,14 +1,46 @@
 package lntest.top
 
-import linknan.generator.ArgParser.configParse
 import linknan.generator._
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.perf.DebugOptionsKey
 import zhujiang.ZJParametersKey
 
+import scala.annotation.tailrec
+
 object SimArgParser {
+  private var core = "nanhu"
+  private var cfg = "minimal"
+  private var opts = Array[String]()
+  @tailrec
+  def configParse(args: List[String]): Unit = {
+    args match {
+      case "--config" :: cfgStr :: tail => {
+        cfg = cfgStr
+        configParse(tail)
+      }
+      case "--core" :: cfgStr :: tail => {
+        core = cfgStr
+        configParse(tail)
+      }
+      case option :: tail => {
+        opts :+= option
+        configParse(tail)
+      }
+      case Nil =>
+    }
+  }
+
   def apply(args: Array[String]): (Parameters, Array[String]) = {
-    val (configuration, stripCfgArgs) = configParse(sim = true)(args)
+    configParse(args.toList)
+    val configuration = cfg match {
+      case "reduced" => new ReducedConfig(core)
+      case "minimal" => new MinimalConfig(core)
+      case "spec" => new SpecConfig(core)
+      case "fpga" => new FpgaConfig(core)
+      case "btest" => new BtestConfig(core)
+      case _ => new FullConfig(core)
+    }
+    println(s"Using $cfg config with $core cores")
 
     var firrtlOpts = Array[String]()
 
@@ -69,7 +101,7 @@ object SimArgParser {
       }
     }
 
-    val cfg = parse(configuration, stripCfgArgs.toList)
-    (cfg, firrtlOpts)
+    val finalCfg = parse(configuration, opts.toList)
+    (finalCfg, firrtlOpts)
   }
 }

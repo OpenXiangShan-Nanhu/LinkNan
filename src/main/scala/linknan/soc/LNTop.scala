@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.experimental.hierarchy.{Definition, Instance}
 import chisel3.experimental.{ChiselAnnotation, annotate}
 import chisel3.util._
-import freechips.rocketchip.diplomacy.MonitorsEnabled
+import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import linknan.cluster.{BlockTestIO, CpuCluster}
 import linknan.generator.{PrefixKey, TestIoOptionsKey}
 import linknan.soc.uncore.UncoreComplex
@@ -62,17 +62,20 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with ImplicitClock with I
   uncore.io.debug.reset := DontCare
   io.ndreset := uncore.io.debug.ndreset
 
-  private val nanhuNode = noc.io.ccn.groupBy(_.node.attr)("nanhu").head.node
-  private val nanhuClusterDef = Definition(new CpuCluster(nanhuNode)(p.alterPartial({
-    case MonitorsEnabled => false
-  })))
+  private val ccnNodeMap = noc.io.ccn.groupBy(_.node.attr)
+  private val clusterDefMap = for((name, nodes) <- ccnNodeMap) yield {
+    val cdef = Definition(new CpuCluster(nodes.head.node)(p.alterPartial({
+      case MonitorsEnabled => false
+    })))
+    (name, cdef)
+  }
   private val cpuNum = noc.io.ccn.map(_.node.cpuNum).sum
 
-  val core = if(p(TestIoOptionsKey).doBlockTest) Some(IO(Vec(cpuNum, new BlockTestIO(nanhuClusterDef.coreIoParams)))) else None
+  val core = if(p(TestIoOptionsKey).doBlockTest) Some(IO(Vec(cpuNum, new BlockTestIO(clusterDefMap.head._2.coreIoParams)))) else None
 
   for((ccn, i) <- noc.io.ccn.zipWithIndex) {
     val clusterId = ccn.node.clusterId
-    val cc = Instance(nanhuClusterDef)
+    val cc = Instance(clusterDefMap(ccn.node.attr))
     cc.icn.ccn <> ccn
     if(p(ZJParametersKey).cpuAsync) {
       cc.icn.osc_clock := io.cluster_clocks.get(i)

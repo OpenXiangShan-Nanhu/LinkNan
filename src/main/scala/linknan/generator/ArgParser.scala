@@ -4,36 +4,42 @@ import org.chipsalliance.cde.config.Parameters
 import xs.utils.perf.DebugOptionsKey
 import zhujiang.ZJParametersKey
 
+import scala.annotation.tailrec
+
 object ArgParser {
-  def configParse(sim:Boolean)(args: Array[String]) :(Parameters, Array[String]) = {
-    val configParam = args.filter(_ == "--config")
-    if(configParam.isEmpty) {
-      val defaultCfg = if(sim) {
-        println("Config is not assigned, use Minimal Configuration!")
-        new MinimalConfig
-      } else {
-        println("Config is not assigned, use Full Configuration!")
-        new FullConfig
+  private var core = "nanhu"
+  private var cfg = "full"
+  private var opts = Array[String]()
+  @tailrec
+  def configParse(args: List[String]): Unit = {
+    args match {
+      case "--config" :: cfgStr :: tail => {
+        cfg = cfgStr
+        configParse(tail)
       }
-      (defaultCfg, args)
-    } else {
-      val pos = args.indexOf(configParam.head)
-      val cfgStr = args(pos + 1)
-      val res = cfgStr match {
-        case "reduced" => new ReducedConfig
-        case "minimal" => new MinimalConfig
-        case "spec" => new SpecConfig
-        case "fpga" => new FpgaConfig
-        case "btest" => new BtestConfig
-        case _ => new FullConfig
+      case "--core" :: cfgStr :: tail => {
+        core = cfgStr
+        configParse(tail)
       }
-      val newArgs = args.zipWithIndex.filterNot(e => e._2 == pos || e._2 == (pos + 1)).map(_._1)
-      (res, newArgs)
+      case option :: tail => {
+        opts :+= option
+        configParse(tail)
+      }
+      case Nil =>
     }
   }
 
   def apply(args: Array[String]): (Parameters, Array[String]) = {
-    val (configuration, stripCfgArgs) = configParse(sim = false)(args)
+    configParse(args.toList)
+    val configuration = cfg match {
+      case "reduced" => new ReducedConfig(core)
+      case "minimal" => new MinimalConfig(core)
+      case "spec" => new SpecConfig(core)
+      case "fpga" => new FpgaConfig(core)
+      case "btest" => new BtestConfig(core)
+      case _ => new FullConfig(core)
+    }
+    println(s"Using $cfg config with $core cores")
 
     var firrtlOpts = Array[String]()
     def parse(config: Parameters, args: List[String]): Parameters = {
@@ -81,7 +87,7 @@ object ArgParser {
       }
     }
 
-    val cfg = parse(configuration, stripCfgArgs.toList)
-    (cfg, firrtlOpts)
+    val finalCfg = parse(configuration, opts.toList)
+    (finalCfg, firrtlOpts)
   }
 }

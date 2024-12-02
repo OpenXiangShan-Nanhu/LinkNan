@@ -15,7 +15,7 @@ function emu_comp(num_cores)
       sim = true, config = option.get("config"),
       dramsim3 = option.get("dramsim3"), enable_perf = not option.get("no_perf"),
       cpu_sync = option.get("cpu_sync"), lua_scoreboard = option.get("lua_scoreboard"),
-      clean_difftest = option.get("no_diff")
+      clean_difftest = option.get("no_diff"), core = option.get("core")
     })
   end,{
     files = chisel_dep_srcs,

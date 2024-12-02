@@ -4,8 +4,9 @@ import chisel3._
 import chisel3.experimental.hierarchy.core.IsLookupable
 import chisel3.experimental.hierarchy.{Definition, Instance, instantiable, public}
 import darecreek.exu.vfu.{VFuParameters, VFuParamsKey}
-import freechips.rocketchip.diplomacy.{LazyModule, LazyModuleImp}
+import org.chipsalliance.diplomacy.lazymodule.{LazyModule, LazyModuleImp}
 import freechips.rocketchip.tilelink.{TLBundle, TLBundleParameters, TLClientNode, TLEdgeIn, TLManagerNode, TLXbar}
+import linknan.cluster.core.{BoomV4CoreWrapper, NanhuCoreWrapper}
 import linknan.cluster.hub.{AlwaysOnDomain, ImsicBundle}
 import linknan.cluster.hub.interconnect.ClusterDeviceBundle
 import linknan.generator.TestIoOptionsKey
@@ -49,12 +50,11 @@ case class BlockTestIOParams(ioParams:TLBundleParameters, l2Params: TLBundlePara
 class CpuCluster(node:Node)(implicit p:Parameters) extends ZJRawModule {
   private val removeCsu = p(TestIoOptionsKey).removeCsu
   private val removeCore = p(TestIoOptionsKey).removeCore || p(TestIoOptionsKey).removeCsu
-  private val dcacheParams = p(XSCoreParamsKey).dcacheParametersOpt.get
 
-  private val coreGen = LazyModule(new CoreWrapper()(p.alterPartial({
-    case TLUserKey => TLUserParams(aliasBits = dcacheParams.aliasBitsOpt.getOrElse(0))
-    case VFuParamsKey => VFuParameters()
-  })))
+  private val coreGen = node.attr match {
+    case "boom" => LazyModule(new BoomV4CoreWrapper)
+    case _ => LazyModule(new NanhuCoreWrapper)
+  }
   private val coreDef = if(!removeCore) Some(Definition(coreGen.module)) else None
   private val coreSeq = if(!removeCore) Some(Seq.fill(node.cpuNum)(Instance(coreDef.get))) else None
   coreSeq.foreach(_.zipWithIndex.foreach({case(c, i) => c.suggestName(s"core_$i")}))

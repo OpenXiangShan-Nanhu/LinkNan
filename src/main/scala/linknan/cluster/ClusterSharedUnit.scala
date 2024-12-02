@@ -9,9 +9,11 @@ import freechips.rocketchip.interrupts._
 import freechips.rocketchip.tilelink._
 import org.chipsalliance.diplomacy.lazymodule._
 import freechips.rocketchip.resources.BindingScope
+import linknan.cluster.core.CoreWrapperIO
 import linknan.cluster.hub.AlwaysOnDomainBundle
 import linknan.cluster.power.controller.{PowerMode, devActiveBits}
 import linknan.cluster.power.pchannel.PChannelSlv
+import linknan.generator.DcacheKey
 import linknan.utils._
 import org.chipsalliance.cde.config.Parameters
 import xiangshan.{HasXSParameter, XSCoreParamsKey}
@@ -23,8 +25,8 @@ import zhujiang.HasZJParams
 import zhujiang.chi._
 
 class ClusterSharedUnit(cioEdge: TLEdgeIn, l2EdgeIn: TLEdgeIn, node:Node)(implicit p:Parameters) extends LazyModule with HasZJParams
-  with BindingScope with HasXSParameter {
-  private val dcacheParams = p(XSCoreParamsKey).dcacheParametersOpt.get
+  with BindingScope {
+  private val dcacheParams = p(DcacheKey)
   private val l2Params = p(L2ParamKey)
   private val l2cache = LazyModule(new SimpleL2CacheDecoupled()(p.alterPartial({
     case TLUserKey => TLUserParams(aliasBits = dcacheParams.aliasBitsOpt.getOrElse(0))
@@ -38,7 +40,7 @@ class ClusterSharedUnit(cioEdge: TLEdgeIn, l2EdgeIn: TLEdgeIn, node:Node)(implic
     )
   })))
   private val l2Xbar = LazyModule(new TLXbar)
-  private val l2binder = LazyModule(new BankBinder(64 * (coreParams.L2NBanks - 1)))
+  private val l2binder = LazyModule(new BankBinder(64 * (l2Params.nrSlice - 1)))
   private val l2EccIntSink = IntSinkNode(IntSinkPortSimple(1, 1))
   private val l2param = p(L2ParamKey)
   private val cachePortNodes = Seq.fill(node.cpuNum)(TLClientNode(Seq(l2EdgeIn.master)))
