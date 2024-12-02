@@ -43,7 +43,7 @@ task("soc" , function()
     if option.get("core") then table.join2(chisel_opts, {"--core", option.get("core")}) end
     local build_dir = path.join("build", "rtl")
     if not option.get("sim") and not option.get("release") then build_dir = option.get("out_dir") end
-    if option.get("sim") then os.setenv("NOOP_HOME", os.curdir()) end 
+    if option.get("sim") then os.setenv("NOOP_HOME", os.curdir()) end
     table.join2(chisel_opts, {"--target", "systemverilog", "--full-stacktrace"})
     table.join2(chisel_opts, {"-td", build_dir})
     os.execv(os.shell(), chisel_opts)
@@ -128,6 +128,7 @@ task("simv", function()
     description = "Compile with vcs",
     options = {
       {'b', "rebuild", "k", nil, "forcely rebuild"},
+      {'n', "no_diff", "k", nil, "disable difftest"},
       {'d', "no_fsdb", "k", nil, "do not dump wave"},
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'S', "cpu_sync", "k", nil, "use same clock to cpu cluster and noc"},
@@ -152,7 +153,6 @@ task("simv-run", function ()
     description = "Run simv",
     options = {
       {nil, "no_dump", "k", nil, "do not dump waveform"},
-      {nil, "no_diff", "k", nil, "disable difftest"},
       {'i', "image", "kv", nil, "bin image bin name"},
       {'z', "imagez", "kv", nil, "gz image name"},
       {'c', "cycles", "kv", "0", "gz image name"},

@@ -19,7 +19,8 @@ function simv_comp(num_cores)
     if os.exists(build_dir) then os.rmdir(build_dir) end
     task.run("soc", {
       vcs = true, sim = true, config = option.get("config"),
-      cpu_sync = option.get("cpu_sync"), core = option.get("core")
+      cpu_sync = option.get("cpu_sync"), core = option.get("core"),
+      clean_difftest = option.get("no_diff")
     })
   end,{
     files = chisel_dep_srcs,
@@ -48,15 +49,18 @@ function simv_comp(num_cores)
 
   local csrc = os.files(path.join(design_csrc, "*.cpp"))
   table.join2(csrc, os.files(path.join(difftest_csrc_common, "*.cpp")))
-  table.join2(csrc, os.files(path.join(difftest_csrc_difftest, "*.cpp")))
   table.join2(csrc, os.files(path.join(difftest_csrc_spikedasm, "*.cpp")))
   table.join2(csrc, os.files(path.join(difftest_csrc_vcs, "*.cpp")))
 
   local headers = os.files(path.join(design_csrc, "*.h"))
   table.join2(headers, os.files(path.join(difftest_csrc_common, "*.h")))
-  table.join2(headers, os.files(path.join(difftest_csrc_difftest, "*.h")))
   table.join2(headers, os.files(path.join(difftest_csrc_spikedasm, "*.h")))
   table.join2(headers, os.files(path.join(difftest_csrc_vcs, "*.h")))
+
+  if not option.get("no_diff") then
+    table.join2(csrc, os.files(path.join(difftest_csrc_difftest, "*.cpp")))
+    table.join2(headers, os.files(path.join(difftest_csrc_difftest, "*.h")))
+  end
 
   local vsrc_filelist_path = path.join(comp_dir, "vsrc.f")
   local vsrc_filelist_contents = ""
@@ -85,6 +89,9 @@ function simv_comp(num_cores)
   end
   if option.get("sparse_mem") then
     cxx_flags = cxx_flags .. " -DCONFIG_USE_SPARSEMM"
+  end
+  if option.get("no_diff") then
+    cxx_flags = cxx_flags .. " -DCONFIG_NO_DIFFTEST"
   end
 
   local cxx_ldflags = "-Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz -lsqlite3"
@@ -156,11 +163,7 @@ function simv_run()
   if not option.get("no_dump") then
     sh_str = sh_str .. " +dump-wave=fsdb"
   end
-  if not option.get("no_diff") then
-    sh_str = sh_str .. " +diff=" .. ref_so
-  else
-    sh_str = sh_str .. " +no-diff"
-  end
+  sh_str = sh_str .. " +diff=" .. ref_so
   sh_str = sh_str .. " +max-cycles=" .. option.get("cycles")
   sh_str = sh_str .. " +workload=" .. image_file
   sh_str = sh_str .. " -fgp=num_threads:4,num_fsdb_threads:4"
