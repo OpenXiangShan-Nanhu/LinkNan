@@ -90,8 +90,15 @@ task("emu", function()
   on_run(function()
     import("core.base.option")
     local num_cores = "1"
-    if option.get("config") == "full" then num_cores = 8 end
-    if option.get("config") == "reduced" then num_cores = 4 end
+    os.setenv("NR_L2", 1)
+    if option.get("config") == "full" then
+      num_cores = 8
+      os.setenv("NR_L2", 4)
+    end
+    if option.get("config") == "reduced" then
+      num_cores = 4
+      os.setenv("NR_L2", 2)
+    end
     import("scripts.xmake.verilator").emu_comp(num_cores)
   end)
 end)
@@ -141,8 +148,15 @@ task("simv", function()
   on_run(function()
     import("core.base.option")
     local num_cores = "1"
-    if option.get("config") == "full" then num_cores = 8 end
-    if option.get("config") == "reduced" then num_cores = 4 end
+    os.setenv("NR_L2", 1)
+    if option.get("config") == "full" then
+      num_cores = 8
+      os.setenv("NR_L2", 4)
+    end
+    if option.get("config") == "reduced" then
+      num_cores = 4
+      os.setenv("NR_L2", 2)
+    end
     import("scripts.xmake.vcs").simv_comp(num_cores)
   end)
 end)

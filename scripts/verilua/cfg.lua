@@ -12,11 +12,15 @@ cfg.srcs = {
 }
 
 
+cfg.nr_l2 = tonumber(os.getenv("NR_L2")) or 1
 cfg.nr_l2_slice = 2
 
 -- Not used now
 -- cfg.nr_dj_dcu = 2
 -- cfg.nr_dj_pcu = 1
+
+cfg.enable_l2_mon_out = true
+cfg.enable_l2_mon_in = true
 
 cfg.verbose_l2_mon_out = false
 cfg.verbose_l2_mon_in = false
