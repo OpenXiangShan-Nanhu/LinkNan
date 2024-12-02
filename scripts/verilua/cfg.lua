@@ -12,8 +12,12 @@ cfg.srcs = {
 }
 
 
-cfg.nr_l2 = tonumber(os.getenv("NR_L2")) or 1
-cfg.nr_l2_slice = tonumber(os.getenv("NR_L2_BANK")) or 2
+-- Check whether parameters are correctly set by enviroment variables
+local NR_L2 = assert(os.getenv("NR_L2"), "Enviroment variable `NR_L2` is not set!")
+local NR_L2_BANK = assert(os.getenv("NR_L2_BANK"), "Enviroment variable `NR_L2_BANK` is not set!")
+
+cfg.nr_l2 = tonumber(NR_L2)
+cfg.nr_l2_slice = tonumber(NR_L2_BANK)
 
 -- Not used now
 -- cfg.nr_dj_dcu = 2
