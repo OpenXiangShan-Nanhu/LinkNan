@@ -118,6 +118,7 @@ class SimTop(implicit p: Parameters) extends Module {
 
   if(doBlockTest) {
     soc.io.jtag := DontCare
+    soc.io.jtag.reset := true.B.asAsyncReset
   } else {
     val success = Wire(Bool())
     val jtag = Module(new SimJTAG(tickDelay = 3))
