@@ -5,8 +5,11 @@ import chisel3.util._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
 import linknan.cluster.{BlockTestIO, BlockTestIOParams}
+import linknan.generator.DcacheKey
 import org.chipsalliance.cde.config.Parameters
 import xiangshan.XSCoreParamsKey
+import xiangshan.cache.mmu.L2TLBParameters
+import xiangshan.frontend.icache.ICacheParameters
 import xs.utils.tl.{TLNanhuBusField, TLNanhuBusKey}
 import zhujiang.ZJParametersKey
 
@@ -20,8 +23,13 @@ class SimCoreHubExtIO(cioP:TLBundleParameters, dcP:TLBundleParameters, icP:TLBun
 }
 
 class SimCoreHub(params:BlockTestIOParams)(implicit p: Parameters) extends LazyModule {
-  private val icacheImplParams = p(XSCoreParamsKey).icacheParameters
-  private val l2tlbImplParams = p(XSCoreParamsKey).l2tlbParameters
+  private val icacheImplParams = ICacheParameters(
+    tagECC = None,
+    dataECC = None,
+    replacer = Some("setplru"),
+    nPrefetchEntries = 2,
+  )
+  private val l2tlbImplParams = L2TLBParameters()
   private val icacheOutstanding = icacheImplParams.nMissEntries + icacheImplParams.nReleaseEntries + icacheImplParams.nPrefetchEntries
   private val ptwOustanding = l2tlbImplParams.llptwsize + 1
   private val icacheDplmcParams = TLMasterPortParameters.v1(
@@ -34,7 +42,7 @@ class SimCoreHub(params:BlockTestIOParams)(implicit p: Parameters) extends LazyM
   )
   private val icacheNode = TLClientNode(Seq(icacheDplmcParams))
 
-  private val dcacheImplParams = p(XSCoreParamsKey).dcacheParametersOpt.get
+  private val dcacheImplParams = p(DcacheKey)
   private val dcacheDplmcParames = TLMasterPortParameters.v1(
     Seq(TLMasterParameters.v1(
       name = "dcache",

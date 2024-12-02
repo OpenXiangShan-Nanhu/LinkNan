@@ -13,7 +13,7 @@ cfg.srcs = {
 
 
 cfg.nr_l2 = tonumber(os.getenv("NR_L2")) or 1
-cfg.nr_l2_slice = 2
+cfg.nr_l2_slice = tonumber(os.getenv("NR_L2_BANK")) or 2
 
 -- Not used now
 -- cfg.nr_dj_dcu = 2
