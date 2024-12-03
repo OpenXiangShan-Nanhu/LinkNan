@@ -114,12 +114,21 @@ function simv_comp(num_cores)
   vcs_flags = vcs_flags .. " -f " .. csrc_filelist_path
   vcs_flags = "vcs " .. vcs_flags
   os.cd(comp_dir)
-  io.writefile("vcs_cmd.sh", vcs_flags)
+  local cmd_file = path.join(comp_dir, "vcs_cmd.sh")
+  if os.exists(cmd_file) then
+    local fileStr = io.readfile(cmd_file)
+    if fileStr ~= verilator_flags then
+      io.writefile("vcs_cmd.sh", vcs_flags)
+    end
+  else
+    io.writefile("vcs_cmd.sh", vcs_flags)
+  end
 
   local depend_srcs = vsrc
   table.join2(depend_srcs, csrc)
   table.join2(depend_srcs, headers)
   table.join2(depend_srcs, { path.join(abs_base, "scripts", "xmake", "vcs.lua") })
+  table.join2(depend_srcs, { cmd_file })
 
   depend.on_changed(function()
     print(vcs_flags)
