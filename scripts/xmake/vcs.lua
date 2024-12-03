@@ -117,7 +117,7 @@ function simv_comp(num_cores)
   local cmd_file = path.join(comp_dir, "vcs_cmd.sh")
   if os.exists(cmd_file) then
     local fileStr = io.readfile(cmd_file)
-    if fileStr ~= verilator_flags then
+    if fileStr ~= vcs_flags then
       io.writefile(cmd_file, vcs_flags)
     end
   else
