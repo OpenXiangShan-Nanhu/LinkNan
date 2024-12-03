@@ -165,7 +165,7 @@ class SimTop(implicit p: Parameters) extends Module {
   private val timer = Wire(UInt(64.W))
   timer := GTimer()
   dontTouch(timer)
-  if (!debugOpts.FPGAPlatform && debugOpts.EnablePerfDebug && !doBlockTest) {
+  if (!doBlockTest) {
     val logEnable = Wire(Bool())
     val clean = Wire(Bool())
     val dump = Wire(Bool())

@@ -53,6 +53,11 @@ object SimArgParser {
             case DebugOptionsKey => up(DebugOptionsKey).copy(UseDRAMSim = true)
           }), tail)
 
+        case "--no-perf" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case DebugOptionsKey => up(DebugOptionsKey).copy(EnablePerfDebug = false)
+          }), tail)
+
         case "--cpu-sync" :: tail =>
           parse(config.alter((site, here, up) => {
             case ZJParametersKey => up(ZJParametersKey).copy(cpuAsync = false)
@@ -87,7 +92,7 @@ object SimArgParser {
 
         case "--lua-scoreboard" :: tail =>
           parse(config.alter((site, here, up) => {
-            case DebugOptionsKey => up(DebugOptionsKey).copy(EnableLuaScoreBoard = true)
+            case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDebug = true, EnableLuaScoreBoard = true)
           }), tail)
 
         case "--prefix" :: confString :: tail =>
