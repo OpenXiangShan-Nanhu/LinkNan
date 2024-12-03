@@ -61,7 +61,6 @@ abstract class BaseCoreWrapper(legacyMmap:Boolean = true)(implicit p:Parameters)
       supportsGet = TransferSizes(1, 8),
       supportsPutFull = TransferSizes(1, 8),
       supportsPutPartial = TransferSizes(1, 8),
-      executable = true,
       regionType = RegionType.GET_EFFECTS
     )),
     beatBytes = 8
