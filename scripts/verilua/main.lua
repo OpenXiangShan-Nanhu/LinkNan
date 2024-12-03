@@ -1,11 +1,18 @@
 local LuaDataBase = require "LuaDataBase"
 local L2TLMonitor = require "L2TLMonitor"
 local L2CHIMonitor = require "L2CHIMonitor"
+local PCUMonitor = require "PCUMonitor"
+local DCUMonitor = require "DCUMonitor"
+local DDRMonitor = require "DDRMonitor"
+local dj_addrmap = require "DJAddrMap"
 
 local f = string.format
 
 local l2_mon_in_vec = {}
 local l2_mon_out_vec = {}
+local dj_pcu_mon_vec = {}
+local dj_dcu_mon_vec = {}
+local dj_ddr_mon = nil
 
 local tl_db = LuaDataBase({
     table_name = "tl_db",
@@ -228,10 +235,278 @@ for i = 0, cfg.nr_l2 - 1 do
         rxsnp,
 
         chi_db,
-        cfg:get_or_else("verbose_l2_mon_out", true),
+        cfg:get_or_else("verbose_l2_mon_out", false),
         cfg:get_or_else("enable_l2_mon_out", true)
     )
     table.insert(l2_mon_out_vec, l2_mon_out)
+end
+
+for i = 0, cfg.nr_dj_pcu - 1 do
+    local dj_hier = tostring(dut.soc.noc["pcu_" .. i])
+
+	local rxreq = ([[
+		| valid
+		| ready
+		| bits_Addr => addr
+		| bits_Opcode => opcode
+		| bits_TxnID => txnID
+		| bits_SrcID => srcID
+		| bits_TgtID => tgtID
+	]]):abdl({ hier = dj_hier, prefix = "io_toLocal_rx_req_", name = "PCU RXREQ" })
+
+	local rxdat = ([[
+		| valid
+		| ready
+		| bits_Opcode => opcode
+		| bits_TxnID => txnID
+		| bits_SrcID => srcID
+		| bits_TgtID => tgtID
+		| bits_DBID => dbID
+		| bits_Data => data
+		| bits_Resp => resp
+		| bits_DataID => dataID
+	]]):abdl({ hier = dj_hier, prefix = "io_toLocal_rx_data_", name = "PCU RXDAT" })
+
+	local rxrsp = ([[
+		| valid
+		| ready
+		| bits_Opcode => opcode
+		| bits_SrcID => srcID
+		| bits_TxnID => txnID
+		| bits_TgtID => tgtID
+		| bits_Resp => resp
+		| bits_DBID => dbID
+	]]):abdl({ hier = dj_hier, prefix = "io_toLocal_rx_resp_", name = "PCU RXRSP" })
+
+	local txreq = ([[
+		| valid
+		| ready
+		| bits_Addr => addr
+		| bits_DbgAddr => dbgaddr
+		| bits_Opcode => opcode
+		| bits_TxnID => txnID
+		| bits_SrcID => srcID
+		| bits_TgtID => tgtID
+		| bits_ReturnTxnID => returnTxnID
+		| bits_ReturnNID => returnNID
+	]]):abdl({ hier = dj_hier, prefix = "io_toLocal_tx_req_", name = "PCU TXRTEQ" })
+
+	local txdat = ([[
+		| valid
+		| ready
+		| bits_Opcode => opcode
+		| bits_TxnID => txnID
+		| bits_SrcID => srcID
+		| bits_TgtID => tgtID
+		| bits_DBID => dbID
+		| bits_Data => data
+		| bits_Resp => resp 
+		| bits_DataID => dataID
+	]]):abdl({ hier = dj_hier, prefix = "io_toLocal_tx_data_", name = "PCU TXDAT" })
+
+	local txsnp = ([[
+		| valid
+		| ready
+		| bits_Opcode => opcode
+		| bits_Addr => addr
+		| bits_SrcID => srcID
+		| bits_TgtID => tgtID
+		| bits_TxnID => txnID
+		| bits_RetToSrc => retToSrc
+	]]):abdl({ hier = dj_hier, prefix = "io_toLocal_tx_snoop_", name = "PCU TXSNP" })
+
+	local txrsp = ([[
+		| valid
+		| ready
+		| bits_Opcode => opcode
+		| bits_SrcID => srcID
+		| bits_TxnID => txnID
+		| bits_TgtID => tgtID
+		| bits_Resp => resp
+		| bits_DBID => dbID
+	]]):abdl({ hier = dj_hier, prefix = "io_toLocal_tx_resp_", name = "PCU TXRSP" })
+
+	local dj_pcu_mon = PCUMonitor(
+		"dj_pcu_mon_" .. i,
+		i,
+
+		--
+		-- CHI channels
+		--
+		rxreq,
+		rxrsp,
+		rxdat,
+		txreq,
+		txrsp,
+		txdat,
+		txsnp,
+
+		chi_db,
+		cfg:get_or_else(f("verbose_dj_pcu_mon_%d", i), false),
+		cfg:get_or_else(f("enable_dj_pcu_mon_%d", i), true)
+	)
+
+	table.insert(dj_pcu_mon_vec, dj_pcu_mon)
+end
+
+for i = 0, cfg.nr_dj_dcu - 1 do
+    local dj_hier = tostring(dut.soc.noc["dcu_" .. i])
+
+	local rxreqs = {}
+	local rxdats = {}
+	local txdats = {}
+	local txrsps = {}
+	for j = 0, cfg.nr_dcu_port - 1 do
+		local rxreq = ([[
+			| valid
+			| ready
+			| bits_Addr => addr
+			| bits_Opcode => opcode
+			| bits_TxnID => txnID
+			| bits_SrcID => srcID
+			| bits_TgtID => tgtID
+			| bits_ReturnNID => returnNID
+			| bits_ReturnTxnID => returnTxnID
+		]]):abdl({ hier = dj_hier, prefix = "io_icns_" .. j .. "_rx_req_", name = "DCU PORT" .. j .. " RXREQ" })
+
+		local rxdat = ([[
+			| valid
+			| ready
+			| bits_Opcode => opcode
+			| bits_TxnID => txnID
+			| bits_SrcID => srcID
+			| bits_TgtID => tgtID
+			| bits_DBID => dbID
+			| bits_Data => data
+			| bits_Resp => resp
+			| bits_DataID => dataID
+		]]):abdl({ hier = dj_hier, prefix = "io_icns_" .. j .. "_rx_data_", name = "DCU PORT" .. j .. " RXDAT" })
+
+		local txdat = ([[
+			| valid
+			| ready
+			| bits_Opcode => opcode
+			| bits_TxnID => txnID
+			| bits_SrcID => srcID
+			| bits_TgtID => tgtID
+			| bits_DBID => dbID
+			| bits_Data => data
+			| bits_Resp => resp 
+			| bits_DataID => dataID 
+		]]):abdl({ hier = dj_hier, prefix = "io_icns_" .. j .. "_tx_data_", name = "DCU PORT" .. j .. " TXDAT" })
+
+		local txrsp = ([[
+			| valid
+			| ready
+			| bits_Opcode => opcode
+			| bits_SrcID => srcID
+			| bits_TxnID => txnID
+			| bits_TgtID => tgtID
+			| bits_Resp => resp
+			| bits_DBID => dbID
+		]]):abdl({ hier = dj_hier, prefix = "io_icns_" .. j .. "_tx_resp_", name = "DCU PORT" .. j .. " TXRSP" })
+
+		table.insert(rxreqs, rxreq)
+		table.insert(rxdats, rxdat)
+		table.insert(txdats, txdat)
+		table.insert(txrsps, txrsp)
+	end
+
+	local dj_dcu_mon = DCUMonitor(
+		"dj_dcu_mon_" .. i,
+		i,
+
+		--
+		-- CHI channels
+		--
+		rxreqs,
+		rxdats,
+		txrsps,
+		txdats,
+
+		chi_db,
+		cfg:get_or_else(f("verbose_dj_dcu_mon_%d", i), false),
+		cfg:get_or_else(f("enable_dj_dcu_mon_%d", i), true),
+		cfg.nr_dcu_port
+	)
+
+	table.insert(dj_dcu_mon_vec, dj_dcu_mon)
+end
+
+
+do
+    local dj_ddr_hier = tostring(dut.soc.noc.memSubSys)
+
+    local rxreq = ([[
+        | valid
+        | ready
+        | bits_Addr => addr
+        | bits_Opcode => opcode
+        | bits_TxnID => txnID
+        | bits_SrcID => srcID
+        | bits_TgtID => tgtID
+        | bits_ReturnNID => returnNID
+        | bits_ReturnTxnID => returnTxnID
+    ]]):abdl({ hier = dj_ddr_hier, prefix = "io_icn_mem_rx_req_", name = "DDR RXREQ" })
+    
+    local rxdat = ([[
+        | valid
+        | bits_Opcode => opcode
+        | bits_TxnID => txnID
+        | bits_SrcID => srcID
+        | bits_TgtID => tgtID
+        | bits_DBID => dbID
+        | bits_Data => data
+        | bits_Resp => resp
+        | bits_DataID => dataID
+    ]]):abdl({ hier = dj_ddr_hier, prefix = "io_icn_mem_rx_data_", name = "DDR RXDAT" })
+    
+    local txrsp = ([[
+        | valid
+        | ready
+        | bits_Opcode => opcode
+        | bits_SrcID => srcID
+        | bits_TxnID => txnID
+        | bits_TgtID => tgtID
+        | bits_Resp => resp
+        | bits_DBID => dbID
+    ]]):abdl({ hier = dj_ddr_hier, prefix = "io_icn_mem_tx_resp_", name = "DDR TXRSP" })
+    
+    local txdat = ([[
+        | valid
+        | ready
+        | bits_Opcode => opcode
+        | bits_TxnID => txnID
+        | bits_SrcID => srcID
+        | bits_TgtID => tgtID
+        | bits_DBID => dbID
+        | bits_Data => data
+        | bits_Resp => resp
+        | bits_DataID => dataID
+    ]]):abdl({ hier = dj_ddr_hier, prefix = "io_icn_mem_tx_data_", name = "DDR TXDAT" })
+    
+
+    dj_ddr_mon = DDRMonitor(
+        "dj_ddr_mon",
+    
+        --
+        -- CHI channels
+        --
+        rxreq,
+        rxdat,
+        txrsp,
+        txdat,
+    
+        chi_db,
+        cfg:get_or_else("verbose_dj_ddr_mon", false),
+        cfg:get_or_else("enable_dj_ddr_mon", true)
+    )
+end
+
+for dcu_idx, node_ids in pairs(cfg.dcu_node_cfg) do
+    for dcu_port_idx, node_id in ipairs(node_ids) do
+        dj_addrmap:update_dcu_nodeid(dcu_idx, dcu_port_idx - 1, node_id)
+    end
 end
 
 local print = function(...) print("[main.lua]", ...) end
@@ -244,6 +519,8 @@ fork {
         
         local nr_l2_mon_in = #l2_mon_in_vec
         local nr_l2_mon_out = #l2_mon_out_vec
+        local nr_dj_pcu_mon = #dj_pcu_mon_vec
+        local nr_dj_dcu_mon = #dj_dcu_mon_vec
 
         print("hello from main.lua")
 
@@ -256,6 +533,16 @@ fork {
             for i = 1, nr_l2_mon_out do
                 l2_mon_out_vec[i]:sample_all(cycles)
             end
+
+            for i = 1, nr_dj_pcu_mon do
+                dj_pcu_mon_vec[i]:sample_all(cycles)
+            end
+
+            for i = 1, nr_dj_dcu_mon do
+                dj_dcu_mon_vec[i]:sample_all(cycles)
+            end
+
+            dj_ddr_mon:sample_all(cycles)
 
             cycles = timer:get()
             clock:posedge()
