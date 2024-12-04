@@ -131,7 +131,7 @@ class L1DConfig(sizeInKiB:Int = 64, ways:Int = 4) extends Config((site, here, up
 })
 
 class FullConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new FullNocConfig(core)
+  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new FullNocConfig(core) ++ new BaseConfig(core)
 )
 
 class ReducedConfig(core:String) extends Config(
