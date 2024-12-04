@@ -8,9 +8,9 @@ import xijiang.{NodeParam, NodeType}
 import xs.utils.perf.{DebugOptions, DebugOptionsKey}
 import zhujiang.{ZJParameters, ZJParametersKey}
 
-case object PrefixKey extends Field[String]
 case object TestIoOptionsKey extends Field[TestIoOptions]
 case object DcacheKey extends Field[DCacheParameters]
+case object MiscKey extends Field[MiscOpts]
 
 case class TestIoOptions(
   removeCore: Boolean = false,
@@ -21,13 +21,22 @@ case class TestIoOptions(
   val hasCsu = !removeCsu
 }
 
-class FullNocConfig(core:String) extends Config((site, here, up) => {
+case class MiscOpts(
+  prefix:String = "",
+  random:Boolean = false
+)
+
+class BaseConfig(core:String) extends Config((site, here, up) => {
+  case DebugOptionsKey => DebugOptions()
+  case MiscKey => MiscOpts("", core == "boom")
+  case TestIoOptionsKey => TestIoOptions()
+  case LinkNanParamsKey => LinkNanParams()
   case DebugOptionsKey => DebugOptions()
   case DcacheKey => DCacheParameters()
   case L2ParamKey => L2Param(useDiplomacy = true)
-  case PrefixKey => ""
-  case TestIoOptionsKey => TestIoOptions()
-  case LinkNanParamsKey => LinkNanParams()
+})
+
+class FullNocConfig(core:String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true, dpId = 0),
@@ -58,12 +67,6 @@ class FullNocConfig(core:String) extends Config((site, here, up) => {
 })
 
 class ReducedNocConfig(core:String) extends Config((site, here, up) => {
-  case DebugOptionsKey => DebugOptions()
-  case DcacheKey => DCacheParameters()
-  case L2ParamKey => L2Param(useDiplomacy = true)
-  case PrefixKey => ""
-  case TestIoOptionsKey => TestIoOptions()
-  case LinkNanParamsKey => LinkNanParams()
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
@@ -80,12 +83,6 @@ class ReducedNocConfig(core:String) extends Config((site, here, up) => {
 })
 
 class MinimalNocConfig(core:String) extends Config((site, here, up) => {
-  case DebugOptionsKey => DebugOptions()
-  case DcacheKey => DCacheParameters()
-  case L2ParamKey => L2Param(useDiplomacy = true)
-  case PrefixKey => ""
-  case TestIoOptionsKey => TestIoOptions()
-  case LinkNanParamsKey => LinkNanParams()
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
@@ -138,21 +135,21 @@ class FullConfig(core:String) extends Config(
 )
 
 class ReducedConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(4, 8) ++ new ReducedNocConfig(core)
+  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(4, 8) ++ new ReducedNocConfig(core) ++ new BaseConfig(core)
 )
 
 class MinimalConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(2, 8) ++ new MinimalNocConfig(core)
+  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(2, 8) ++ new MinimalNocConfig(core) ++ new BaseConfig(core)
 )
 
 class SpecConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new MinimalNocConfig(core)
+  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new MinimalNocConfig(core) ++ new BaseConfig(core)
 )
 
 class FpgaConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(8, 8) ++ new FullNocConfig(core)
+  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(8, 8) ++ new FullNocConfig(core) ++ new BaseConfig(core)
 )
 
 class BtestConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(1, 8) ++ new ReducedNocConfig(core)
+  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(1, 8) ++ new ReducedNocConfig(core) ++ new BaseConfig(core)
 )

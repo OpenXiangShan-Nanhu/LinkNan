@@ -78,7 +78,7 @@ object ArgParser {
 
         case "--prefix" :: confString :: tail =>
           parse(config.alter((site, here, up) => {
-            case PrefixKey => confString
+            case MiscKey => up(MiscKey).copy(prefix = confString)
           }), tail)
 
         case option :: tail =>

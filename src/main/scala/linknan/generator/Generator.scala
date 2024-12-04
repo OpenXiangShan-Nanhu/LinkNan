@@ -9,28 +9,31 @@ import xs.utils.FileRegisters
 import zhujiang.ZJParametersKey
 
 object Generator {
-  val firtoolOps = Seq(
-    FirtoolOption("-O=release"),
-    FirtoolOption("--disable-all-randomization"),
-    FirtoolOption("--disable-annotation-unknown"),
-    FirtoolOption("--strip-debug-info"),
-    FirtoolOption("--lower-memories"),
-    FirtoolOption("--add-vivado-ram-address-conflict-synthesis-bug-workaround"),
-    FirtoolOption("--lowering-options=noAlwaysComb," +
-      " disallowPortDeclSharing, disallowLocalVariables," +
-      " emittedLineLength=120, explicitBitcast," +
-      " locationInfoStyle=plain, disallowMuxInlining")
-  )
+  def firtoolOpts(random:Boolean) = {
+    val opts = Seq(
+      FirtoolOption("-O=release"),
+      FirtoolOption("--disable-annotation-unknown"),
+      FirtoolOption("--strip-debug-info"),
+      FirtoolOption("--lower-memories"),
+      FirtoolOption("--add-vivado-ram-address-conflict-synthesis-bug-workaround"),
+      FirtoolOption("--lowering-options=noAlwaysComb," +
+        " disallowPortDeclSharing, disallowLocalVariables," +
+        " emittedLineLength=120, explicitBitcast," +
+        " locationInfoStyle=plain, disallowMuxInlining")
+    )
+    if(random) opts
+    else opts :+ FirtoolOption("--disable-all-randomization")
+  }
 }
 
 object SocGenerator extends App {
   val (config, firrtlOpts) = ArgParser(args)
-  xs.utils.GlobalData.prefix = config(PrefixKey)
-  difftest.GlobalData.prefix = config(PrefixKey)
-  (new ChiselStage).execute(firrtlOpts, Generator.firtoolOps ++ Seq(
+  xs.utils.GlobalData.prefix = config(MiscKey).prefix
+  difftest.GlobalData.prefix = config(MiscKey).prefix
+  (new ChiselStage).execute(firrtlOpts, Generator.firtoolOpts(config(MiscKey).random) ++ Seq(
     ChiselGeneratorAnnotation(() => new LNTop()(config))
   ))
 
   if(config(ZJParametersKey).tfbParams.isDefined) TrafficBoardFileManager.release("cosim", "cosim", config)
-  FileRegisters.write(filePrefix = config(PrefixKey) + "LNTop.")
+  FileRegisters.write(filePrefix = config(MiscKey).prefix + "LNTop.")
 }

@@ -6,7 +6,7 @@ import chisel3.experimental.{ChiselAnnotation, annotate}
 import chisel3.util._
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import linknan.cluster.{BlockTestIO, CpuCluster}
-import linknan.generator.{PrefixKey, TestIoOptionsKey}
+import linknan.generator.{MiscKey, TestIoOptionsKey}
 import linknan.soc.uncore.UncoreComplex
 import zhujiang.{DftWires, ZJParametersKey, ZJRawModule, Zhujiang}
 import org.chipsalliance.cde.config.Parameters
@@ -19,7 +19,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with ImplicitClock with I
   override protected val implicitReset = Wire(AsyncReset())
   private val mod = this.toNamed
   annotate(new ChiselAnnotation {
-    def toFirrtl = NestedPrefixModulesAnnotation(mod, p(PrefixKey), inclusive = true)
+    def toFirrtl = NestedPrefixModulesAnnotation(mod, p(MiscKey).prefix, inclusive = true)
   })
   private val noc = Module(new Zhujiang)
   private val clusterNum = noc.io.ccn.length

@@ -115,7 +115,8 @@ function simv_comp(num_cores)
   vcs_flags = "vcs " .. vcs_flags
 
   if option.get("core") == "boom" then
-    vcs_flags = vcs_flags .. " +vcs+initreg+0"
+    vcs_flags = vcs_flags .. " +define+RANDOMIZE_GARBAGE_ASSIGN +define+RANDOMIZE_DELAY=0"
+    vcs_flags = vcs_flags .. " +define+RANDOMIZE_REG_INIT +define+RANDOMIZE_MEM_INIT"
   else
     vcs_flags = vcs_flags .. " -xprop"
   end

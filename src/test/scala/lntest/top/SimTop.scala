@@ -27,11 +27,10 @@ import xs.utils.{FileRegisters, GTimer}
 import difftest._
 import circt.stage.ChiselStage
 import linknan.cluster.BlockTestIO
-import linknan.generator.{DcacheKey, Generator, PrefixKey, TestIoOptionsKey}
+import linknan.generator.{DcacheKey, Generator, MiscKey, TestIoOptionsKey}
 import linknan.soc.LNTop
 import org.chipsalliance.diplomacy.DisableMonitors
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
-import xiangshan.XSCoreParamsKey
 import xijiang.NodeType
 import xijiang.tfb.TrafficBoardFileManager
 import xs.utils.perf.DebugOptionsKey
@@ -190,13 +189,13 @@ class SimTop(implicit p: Parameters) extends Module {
 
 object SimGenerator extends App {
   val (config, firrtlOpts) = SimArgParser(args)
-  xs.utils.GlobalData.prefix = config(PrefixKey)
-  difftest.GlobalData.prefix = config(PrefixKey)
-  (new ChiselStage).execute(firrtlOpts, Generator.firtoolOps ++ Seq(
+  xs.utils.GlobalData.prefix = config(MiscKey).prefix
+  difftest.GlobalData.prefix = config(MiscKey).prefix
+  (new ChiselStage).execute(firrtlOpts, Generator.firtoolOpts(config(MiscKey).random) ++ Seq(
     ChiselGeneratorAnnotation(() => {
       DisableMonitors(p => new SimTop()(p))(config)
     })
   ))
   if(config(ZJParametersKey).tfbParams.isDefined) TrafficBoardFileManager.release("generated-src", "generated-src", config)
-  FileRegisters.write(filePrefix = config(PrefixKey) + "LNTop.")
+  FileRegisters.write(filePrefix = config(MiscKey).prefix + "LNTop.")
 }
