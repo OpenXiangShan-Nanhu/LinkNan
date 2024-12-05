@@ -2,7 +2,9 @@ package lntest.top
 
 import chisel3.Module
 import freechips.rocketchip.amba.axi4.{AXI4MasterNode, AXI4MasterParameters, AXI4MasterPortParameters, AXI4SlaveNode, AXI4SlaveParameters, AXI4SlavePortParameters}
-import freechips.rocketchip.diplomacy.{AddressSet, IdRange, LazyModule, LazyModuleImp, MemoryDevice, RegionType, TransferSizes}
+import freechips.rocketchip.diplomacy.{AddressSet, IdRange, RegionType, TransferSizes}
+import freechips.rocketchip.resources.MemoryDevice
+import org.chipsalliance.diplomacy.lazymodule._
 import linknan.generator.TestIoOptionsKey
 import lntest.peripheral.AXI4MemorySlave
 import org.chipsalliance.cde.config.Parameters

@@ -20,8 +20,10 @@ import chisel3._
 import org.chipsalliance.cde.config
 import lntest.peripheral._
 import freechips.rocketchip.amba.axi4._
-import freechips.rocketchip.diplomacy.{MemoryDevice, _}
+import freechips.rocketchip.resources.MemoryDevice
+import org.chipsalliance.diplomacy.lazymodule._
 import difftest._
+import freechips.rocketchip.diplomacy.{AddressSet, IdRange, RegionType, TransferSizes}
 import zhujiang.ZJParametersKey
 import zhujiang.axi.AxiParams
 

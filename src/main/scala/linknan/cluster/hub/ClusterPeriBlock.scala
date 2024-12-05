@@ -3,7 +3,8 @@ package linknan.cluster.hub
 import aia.{CSRToIMSICBundle, IMSICParams, IMSICToCSRBundle, TLIMSIC}
 import chisel3._
 import chisel3.util._
-import freechips.rocketchip.diplomacy.{IdRange, LazyModule, LazyModuleImp}
+import freechips.rocketchip.diplomacy.IdRange
+import org.chipsalliance.diplomacy.lazymodule._
 import freechips.rocketchip.tilelink.{TLBuffer, TLClientNode, TLMasterParameters, TLMasterPortParameters}
 import linknan.cluster.hub.interconnect.{ClusterPeriParams, PeriXBar}
 import linknan.cluster.hub.peripheral._

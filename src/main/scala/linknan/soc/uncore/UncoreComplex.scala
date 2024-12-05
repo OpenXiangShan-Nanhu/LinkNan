@@ -1,17 +1,17 @@
 package linknan.soc.uncore
 
 import chisel3._
-import chisel3.util.Cat
+import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import zhujiang.axi._
-import freechips.rocketchip.diplomacy._
+import org.chipsalliance.diplomacy.lazymodule._
 import linknan.soc.{LinkNanParamsKey, PeripheralRemapper}
 import org.chipsalliance.cde.config.Parameters
 import xijiang.{Node, NodeType}
 import xs.utils.ResetGen
-import zhujiang.device.async.{DeviceIcnAsyncBundle, DeviceSideAsyncModule}
+import zhujiang.device.async.DeviceSideAsyncModule
 import zhujiang.device.bridge.axilite.AxiLiteBridge
 import zhujiang.device.dma.Axi2Chi
-import zhujiang.{DftWires, SocDevBundle, ZJModule, ZJRawModule}
+import zhujiang.{DftWires, SocDevBundle, ZJRawModule}
 
 class ShiftSync[T <: Data](gen:T, sync:Int = 3) extends Module {
   val io = IO(new Bundle{

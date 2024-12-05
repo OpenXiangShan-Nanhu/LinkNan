@@ -5,7 +5,8 @@ import chisel3._
 import chisel3.experimental.ExtModule
 import chisel3.util._
 import freechips.rocketchip.amba.axi4.{AXI4Parameters, AXI4SlaveNode}
-import freechips.rocketchip.diplomacy.{AddressSet, LazyModule}
+import org.chipsalliance.diplomacy.lazymodule._
+import freechips.rocketchip.diplomacy.AddressSet
 import xs.utils._
 
 class DramRWHelper extends ExtModule with HasExtModuleInline {

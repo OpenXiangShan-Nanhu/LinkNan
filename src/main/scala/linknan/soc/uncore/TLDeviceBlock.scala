@@ -1,11 +1,13 @@
 package linknan.soc.uncore
 
-import aia.{APLICParams, IMSICParams, TLAPLIC}
+import aia.TLAPLIC
 import chisel3._
 import chisel3.util._
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
-import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.diplomacy.{AddressSet, IdRange, TransferSizes}
+import freechips.rocketchip.resources.BindingScope
+import org.chipsalliance.diplomacy.lazymodule._
 import freechips.rocketchip.interrupts._
 import freechips.rocketchip.tile.MaxHartIdBits
 import freechips.rocketchip.tilelink._

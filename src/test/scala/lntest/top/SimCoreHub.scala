@@ -1,13 +1,12 @@
 package lntest.top
 import SimpleL2.Configs.L2ParamKey
 import chisel3._
-import chisel3.util._
-import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
 import linknan.cluster.{BlockTestIO, BlockTestIOParams}
 import linknan.generator.DcacheKey
 import org.chipsalliance.cde.config.Parameters
-import xiangshan.XSCoreParamsKey
+import org.chipsalliance.diplomacy.lazymodule._
+import freechips.rocketchip.diplomacy.{IdRange, RegionType, TransferSizes}
 import xiangshan.cache.mmu.L2TLBParameters
 import xiangshan.frontend.icache.ICacheParameters
 import xs.utils.tl.{TLNanhuBusField, TLNanhuBusKey}
