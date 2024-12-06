@@ -177,6 +177,7 @@ for i = 0, cfg.nr_l2 - 1 do
         | bits_resp => resp
         | bits_data => data
         | bits_dataID => dataID
+        | bits_homeNID => homeNID
     ]]):abdl({ hier = l2_hier, prefix = "io_chi_txdat_", name = "L2 CHI TXDAT" })
 
     local rxrsp = ([[
@@ -212,6 +213,7 @@ for i = 0, cfg.nr_l2 - 1 do
         | bits_opcode => opcode
         | bits_txnID => txnID
         | bits_retToSrc => retToSrc
+        | bits_fwdTxnID => fwdTxnID
     ]]):abdl({ hier = l2_hier, prefix = "io_chi_rxsnp_", name = "L2 CHI RXSNP" })
 
     local l2_mon_out = L2CHIMonitor(
