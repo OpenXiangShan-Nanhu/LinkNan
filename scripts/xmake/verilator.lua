@@ -111,6 +111,9 @@ function emu_comp(num_cores)
 `verilator_config
 public_flat_rd -module "SimTop" -var "timer"
 public_flat_rd -module "SimpleL2CacheDecoupled" -var "*"
+public_flat_rd -module "ProtocolCtrlUnit" -var "*"
+public_flat_rd -module "DataCtrlUnit" -var "*"
+public_flat_rd -module "MemoryComplex" -var "*"
 ]])
     verilator_flags = verilator_flags .. " " .. path.join(os.tmpdir(), "ln_config.vlt")
   end

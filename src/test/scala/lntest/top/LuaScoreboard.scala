@@ -9,7 +9,7 @@ class LuaScoreboard(nrL2:Int, nrL2Bank:Int, nrPcu:Int, nrDcu:Int, dcuStr:String)
     "NR_L2_BANK" -> nrL2Bank,
     "NR_PCU" -> nrPcu,
     "NR_DCU" -> nrDcu,
-    "DCU_STR" -> dcuStr
+    "DCU_NODE_STR" -> dcuStr
   )
 ) with HasBlackBoxInline {
   val io = IO(new Bundle {
@@ -24,7 +24,7 @@ class LuaScoreboard(nrL2:Int, nrL2Bank:Int, nrPcu:Int, nrDcu:Int, dcuStr:String)
        |  parameter NR_L2_BANK,
        |  parameter NR_PCU,
        |  parameter NR_DCU,
-       |  parameter DCU_STR
+       |  parameter string DCU_NODE_STR
        |)(
        |  input  wire clock,
        |  input  wire reset,
@@ -36,7 +36,7 @@ class LuaScoreboard(nrL2:Int, nrL2Bank:Int, nrPcu:Int, nrDcu:Int, dcuStr:String)
        |  import "DPI-C" function void verilua_main_step_safe();
        |`ifdef VERILATOR
        |  initial begin
-       |    $$c("char value[50];");
+       |    $$c("char value[500];");
        |
        |    $$c("sprintf(value, \\"%d\\",", NR_L2, ");");
        |    $$c("setenv(\\"NR_L2\\", value, 1);");
@@ -50,6 +50,8 @@ class LuaScoreboard(nrL2:Int, nrL2Bank:Int, nrPcu:Int, nrDcu:Int, dcuStr:String)
        |    $$c("sprintf(value, \\"%d\\",", NR_DCU, ");");
        |    $$c("setenv(\\"NR_DCU\\", value, 1);");
        |
+       |    $$c("setenv(\\"DCU_NODE_STR\\",", DCU_NODE_STR, ".c_str(), 1);");
+       |
        |    verilua_init();
        |  end
        |`else
@@ -60,6 +62,7 @@ class LuaScoreboard(nrL2:Int, nrL2Bank:Int, nrPcu:Int, nrDcu:Int, dcuStr:String)
        |    setenv("NR_L2_BANK", $$sformatf("%d", NR_L2_BANK), 1);
        |    setenv("NR_PCU", $$sformatf("%d", NR_PCU), 1);
        |    setenv("NR_DCU", $$sformatf("%d", NR_DCU), 1);
+       |    setenv("DCU_NODE_STR", DCU_NODE_STR, 1);
        |
        |    #1 verilua_init();
        |  end

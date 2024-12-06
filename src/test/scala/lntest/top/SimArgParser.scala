@@ -92,7 +92,7 @@ object SimArgParser {
 
         case "--lua-scoreboard" :: tail =>
           parse(config.alter((site, here, up) => {
-            case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDebug = true, EnableLuaScoreBoard = true)
+            case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDebug = true, EnableLuaScoreBoard = true, FPGAPlatform = true)
           }), tail)
 
         case "--prefix" :: confString :: tail =>
