@@ -302,6 +302,7 @@ for i = 0, cfg.nr_dj_pcu - 1 do
 		| bits_Data => data
 		| bits_Resp => resp 
 		| bits_DataID => dataID
+        | bits_homeNID => homeNID
 	]]):abdl({ hier = dj_hier, prefix = "io_toLocal_tx_data_", name = "PCU TXDAT" })
 
 	local txsnp = ([[
@@ -313,6 +314,7 @@ for i = 0, cfg.nr_dj_pcu - 1 do
 		| bits_TgtID => tgtID
 		| bits_TxnID => txnID
 		| bits_RetToSrc => retToSrc
+        | bits_fwdTxnID => fwdTxnID
 	]]):abdl({ hier = dj_hier, prefix = "io_toLocal_tx_snoop_", name = "PCU TXSNP" })
 
 	local txrsp = ([[
