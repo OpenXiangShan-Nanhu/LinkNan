@@ -47,7 +47,7 @@ class FullNocConfig(core:String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
       NodeParam(nodeType = NodeType.S, bankId = 3, splitFlit = true, dpId = 0),
 
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "cfg"),
+      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, outstanding = 32, attr = "cfg"),
       NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.RI, attr = "dma", splitFlit = true),
 
