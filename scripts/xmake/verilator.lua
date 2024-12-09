@@ -15,7 +15,7 @@ function emu_comp(num_cores)
       sim = true, config = option.get("config"),
       dramsim3 = option.get("dramsim3"), enable_perf = not option.get("no_perf"),
       cpu_sync = option.get("cpu_sync"), lua_scoreboard = option.get("lua_scoreboard"),
-      clean_difftest = option.get("no_diff"), core = option.get("core")
+      core = option.get("core")
     })
   end,{
     files = chisel_dep_srcs,
@@ -115,7 +115,7 @@ public_flat_rd -module "SimpleL2CacheDecoupled" -var "*"
     verilator_flags = verilator_flags .. " " .. path.join(os.tmpdir(), "ln_config.vlt")
   end
 
-  verilator_flags = verilator_flags .. " +define+VERILATOR=1 +define+PRINTF_COND=1 +define+DIFFTEST"
+  verilator_flags = verilator_flags .. " +define+VERILATOR=1 +define+PRINTF_COND=1"
   verilator_flags = verilator_flags .. " +define+RANDOMIZE_REG_INIT +define+RANDOMIZE_MEM_INIT"
   verilator_flags = verilator_flags .. " +define+RANDOMIZE_GARBAGE_ASSIGN +define+RANDOMIZE_DELAY=0"
   verilator_flags = verilator_flags .. " -Wno-UNOPTTHREADS -Wno-STMTDLY -Wno-WIDTH --no-timing"
@@ -125,6 +125,9 @@ public_flat_rd -module "SimpleL2CacheDecoupled" -var "*"
   end
   if not option.get("fast") then
     verilator_flags = verilator_flags .. " --trace"
+  end
+  if not option.get("no_diff") then
+    verilator_flags = verilator_flags .. "+define+DIFFTEST"
   end
   verilator_flags = verilator_flags .. " -CFLAGS \"" .. cxx_flags .. "\""
   verilator_flags = verilator_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""

@@ -19,8 +19,7 @@ function simv_comp(num_cores)
     if os.exists(build_dir) then os.rmdir(build_dir) end
     task.run("soc", {
       vcs = true, sim = true, config = option.get("config"),
-      cpu_sync = option.get("cpu_sync"), core = option.get("core"),
-      clean_difftest = option.get("no_diff")
+      cpu_sync = option.get("cpu_sync"), core = option.get("core")
     })
   end,{
     files = chisel_dep_srcs,
@@ -100,13 +99,16 @@ function simv_comp(num_cores)
   vcs_flags = vcs_flags .. " -full64 +v2k -timescale=1ns/1ns -sverilog +rad"
   vcs_flags = vcs_flags .. " -debug_access +lint=TFIPC-L -l vcs.log -top tb_top"
   vcs_flags = vcs_flags .. " -fgp -lca -kdb +nospecify +notimingcheck -no_save"
-  vcs_flags = vcs_flags .. " +define+DIFFTEST +define+PRINTF_COND=1 +define+VCS"
+  vcs_flags = vcs_flags .. " +define+PRINTF_COND=1 +define+VCS"
   vcs_flags = vcs_flags .. " +define+CONSIDER_FSDB=tb_top.sim"
   vcs_flags = vcs_flags .. " +define+SIM_TOP_MODULE_NAME=tb_top.sim -j200"
   if not option.get("no_fsdb") then
     novas = path.join(os.getenv("VERDI_HOME"), "share", "PLI", "VCS", "LINUX64")
     vcs_flags = vcs_flags .. " -P " .. path.join(novas, "novas.tab")
     vcs_flags = vcs_flags .. " " .. path.join(novas, "pli.a")
+  end
+  if not option.get("no_diff") then
+    vcs_flags = vcs_flags .. " +define+DIFFTEST"
   end
   vcs_flags = vcs_flags .. " -CFLAGS \"" .. cxx_flags .. "\""
   vcs_flags = vcs_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""
