@@ -130,7 +130,7 @@ public_flat_rd -module "MemoryComplex" -var "*"
     verilator_flags = verilator_flags .. " --trace"
   end
   if not option.get("no_diff") then
-    verilator_flags = verilator_flags .. "+define+DIFFTEST"
+    verilator_flags = verilator_flags .. " +define+DIFFTEST"
   end
   verilator_flags = verilator_flags .. " -CFLAGS \"" .. cxx_flags .. "\""
   verilator_flags = verilator_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""
