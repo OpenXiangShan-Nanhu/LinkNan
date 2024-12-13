@@ -2,6 +2,7 @@ package linknan.soc.uncore
 
 import chisel3._
 import chisel3.util._
+import freechips.rocketchip.util.MaskGen
 import xs.utils.ResetRRArbiter
 import zhujiang.axi._
 import zhujiang.tilelink._
@@ -60,6 +61,7 @@ class AxiLite2TLUL(axiParams: AxiParams) extends Module {
   rp.bits.size := arPipe.io.deq.bits.size
   rp.bits.source := arPipe.io.deq.bits.id
   rp.bits.address := arPipe.io.deq.bits.addr
+  rp.bits.mask := MaskGen(arPipe.io.deq.bits.addr, arPipe.io.deq.bits.size, axiParams.dataBits / 8)
   arPipe.io.deq.ready := rp.ready
 
   rPipe.io.enq.valid := io.tl.d.valid && io.tl.d.bits.opcode === DOpcode.AccessAckData
