@@ -7,6 +7,7 @@ local DDRMonitor = require "DDRMonitor"
 local dj_addrmap = require "DJAddrMap"
 
 local f = string.format
+local tonumber = tonumber
 
 local l2_mon_in_vec = {}
 local l2_mon_out_vec = {}
@@ -529,7 +530,7 @@ fork {
 
         print("hello from main.lua")
 
-        local cycles = timer:get()
+        local cycles = tonumber(timer:get())
         while true do
             for i = 1, nr_l2_mon_in do
                 l2_mon_in_vec[i]:sample_all(cycles)
@@ -549,7 +550,7 @@ fork {
 
             dj_ddr_mon:sample_all(cycles)
 
-            cycles = timer:get()
+            cycles = tonumber(timer:get())
             clock:posedge()
         end
     end
