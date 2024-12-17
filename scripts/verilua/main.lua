@@ -221,6 +221,7 @@ for i = 0, cfg.nr_l2 - 1 do
         | bits_txnID => txnID
         | bits_retToSrc => retToSrc
         | bits_fwdTxnID => fwdTxnID
+        | bits_fwdNID => fwdNID
     ]]):abdl({ hier = l2_hier, prefix = "io_chi_rxsnp_", name = "L2 CHI RXSNP" })
 
     local l2_mon_out = L2CHIMonitor(
