@@ -4,7 +4,7 @@ cfg.mode = "step"
 cfg.attach = true
 cfg.top = "TOP.SimTop"
 
-local test_zhujiang_dir = "/nfs/home/zhengchuyu/workspace/noc/TestZhuJiang"
+local test_zhujiang_dir = "/nfs/share/home/zhengchuyu/TestZhuJiang"
 cfg.srcs = {
     "./?.lua",
     test_zhujiang_dir .. "/src/test/lua/common/?.lua",
