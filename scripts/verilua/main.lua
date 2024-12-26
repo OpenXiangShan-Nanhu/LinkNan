@@ -134,7 +134,7 @@ for i = 0, cfg.nr_l2 - 1 do
         ]]):abdl({ hier = l2_hier, prefix = l2_prefix, name = "L2 TL E" })
 
         local l2_mon_in = L2TLMonitor(
-            "l2_mon_in_slice_" .. j, -- name
+            f("l2_mon_in_core_%d_slice_%d", i, j), -- name
 
             --
             -- TileLink channels
@@ -226,7 +226,7 @@ for i = 0, cfg.nr_l2 - 1 do
     ]]):abdl({ hier = l2_hier, prefix = "io_chi_rxsnp_", name = "L2 CHI RXSNP" })
 
     local l2_mon_out = L2CHIMonitor(
-        "l2_mon_out",
+        f("l2_mon_out_core_%d", i), -- name
         0, -- index
         --
         -- CHI Channels

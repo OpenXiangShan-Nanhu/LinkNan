@@ -36,6 +36,8 @@ assert(cfg.nr_dj_dcu == nr_dj_dcu)
 cfg.nr_dcu_port = #dcu_node_cfg[0]
 cfg.dcu_node_cfg = dcu_node_cfg
 
+cfg.enable_scoreboard = true
+
 cfg.enable_l2_mon_out = true
 cfg.enable_l2_mon_in = true
 cfg.enable_dj_ddr_mon = true
