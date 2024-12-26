@@ -141,7 +141,7 @@ class SimTop(implicit p: Parameters) extends Module {
       val nodeIdStr = ns._2.map(n => s"0x${n.nodeId.toHexString}").reduce((a, b) => s"$a, $b")
       s"[${ns._1}] = {$nodeIdStr}"
     }).reduce((a, b) => s"$a, $b")
-    val luaScb = Module(new LuaScoreboard(s"{ $l2Str }", nrPcu, dcuSeq.length, s"{ $dcuStr }"))
+    val luaScb = Module(new LuaScoreboard(s"{ $l2Str }", nrPcu, dcuSeq.groupBy(_.bankId).size, s"{ $dcuStr }"))
     luaScb.io.clock := clock
     luaScb.io.reset := reset
     luaScb.io.sim_final := io.simFinal.get
