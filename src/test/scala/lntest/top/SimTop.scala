@@ -133,15 +133,15 @@ class SimTop(implicit p: Parameters) extends Module {
   }
 
   if(hasCsu && p(DebugOptionsKey).EnableLuaScoreBoard) {
-    val nrL2 = p(ZJParametersKey).localRing.count(_.nodeType == NodeType.CC)
-    val nrL2Bank = p(L2ParamKey).nrSlice
+    val l2StrSeq = soc.ccns.zipWithIndex.map(n => s"[${n._2}] = { ${p(L2ParamKey).nrSlice}, ${n._1.cpuNum} }")
+    val l2Str = l2StrSeq.reduce((a, b) => s"$a, $b")
     val nrPcu = p(ZJParametersKey).localRing.count(_.nodeType == NodeType.HF)
     val dcuSeq = p(ZJParametersKey).localRing.filter(n => n.nodeType == NodeType.S && !n.mainMemory)
     val dcuStr = dcuSeq.groupBy(_.bankId).map(ns => {
       val nodeIdStr = ns._2.map(n => s"0x${n.nodeId.toHexString}").reduce((a, b) => s"$a, $b")
       s"[${ns._1}] = {$nodeIdStr}"
     }).reduce((a, b) => s"$a, $b")
-    val luaScb = Module(new LuaScoreboard(nrL2, nrL2Bank, nrPcu, dcuSeq.length, s"{ $dcuStr }"))
+    val luaScb = Module(new LuaScoreboard(s"{ $l2Str }", nrPcu, dcuSeq.length, s"{ $dcuStr }"))
     luaScb.io.clock := clock
     luaScb.io.reset := reset
     luaScb.io.sim_final := io.simFinal.get

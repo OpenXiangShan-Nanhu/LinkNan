@@ -3,10 +3,9 @@ package lntest.top
 import chisel3._
 import chisel3.util._
 
-class LuaScoreboard(nrL2:Int, nrL2Bank:Int, nrPcu:Int, nrDcu:Int, dcuStr:String) extends BlackBox(
+class LuaScoreboard(l2Str:String, nrPcu:Int, nrDcu:Int, dcuStr:String) extends BlackBox(
   Map(
-    "NR_L2" -> nrL2,
-    "NR_L2_BANK" -> nrL2Bank,
+    "L2_CFG_STR" -> l2Str,
     "NR_PCU" -> nrPcu,
     "NR_DCU" -> nrDcu,
     "DCU_NODE_STR" -> dcuStr
@@ -20,8 +19,7 @@ class LuaScoreboard(nrL2:Int, nrL2Bank:Int, nrPcu:Int, nrDcu:Int, dcuStr:String)
   setInline(s"LuaScoreboard.sv",
     s"""
        |module LuaScoreboard #(
-       |  parameter NR_L2,
-       |  parameter NR_L2_BANK,
+       |  parameter string L2_CFG_STR,
        |  parameter NR_PCU,
        |  parameter NR_DCU,
        |  parameter string DCU_NODE_STR

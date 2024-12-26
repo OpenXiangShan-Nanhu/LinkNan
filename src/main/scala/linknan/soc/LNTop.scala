@@ -72,6 +72,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with ImplicitClock with I
   private val cpuNum = noc.io.ccn.map(_.node.cpuNum).sum
 
   val core = if(p(TestIoOptionsKey).doBlockTest) Some(IO(Vec(cpuNum, new BlockTestIO(clusterDefMap.head._2.coreIoParams)))) else None
+  val ccns = noc.io.ccn.map(_.node)
 
   for((ccn, i) <- noc.io.ccn.zipWithIndex) {
     val clusterId = ccn.node.clusterId
