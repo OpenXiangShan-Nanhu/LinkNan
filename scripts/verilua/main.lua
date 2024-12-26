@@ -53,104 +53,95 @@ local chi_db = LuaDataBase({
     verbose = false,
 })
 
-for i = 0, cfg.nr_l2 - 1 do
+local l2_core_id = 0
+for k, v in pairs(cfg.l2_cfg) do
+    local l2_id = k
+    local nr_slice = v[1]
+    local nr_core = v[2]
+    
+    local l2_prefix = ""
     local l2_hier = ""
-    if i == 0 then
+
+    if l2_id == 0 then
         l2_hier = tostring(dut.soc.cc.csu.l2cache)
     else
-        l2_hier = tostring(dut.soc["cc_" .. i].csu.l2cache)
+        l2_hier = tostring(dut.soc["cc_" .. l2_id].csu.l2cache)
     end
 
-    for j = 0, cfg.nr_l2_slice - 1 do
-        local l2_prefix = ""
-
-        if cfg.nr_l2_slice == 1 then
-            l2_prefix = "auto_sink_nodes_in_a_"
-        else
-            l2_prefix = f("auto_sink_nodes_in_%d_a_", j)
+    for i = 0, nr_core - 1 do
+        local gen_l2_prefix = function (chnl, idx)
+            if nr_slice == 1 then
+                return "auto_sink_nodes_in_" .. chnl .. "_"
+            else
+                return f("auto_sink_nodes_in_%d_%s_", idx, chnl)
+            end
         end
-        local tl_a = ([[
-            | valid
-            | ready
-            | bits_address => address
-            | bits_opcode => opcode
-            | bits_param => param
-            | bits_source => source
-        ]]):abdl({ hier = l2_hier, prefix = l2_prefix, name = "L2 TL A" })
 
-        if cfg.nr_l2_slice == 1 then
-            l2_prefix = "auto_sink_nodes_in_b_"
-        else
-            l2_prefix = f("auto_sink_nodes_in_%d_b_", j)
+        for j = 0, nr_slice - 1 do
+            local tl_a = ([[
+                | valid
+                | ready
+                | bits_address => address
+                | bits_opcode => opcode
+                | bits_param => param
+                | bits_source => source
+            ]]):abdl({ hier = l2_hier, prefix = gen_l2_prefix("a", j), name = "L2 TL A" })
+
+            local tl_b = ([[
+                | valid
+                | ready
+                | bits_address => address
+                | bits_opcode => opcode
+                | bits_param => param
+                | bits_source => source
+                | bits_data => data
+            ]]):abdl({ hier = l2_hier, prefix = gen_l2_prefix("b", j), name = "L2 TL B" })
+
+            local tl_c = ([[
+                | valid
+                | ready
+                | bits_address => address
+                | bits_opcode => opcode
+                | bits_param => param
+                | bits_source => source
+                | bits_data => data
+            ]]):abdl({ hier = l2_hier, prefix = gen_l2_prefix("c", j), name = "L2 TL C" })
+
+            local tl_d = ([[
+                | valid
+                | ready
+                | bits_opcode => opcode
+                | bits_param => param
+                | bits_source => source
+                | bits_data => data
+                | bits_sink => sink
+            ]]):abdl({ hier = l2_hier, prefix = gen_l2_prefix("d", j), name = "L2 TL D" })
+
+            local tl_e = ([[
+                | valid
+                | bits_sink => sink
+            ]]):abdl({ hier = l2_hier, prefix = gen_l2_prefix("e", j), name = "L2 TL E" })
+
+            local l2_mon_in = L2TLMonitor(
+                f("l2_mon_in_core_%d_slice_%d", l2_core_id, j), -- name
+
+                --
+                -- TileLink channels
+                --
+                tl_a,
+                tl_b,
+                tl_c,
+                tl_d,
+                tl_e,
+
+                tl_db,
+                cfg:get_or_else("verbose_l2_mon_in", true),
+                cfg:get_or_else("enable_l2_mon_in", true)
+            )
+
+            table.insert(l2_mon_in_vec, l2_mon_in)
         end
-        local tl_b = ([[
-            | valid
-            | ready
-            | bits_address => address
-            | bits_opcode => opcode
-            | bits_param => param
-            | bits_source => source
-            | bits_data => data
-        ]]):abdl({ hier = l2_hier, prefix = l2_prefix, name = "L2 TL B" })
-
-        if cfg.nr_l2_slice == 1 then
-            l2_prefix = "auto_sink_nodes_in_c_"
-        else
-            l2_prefix = f("auto_sink_nodes_in_%d_c_", j)
-        end
-        local tl_c = ([[
-            | valid
-            | ready
-            | bits_address => address
-            | bits_opcode => opcode
-            | bits_param => param
-            | bits_source => source
-            | bits_data => data
-        ]]):abdl({ hier = l2_hier, prefix = l2_prefix, name = "L2 TL C" })
-
-        if cfg.nr_l2_slice == 1 then
-            l2_prefix = "auto_sink_nodes_in_d_"
-        else
-            l2_prefix = f("auto_sink_nodes_in_%d_d_", j)
-        end
-        local tl_d = ([[
-            | valid
-            | ready
-            | bits_opcode => opcode
-            | bits_param => param
-            | bits_source => source
-            | bits_data => data
-            | bits_sink => sink
-        ]]):abdl({ hier = l2_hier, prefix = l2_prefix, name = "L2 TL D" })
-
-        if cfg.nr_l2_slice == 1 then
-            l2_prefix = "auto_sink_nodes_in_e_"
-        else
-            l2_prefix = f("auto_sink_nodes_in_%d_e_", j)
-        end
-        local tl_e = ([[
-            | valid
-            | bits_sink => sink
-        ]]):abdl({ hier = l2_hier, prefix = l2_prefix, name = "L2 TL E" })
-
-        local l2_mon_in = L2TLMonitor(
-            f("l2_mon_in_core_%d_slice_%d", i, j), -- name
-
-            --
-            -- TileLink channels
-            --
-            tl_a,
-            tl_b,
-            tl_c,
-            tl_d,
-            tl_e,
-
-            tl_db,
-            cfg:get_or_else("verbose_l2_mon_in", true),
-            cfg:get_or_else("enable_l2_mon_in", true)
-        )
-
-        table.insert(l2_mon_in_vec, l2_mon_in)
+        l2_core_id = l2_core_id + 1
     end
 
     local txreq = ([[
@@ -226,8 +217,8 @@ for i = 0, cfg.nr_l2 - 1 do
     ]]):abdl({ hier = l2_hier, prefix = "io_chi_rxsnp_", name = "L2 CHI RXSNP" })
 
     local l2_mon_out = L2CHIMonitor(
-        f("l2_mon_out_core_%d", i), -- name
-        0, -- index
+        f("l2_mon_out_cluster_%d", l2_id), -- name
+        l2_id, -- index
         --
         -- CHI Channels
         --
