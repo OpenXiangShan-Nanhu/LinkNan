@@ -132,6 +132,7 @@ task("simv", function()
       {'d', "no_fsdb", "k", nil, "do not dump wave"},
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'S', "cpu_sync", "k", nil, "use same clock to cpu cluster and noc"},
+      {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
       {'C', "core", "kv", nil, "cpu core in soc"},
       {'r', "ref", "kv", "Spike", "reference model"},
       {'c', "config", "kv", "minimal", "rtl config"}

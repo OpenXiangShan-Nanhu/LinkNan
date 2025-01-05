@@ -19,7 +19,8 @@ function simv_comp(num_cores)
     if os.exists(build_dir) then os.rmdir(build_dir) end
     task.run("soc", {
       vcs = true, sim = true, config = option.get("config"),
-      cpu_sync = option.get("cpu_sync"), core = option.get("core")
+      cpu_sync = option.get("cpu_sync"), lua_scoreboard = option.get("lua_scoreboard"),
+      core = option.get("core")
     })
   end,{
     files = chisel_dep_srcs,
@@ -93,7 +94,7 @@ function simv_comp(num_cores)
     cxx_flags = cxx_flags .. " -DCONFIG_NO_DIFFTEST"
   end
 
-  local cxx_ldflags = "-Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz -lsqlite3"
+  local cxx_ldflags = "-Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz"
 
   local vcs_flags = "-cm_dir " .. path.join(comp_dir, "simv")
   vcs_flags = vcs_flags .. " -full64 +v2k -timescale=1ns/1ns -sverilog +rad"
@@ -114,7 +115,11 @@ function simv_comp(num_cores)
   vcs_flags = vcs_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""
   vcs_flags = vcs_flags .. " -f " .. vsrc_filelist_path
   vcs_flags = vcs_flags .. " -f " .. csrc_filelist_path
-  vcs_flags = "vcs " .. vcs_flags
+  if option.get("lua_scoreboard") then
+    vcs_flags = "vl-vcs " .. vcs_flags
+  else
+    vcs_flags = "vcs " .. vcs_flags
+  end
 
   if option.get("core") == "boom" then
     vcs_flags = vcs_flags .. " +define+RANDOMIZE_GARBAGE_ASSIGN +define+RANDOMIZE_DELAY=0"
