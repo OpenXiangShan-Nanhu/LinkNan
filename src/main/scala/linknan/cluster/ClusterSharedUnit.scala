@@ -155,8 +155,8 @@ class ClusterSharedUnit(cioEdge: TLEdgeIn, l2EdgeIn: TLEdgeIn, node:Node)(implic
     connectByName(l2.io.chi.rxrsp, rxrsp)
     connectByName(l2.io.chi.rxdat, rxdat)
     connectByName(l2.io.chi.rxsnp, rxsnp)
-    txreq.bits.LPID := l2.io.chi.txreq.bits.lpID
-    txreq.bits.SnoopMe := l2.io.chi.txreq.bits.snoopMe
+//    txreq.bits.LPID := l2.io.chi.txreq.bits.lpID
+//    txreq.bits.SnoopMe := l2.io.chi.txreq.bits.snoopMe
     txdat.bits.FwdState := l2.io.chi.txdat.bits.fwdState
     l2.io.chi.rxdat.bits.fwdState := rxdat.bits.FwdState
 
