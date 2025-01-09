@@ -2,7 +2,7 @@ package linknan.cluster.hub
 
 import chisel3._
 import freechips.rocketchip.tilelink.{TLBundle, TLBundleParameters}
-import linknan.cluster.hub.interconnect.{CioXBar, ClusterDeviceBundle, ClusterHub, ClusterMiscWires}
+import linknan.cluster.hub.interconnect.{CioXBar, ClusterDeviceBundle, ClusterHub}
 import linknan.cluster.power.controller.{PcsmCtrlIO, PowerMode, devActiveBits}
 import linknan.cluster.power.pchannel.PChannel
 import org.chipsalliance.cde.config.Parameters
@@ -16,7 +16,7 @@ import xijiang.router.base.IcnBundle
 import xs.utils.{ClockGate, ClockManagerWrapper, ResetGen}
 import zhujiang.chi.ChiBuffer
 import zhujiang.device.tlu2chi.TLUL2ChiBridge
-import zhujiang.tilelink.{TLUBuffer, TLULBundle, TilelinkParams}
+import zhujiang.tilelink.TilelinkParams
 
 class CpuDomainCtlBundle(implicit p: Parameters) extends Bundle {
   val pchn = new PChannel(devActiveBits, PowerMode.powerModeBits)
@@ -79,7 +79,7 @@ class AlwaysOnDomain(node: Node, ioParams:TLBundleParameters)(implicit p: Parame
     val icn = new ClusterDeviceBundle(node)
     val cluster = new AlwaysOnDomainBundle(node.copy(nodeType = NodeType.RF), ioParams)
   })
-  private val resetSync = withClockAndReset(implicitClock, io.icn.ccn.reset) { ResetGen(dft = Some(io.icn.dft.reset)) }
+  private val resetSync = withClockAndReset(implicitClock, io.icn.socket.resetRx) { ResetGen(dft = Some(io.icn.dft.reset)) }
   private val pll = Module(new ClockManagerWrapper)
   private val l2Buf = Module(new ChiBuffer(node.copy(nodeType = NodeType.RF)))
   private val clusterCg = Module(new ClockGate)

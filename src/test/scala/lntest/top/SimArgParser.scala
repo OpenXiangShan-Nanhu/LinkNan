@@ -9,7 +9,8 @@ import scala.annotation.tailrec
 
 object SimArgParser {
   private var core = "nanhu"
-  private var cfg = "minimal"
+  private var cfg = "full"
+  private var socket = "async"
   private var opts = Array[String]()
   @tailrec
   def configParse(args: List[String]): Unit = {
@@ -20,6 +21,10 @@ object SimArgParser {
       }
       case "--core" :: cfgStr :: tail => {
         core = cfgStr
+        configParse(tail)
+      }
+      case "--socket" :: cfgStr :: tail => {
+        socket = cfgStr
         configParse(tail)
       }
       case option :: tail => {
@@ -33,14 +38,14 @@ object SimArgParser {
   def apply(args: Array[String]): (Parameters, Array[String]) = {
     configParse(args.toList)
     val configuration = cfg match {
-      case "reduced" => new ReducedConfig(core)
-      case "minimal" => new MinimalConfig(core)
-      case "spec" => new SpecConfig(core)
-      case "fpga" => new FpgaConfig(core)
-      case "btest" => new BtestConfig(core)
-      case _ => new FullConfig(core)
+      case "reduced" => new ReducedConfig(core, socket)
+      case "minimal" => new MinimalConfig(core, socket)
+      case "spec" => new SpecConfig(core, socket)
+      case "fpga" => new FpgaConfig(core, socket)
+      case "btest" => new BtestConfig(core, socket)
+      case _ => new FullConfig(core, socket)
     }
-    println(s"Using $cfg config with $core cores")
+    println(s"Using $cfg config with $core cores and use $socket socket")
 
     var firrtlOpts = Array[String]()
 
@@ -56,11 +61,6 @@ object SimArgParser {
         case "--no-perf" :: tail =>
           parse(config.alter((site, here, up) => {
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnablePerfDebug = false)
-          }), tail)
-
-        case "--cpu-sync" :: tail =>
-          parse(config.alter((site, here, up) => {
-            case ZJParametersKey => up(ZJParametersKey).copy(cpuAsync = false)
           }), tail)
 
         case "--fpga-platform" :: tail =>

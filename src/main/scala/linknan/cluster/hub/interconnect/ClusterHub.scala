@@ -7,8 +7,8 @@ import xijiang.{Node, NodeType}
 import xijiang.router.base.IcnBundle
 import xs.utils.ResetRRArbiter
 import zhujiang.chi._
-import zhujiang.device.async.DeviceSideAsyncModule
-import zhujiang.{CcnDevBundle, DftWires, ZJBundle, ZJModule, ZJParametersKey}
+import zhujiang.device.socket.{SocketDevSide, SocketDevSideBundle, SocketIcnSideBundle}
+import zhujiang.{DftWires, ZJBundle, ZJModule}
 
 class ClusterAddrBundle(implicit p:Parameters) extends ZJBundle {
   val mmio = Bool()
@@ -31,10 +31,29 @@ class ClusterMiscWires(node: Node)(implicit p: Parameters) extends ZJBundle {
 }
 
 class ClusterDeviceBundle(node: Node)(implicit p: Parameters) extends ZJBundle {
-  val ccn = new CcnDevBundle(node)
+  val socket = new SocketDevSideBundle(node)
   val misc = new ClusterMiscWires(node)
   val osc_clock = Input(Clock())
   val dft = Input(new DftWires)
+  def <> (that: ClusterIcnBundle):Unit = {
+    this.socket <> that.socket
+    this.misc <> that.misc
+    this.osc_clock <> that.osc_clock
+    this.dft <> that.dft
+  }
+}
+
+class ClusterIcnBundle(node: Node)(implicit p: Parameters) extends ZJBundle {
+  val socket = new SocketIcnSideBundle(node)
+  val misc = Flipped(new ClusterMiscWires(node))
+  val osc_clock = Output(Clock())
+  val dft = Output(new DftWires)
+  def <> (that: ClusterDeviceBundle):Unit = {
+    this.socket <> that.socket
+    this.misc <> that.misc
+    this.osc_clock <> that.osc_clock
+    this.dft <> that.dft
+  }
 }
 
 class ClusterHub(node: Node)(implicit p: Parameters) extends ZJModule {
@@ -50,17 +69,10 @@ class ClusterHub(node: Node)(implicit p: Parameters) extends ZJModule {
   io.peripheral.rx.req.get.ready := false.B
   io.cpu <> io.icn.misc
   io.dft := io.icn.dft
-  private val clusterIcn = if(!p(ZJParametersKey).cpuAsync) {
-    val bufferOut = Wire(new IcnBundle(node))
-    val icnBuffer = Module(new ChiBuffer(node))
-    icnBuffer.io.in <> io.icn.ccn.sync.get
-    bufferOut <> icnBuffer.io.out
-    bufferOut
-  } else {
-    val asyncSink = Module(new DeviceSideAsyncModule(node))
-    asyncSink.io.async <> io.icn.ccn.async.get
-    asyncSink.io.icn
-  }
+  private val socket = Module(new SocketDevSide(node))
+  socket.io.socket <> io.icn.socket
+  socket.io.chip.foreach(_.local := DontCare)
+  private val clusterIcn = socket.io.icn
 
   private val rxChnMap = node.ejects.map({ chn =>
     val eject = clusterIcn.tx.getBundle(chn).get

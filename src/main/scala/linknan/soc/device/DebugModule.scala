@@ -1,4 +1,4 @@
-package linknan.soc.uncore
+package linknan.soc.device
 
 import chisel3._
 import freechips.rocketchip.devices.debug.{DebugCustomXbar, DebugIO, DebugModuleKey, DebugModuleParams, DebugTransportModuleJTAG, JtagDTMKeyDefault, ResetCtrlIO, SystemJTAGIO, TLDebugModule}
