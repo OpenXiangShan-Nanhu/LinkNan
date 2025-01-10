@@ -17,10 +17,11 @@
 package lntest.top
 
 import SimpleL2.Configs.L2ParamKey
+import chisel3.Module.ResetType
 import org.chipsalliance.cde.config.Parameters
 import chisel3.stage.ChiselGeneratorAnnotation
 import chisel3._
-import chisel3.util.ReadyValidIO
+import chisel3.util.{MixedVec, ReadyValidIO}
 import lntest.peripheral.SimJTAG
 import org.chipsalliance.diplomacy.lazymodule._
 import xs.utils.{FileRegisters, GTimer}
@@ -39,12 +40,14 @@ import zhujiang.ZJParametersKey
 import zhujiang.axi.AxiBundle
 
 class SimTop(implicit p: Parameters) extends Module {
+  override def resetType = Module.ResetType.Asynchronous
   private val debugOpts = p(DebugOptionsKey)
-
   private val doBlockTest = p(TestIoOptionsKey).doBlockTest
   private val hasCsu = p(TestIoOptionsKey).hasCsu
   private val soc = Module(new LNTop)
-  private val l_simMMIO = if(doBlockTest) None else Some(LazyModule(new SimMMIO(soc.io.cfg.params, soc.io.dma.params)))
+  private val cfgMain = soc.cfgIO.filter(_.params.attr == "main").head
+  private val dmaMain = soc.dmaIO.filter(_.params.attr == "main").head
+  private val l_simMMIO = if(doBlockTest) None else Some(LazyModule(new SimMMIO(cfgMain.params, dmaMain.params)))
   private val simMMIO = if(doBlockTest) None else Some(Module(l_simMMIO.get.module))
 
   val io = IO(new Bundle(){
@@ -52,8 +55,8 @@ class SimTop(implicit p: Parameters) extends Module {
     val logCtrl = if(doBlockTest) None else Some(new LogCtrlIO)
     val perfInfo = if(doBlockTest) None else Some(new PerfInfoIO)
     val uart = if(doBlockTest) None else Some(new UARTIO)
-    val dma = if(doBlockTest) Some(Flipped(new AxiBundle(soc.io.dma.params))) else None
-    val cfg = if(doBlockTest) Some(new AxiBundle(soc.io.cfg.params)) else None
+    val dma = if(doBlockTest) Some(MixedVec(soc.dmaIO.map(drv => Flipped(new AxiBundle(drv.params))))) else None
+    val cfg = if(doBlockTest) Some(new AxiBundle(cfgMain.params)) else None
   })
 
   private def connByName(sink:ReadyValidIO[Bundle], src:ReadyValidIO[Bundle]):Unit = {
@@ -67,16 +70,17 @@ class SimTop(implicit p: Parameters) extends Module {
     }
   }
 
+  soc.cfgIO.filterNot(_.params.attr == "main").foreach(_ := DontCare)
   if(doBlockTest) {
-    io.dma.get <> soc.io.dma
-    io.cfg.get <> soc.io.cfg
+    io.dma.get.zip(soc.dmaIO).foreach({case(a, b) => a <> b})
+    io.cfg.get <> cfgMain
     soc.io.ext_intr := 0.U
   } else {
     soc.io.ext_intr := simMMIO.get.io.interrupt.intrVec
     val periCfg = simMMIO.get.cfg.head
     val periDma = simMMIO.get.dma.head
-    val socCfg =  soc.io.cfg
-    val socDma = soc.io.dma
+    val socCfg = cfgMain
+    val socDma = dmaMain
 
     connByName(periCfg.aw, socCfg.aw)
     connByName(periCfg.ar, socCfg.ar)
@@ -91,14 +95,14 @@ class SimTop(implicit p: Parameters) extends Module {
     connByName(periDma.b, socDma.b)
   }
 
-  private val l_simAXIMem = LazyModule(new DummyDramMoudle(soc.io.ddr.params))
+  private val l_simAXIMem = LazyModule(new DummyDramMoudle(soc.ddrIO.params))
   private val simAXIMem = Module(l_simAXIMem.module)
   private val memAxi = simAXIMem.axi.head
-  connByName(memAxi.aw, soc.io.ddr.aw)
-  connByName(memAxi.ar, soc.io.ddr.ar)
-  connByName(memAxi.w, soc.io.ddr.w)
-  connByName(soc.io.ddr.r, memAxi.r)
-  connByName(soc.io.ddr.b, memAxi.b)
+  connByName(memAxi.aw, soc.ddrIO.aw)
+  connByName(memAxi.ar, soc.ddrIO.ar)
+  connByName(memAxi.w, soc.ddrIO.w)
+  connByName(soc.ddrIO.r, memAxi.r)
+  connByName(soc.ddrIO.b, memAxi.b)
 
   val freq = 100
   val cnt = RegInit((freq - 1).U)
@@ -107,29 +111,34 @@ class SimTop(implicit p: Parameters) extends Module {
 
   private val ccns = p(ZJParametersKey).localRing.filter(_.nodeType == NodeType.CC).map(_.attr)
   private val bootAddr = if(ccns.contains("boom")) 0x80000000L.U else 0x10000000L.U
+  private val socReset = reset.asAsyncReset.asBool || soc.io.ndreset
   soc.io.rtc_clock := tick
   soc.io.noc_clock := clock
-  soc.io.cluster_clocks.foreach(_.foreach(_ := clock))
-  soc.io.soc_clock := clock
-  soc.io.reset := (reset.asBool || soc.io.ndreset).asAsyncReset
-  soc.dft := DontCare
-  soc.dft.reset.lgc_rst_n := true.B.asAsyncReset
+  soc.io.cluster_clocks.foreach(_ := clock)
+  soc.reset := socReset.asAsyncReset
+  soc.io.dft := DontCare
+  soc.io.dft.reset.lgc_rst_n := true.B.asAsyncReset
   soc.io.default_reset_vector := bootAddr
   soc.io.chip := 0.U
 
 
   if(doBlockTest) {
-    soc.io.jtag := DontCare
-    soc.io.jtag.reset := true.B.asAsyncReset
+    soc.io.jtag.foreach( jtag => {
+      jtag := DontCare
+      jtag.reset := true.B.asAsyncReset
+    })
   } else {
-    val success = Wire(Bool())
-    val jtag = Module(new SimJTAG(tickDelay = 3))
-    soc.io.jtag.reset := reset.asAsyncReset
-    jtag.connect(soc.io.jtag.jtag, clock, reset.asBool, !reset.asBool, success, jtagEnable = true)
-    soc.io.jtag.mfr_id := 0.U(11.W)
-    soc.io.jtag.part_number := 0.U(16.W)
-    soc.io.jtag.version := 0.U(4.W)
-    simMMIO.get.io.uart <> io.uart.get
+    soc.io.jtag.foreach( soc_jtag => {
+      val success = Wire(Bool())
+      val jtag = Module(new SimJTAG(tickDelay = 3))
+      soc_jtag.reset := reset.asAsyncReset
+      jtag.connect(soc_jtag.jtag, clock, reset.asBool, !reset.asBool, success, jtagEnable = true)
+      soc_jtag.mfr_id := 0.U(11.W)
+      soc_jtag.part_number := 0.U(16.W)
+      soc_jtag.version := 0.U(4.W)
+      simMMIO.get.io.uart <> io.uart.get
+    })
+
   }
 
   if(hasCsu && p(DebugOptionsKey).EnableLuaScoreBoard) {

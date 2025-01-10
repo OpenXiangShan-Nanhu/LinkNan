@@ -72,6 +72,7 @@ class CpuCluster(node:Node)(implicit p:Parameters) extends ZJRawModule {
   @public val coreIoParams = BlockTestIOParams(cioEdge.bundle, cl2Edge.bundle, btNode)
   @public val icn = IO(new ClusterDeviceBundle(node))
   @public val core = if(removeCore) Some(IO(Vec(node.cpuNum, new BlockTestIO(coreIoParams)))) else None
+  dontTouch(icn)
 
   icn <> hub.io.icn
   if(removeCsu) {

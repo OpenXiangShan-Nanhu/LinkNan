@@ -5,7 +5,7 @@ import chisel3.util._
 import freechips.rocketchip.tilelink.{TLBundle, TLBundleParameters}
 
 package object utils {
-  def connectByName[T <: Bundle](sink: ReadyValidIO[T], src: ReadyValidIO[T]):Unit = {
+  def connectByName[T <: Bundle, K <: Bundle](sink: ReadyValidIO[T], src: ReadyValidIO[K]):Unit = {
     sink.valid := src.valid
     src.ready := sink.ready
     sink.bits := DontCare

@@ -19,7 +19,7 @@ function simv_comp(num_cores)
     if os.exists(build_dir) then os.rmdir(build_dir) end
     task.run("soc", {
       vcs = true, sim = true, config = option.get("config"),
-      cpu_sync = option.get("cpu_sync"), lua_scoreboard = option.get("lua_scoreboard"),
+      socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
       core = option.get("core")
     })
   end,{

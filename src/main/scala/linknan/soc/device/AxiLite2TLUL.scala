@@ -1,4 +1,4 @@
-package linknan.soc.uncore
+package linknan.soc.device
 
 import chisel3._
 import chisel3.util._

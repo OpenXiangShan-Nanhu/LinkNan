@@ -1,4 +1,4 @@
-package linknan.soc.uncore
+package linknan.soc.device
 
 import aia.TLAPLIC
 import chisel3._

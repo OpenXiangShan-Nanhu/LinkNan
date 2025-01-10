@@ -36,27 +36,27 @@ class BaseConfig(core:String) extends Config((site, here, up) => {
   case L2ParamKey => L2Param(useDiplomacy = true)
 })
 
-class FullNocConfig(core:String) extends Config((site, here, up) => {
+class FullNocConfig(core:String, socket:String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true, dpId = 0),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true, dpId = 0),
       NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
       NodeParam(nodeType = NodeType.S, bankId = 2, splitFlit = true, dpId = 0),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.S, bankId = 3, splitFlit = true, dpId = 0),
 
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, outstanding = 32, attr = "cfg"),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.RI, attr = "dma", splitFlit = true),
+      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, outstanding = 32, attr = "main"),
+      NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
+      NodeParam(nodeType = NodeType.RI, attr = "", splitFlit = true),
 
       NodeParam(nodeType = NodeType.S, bankId = 3, splitFlit = true, dpId = 1),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.S, bankId = 2, splitFlit = true, dpId = 1),
       NodeParam(nodeType = NodeType.HF, bankId = 1, splitFlit = true),
       NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true, dpId = 1),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true, dpId = 1),
 
       NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data"),
@@ -66,31 +66,31 @@ class FullNocConfig(core:String) extends Config((site, here, up) => {
   )
 })
 
-class ReducedNocConfig(core:String) extends Config((site, here, up) => {
+class ReducedNocConfig(core:String, socket:String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true),
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "cfg"),
-      NodeParam(nodeType = NodeType.RI, attr = "dma", splitFlit = true),
+      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "main"),
+      NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
       NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
       NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data")
     )
   )
 })
 
-class MinimalNocConfig(core:String) extends Config((site, here, up) => {
+class MinimalNocConfig(core:String, socket:String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 1, splitFlit = true, outstanding = 8, attr = core),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 1, splitFlit = true, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
       NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true),
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "cfg"),
-      NodeParam(nodeType = NodeType.RI, attr = "dma", splitFlit = true),
+      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "main"),
+      NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
       NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
       NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data")
     )
@@ -130,26 +130,26 @@ class L1DConfig(sizeInKiB:Int = 64, ways:Int = 4) extends Config((site, here, up
     )
 })
 
-class FullConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new FullNocConfig(core) ++ new BaseConfig(core)
+class FullConfig(core:String, socket:String) extends Config(
+  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new FullNocConfig(core, socket) ++ new BaseConfig(core)
 )
 
-class ReducedConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(4, 8) ++ new ReducedNocConfig(core) ++ new BaseConfig(core)
+class ReducedConfig(core:String, socket:String) extends Config(
+  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(4, 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
 )
 
-class MinimalConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(2, 8) ++ new MinimalNocConfig(core) ++ new BaseConfig(core)
+class MinimalConfig(core:String, socket:String) extends Config(
+  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(2, 8) ++ new MinimalNocConfig(core, socket) ++ new BaseConfig(core)
 )
 
-class SpecConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new MinimalNocConfig(core) ++ new BaseConfig(core)
+class SpecConfig(core:String, socket:String) extends Config(
+  new L1DConfig ++ new L2Config ++ new LLCConfig ++ new MinimalNocConfig(core, socket) ++ new BaseConfig(core)
 )
 
-class FpgaConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(8, 8) ++ new FullNocConfig(core) ++ new BaseConfig(core)
+class FpgaConfig(core:String, socket:String) extends Config(
+  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(8, 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
 )
 
-class BtestConfig(core:String) extends Config(
-  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(1, 8) ++ new ReducedNocConfig(core) ++ new BaseConfig(core)
+class BtestConfig(core:String, socket:String) extends Config(
+  new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(1, 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
 )
