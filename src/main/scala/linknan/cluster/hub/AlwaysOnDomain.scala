@@ -5,6 +5,7 @@ import freechips.rocketchip.tilelink.{TLBundle, TLBundleParameters}
 import linknan.cluster.hub.interconnect.{CioXBar, ClusterDeviceBundle, ClusterHub}
 import linknan.cluster.power.controller.{PcsmCtrlIO, PowerMode, devActiveBits}
 import linknan.cluster.power.pchannel.PChannel
+import linknan.generator.TestIoOptionsKey
 import org.chipsalliance.cde.config.Parameters
 import xijiang.{Node, NodeType}
 import zhujiang.{DftWires, ZJBundle, ZJParametersKey, ZJRawModule}
@@ -91,7 +92,7 @@ class AlwaysOnDomain(node: Node, ioParams:TLBundleParameters)(implicit p: Parame
   io.icn <> clusterHub.io.icn
   l2Buf.io.in <> clusterHub.io.l2cache
   io.cluster.csu.l2cache <> l2Buf.io.out
-  cioXbar.misc.chip := clusterHub.io.cpu.mhartid(0)(clusterIdBits - 1, nodeAidBits)
+  cioXbar.misc.chip := clusterHub.io.cpu.clusterId.head(nodeAidBits)
 
   implicitClock := pll.io.cpu_clock
   implicitReset := resetSync
@@ -115,11 +116,17 @@ class AlwaysOnDomain(node: Node, ioParams:TLBundleParameters)(implicit p: Parame
     val cpuDev = io.cluster.cpu(i)
     val cpuCtl = clusterPeriCx.io.cpu(i)
     cpuCtl.defaultBootAddr := clusterHub.io.cpu.defaultBootAddr(i)
-    cpuCtl.defaultEnable := clusterHub.io.cpu.defaultCpuEnable(i)
+    if(p(TestIoOptionsKey).removeCore || p(TestIoOptionsKey).removeCsu) {
+      cpuCtl.defaultEnable := true.B
+    } else if(i == 0) {
+      cpuCtl.defaultEnable := clusterHub.io.cpu.clusterId === 0.U
+    } else {
+      cpuCtl.defaultEnable := false.B
+    }
 
     cpuDev.pchn <> cpuCtl.pchn
     cpuDev.pcsm <> cpuCtl.pcsm
-    cpuDev.mhartid := clusterHub.io.cpu.mhartid(i)
+    cpuDev.mhartid := clusterHub.io.cpu.clusterId + i.U
     cpuDev.reset_vector := cpuCtl.bootAddr
     cpuDev.msip := clusterHub.io.cpu.msip(i)
     cpuDev.mtip := clusterHub.io.cpu.mtip(i)
@@ -129,7 +136,7 @@ class AlwaysOnDomain(node: Node, ioParams:TLBundleParameters)(implicit p: Parame
     cpuDev.imsic <> cpuCtl.imsic
     cpuDev.blockProbe := cpuCtl.blockProbe
     clusterHub.io.cpu.resetState(i) := cpuDev.reset_state
-    cioXbar.misc.core(i) := clusterHub.io.cpu.mhartid(i)(clusterIdBits - nodeAidBits - 1, 0)
-    cpuCtl.coreId := clusterHub.io.cpu.mhartid(i)(clusterIdBits - nodeAidBits - 1, 0)
+    cioXbar.misc.core(i) := cpuDev.mhartid.tail(nodeAidBits)
+    cpuCtl.coreId := cpuDev.mhartid.tail(nodeAidBits)
   }
 }

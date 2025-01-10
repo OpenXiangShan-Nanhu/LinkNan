@@ -89,6 +89,8 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     }
     ext.dft := io.dft
     ext.socket <> noc
+    ext.misc.clusterId := Cat(io.chip, clusterId.U((clusterIdBits - nodeAidBits).W))
+    ext.misc.defaultBootAddr := io.default_reset_vector
     for(i <- 0 until node.cpuNum) {
       val cid = clusterId + i
       ext.misc.msip(i) := devWrp.io.cpu.msip(cid)
@@ -96,14 +98,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
       ext.misc.meip(i) := devWrp.io.cpu.meip(cid)
       ext.misc.seip(i) := devWrp.io.cpu.seip(cid)
       ext.misc.dbip(i) := devWrp.io.cpu.dbip(cid)
-      ext.misc.mhartid(i) := Cat(io.chip, cid.U((clusterIdBits - nodeAidBits).W))
       devWrp.io.resetCtrl.hartIsInReset(cid) := ext.misc.resetState(i)
-      ext.misc.defaultBootAddr(i) := io.default_reset_vector
-      if(cid == 0 || p(TestIoOptionsKey).removeCore || p(TestIoOptionsKey).removeCsu) {
-        ext.misc.defaultCpuEnable(i) := true.B
-      } else {
-        ext.misc.defaultCpuEnable(i) := false.B
-      }
     }
   }
 }
