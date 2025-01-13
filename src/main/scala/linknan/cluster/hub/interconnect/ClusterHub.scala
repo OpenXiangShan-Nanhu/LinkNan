@@ -70,7 +70,6 @@ class ClusterHub(node: Node)(implicit p: Parameters) extends ZJModule {
   io.dft := io.icn.dft
   private val socket = Module(new SocketDevSide(node))
   socket.io.socket <> io.icn.socket
-  socket.io.chip.foreach(_.local := DontCare)
   private val clusterIcn = socket.io.icn
 
   private val rxChnMap = node.ejects.map({ chn =>
