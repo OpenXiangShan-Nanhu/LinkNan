@@ -63,6 +63,8 @@ class LNTop(implicit p:Parameters) extends ZJModule with NocIOHelper {
     val clusterId = ccn.socket.node.clusterId
     val cc = Instance(clusterDefMap(ccn.socket.node.attr))
     cc.icn <> ccn
+    ccn.socket.c2cClock.foreach(_ := io.noc_clock)
+    cc.icn.socket.c2cClock.foreach(_ := io.noc_clock)
     cc.suggestName(s"cc_${ccn.socket.node.domainId}")
     for(i <- 0 until ccn.socket.node.cpuNum) {
       val cid = clusterId + i
