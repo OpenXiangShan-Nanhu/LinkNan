@@ -27,7 +27,6 @@ create_bd_design $project_name
 create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz clk_wiz_0
 create_bd_cell -type module -reference CpuCluster cc
 create_bd_cell -type ip -vlnv xilinx.com:ip:aurora_64b66b c2c
-create_bd_cell -type ip -vlnv xilinx.com:ip:vio rst_ctrl
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant const_0
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilvector_logic reverser
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconcat rst_concat
@@ -71,14 +70,9 @@ set_property -dict [list \
 ] [get_bd_cells clk_wiz_0]
 
 set_property -dict [list \
-  CONFIG.C_NUM_PROBE_IN {1} \
-  CONFIG.C_NUM_PROBE_OUT {2} \
-  CONFIG.C_PROBE_OUT0_INIT_VAL {0x1} \
-  CONFIG.C_PROBE_OUT1_INIT_VAL {0x1} \
-] [get_bd_cells rst_ctrl]
-
-set_property -dict [list \
   CONFIG.C_AURORA_LANES {4} \
+  CONFIG.C_LINE_RATE {10} \
+  CONFIG.C_REFCLK_FREQUENCY {100} \
   CONFIG.SupportLevel {1} \
   CONFIG.interface_mode {Streaming} \
 ] [get_bd_cells c2c]
@@ -99,6 +93,74 @@ set_property -dict [list \
   CONFIG.C_OPERATION {or} \
   CONFIG.C_SIZE {3} \
 ] [get_bd_cells rst_red_or]
+
+# start rst_gen
+create_bd_cell -type hier rst_gen
+create_bd_cell -type ip -vlnv xilinx.com:ip:c_counter_binary rst_gen/cnt
+create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilreduced_logic rst_gen/red_or
+create_bd_cell -type ip -vlnv xilinx.com:ip:util_ff rst_gen/ff
+create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant rst_gen/ilconstant_1
+create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilvector_logic rst_gen/rev_out
+
+set_property -dict [list \
+  CONFIG.CONST_VAL {1} \
+  CONFIG.CONST_WIDTH {1} \
+] [get_bd_cells rst_gen/ilconstant_1]
+
+set_property -dict [list \
+  CONFIG.AINIT_Value {FF} \
+  CONFIG.CE {true} \
+  CONFIG.Count_Mode {DOWN} \
+  CONFIG.Final_Count_Value {0} \
+  CONFIG.Load {false} \
+  CONFIG.Output_Width {8} \
+  CONFIG.Restrict_Count {true} \
+  CONFIG.SCLR {false} \
+  CONFIG.Sync_Threshold_Output {false} \
+] [get_bd_cells rst_gen/cnt]
+
+set_property -dict [list \
+  CONFIG.C_CLR_INVERTED {0} \
+  CONFIG.C_C_INVERTED {0} \
+  CONFIG.C_D_INVERTED {0} \
+  CONFIG.C_FF_TYPE {1} \
+  CONFIG.C_INIT {0x1} \
+  CONFIG.C_R_INVERTED {0} \
+  CONFIG.C_WIDTH {1} \
+  CONFIG.C_WIDTH.VALUE_SRC USER \
+] [get_bd_cells rst_gen/ff]
+
+set_property -dict [list \
+  CONFIG.C_OPERATION {or} \
+  CONFIG.C_SIZE {8} \
+] [get_bd_cells rst_gen/red_or]
+
+set_property -dict [list \
+  CONFIG.C_OPERATION {not} \
+  CONFIG.C_SIZE {1} \
+] [get_bd_cells rst_gen/rev_out]
+
+create_bd_pin -dir O rst_gen/Q
+create_bd_pin -dir O rst_gen/QN
+create_bd_pin -dir I rst_gen/CLK
+create_bd_pin -dir I rst_gen/CE
+connect_bd_net [get_bd_pins rst_gen/CLK] [get_bd_pins rst_gen/cnt/CLK]
+connect_bd_net [get_bd_pins rst_gen/CE] [get_bd_pins rst_gen/cnt/CE]
+connect_bd_net [get_bd_pins rst_gen/cnt/Q] [get_bd_pins rst_gen/red_or/Op1]
+connect_bd_net [get_bd_pins rst_gen/red_or/Res] [get_bd_pins rst_gen/ff/D]
+connect_bd_net [get_bd_pins rst_gen/QN] [get_bd_pins rst_gen/ff/Q]
+connect_bd_net [get_bd_pins rst_gen/rev_out/Op1] [get_bd_pins rst_gen/ff/Q]
+connect_bd_net [get_bd_pins rst_gen/CLK] [get_bd_pins rst_gen/ff/clk]
+connect_bd_net [get_bd_pins rst_gen/ilconstant_1/dout] [get_bd_pins rst_gen/ff/reset]
+connect_bd_net [get_bd_pins rst_gen/ilconstant_1/dout] [get_bd_pins rst_gen/ff/clk_enable]
+connect_bd_net [get_bd_pins rst_gen/Q] [get_bd_pins rst_gen/rev_out/Res]
+
+copy_bd_objs / [get_bd_cells {rst_gen}]
+connect_bd_net [get_bd_pins rst_gen/Q] [get_bd_pins rst_gen1/CE] -boundary_type upper
+connect_bd_net [get_bd_pins clk_wiz_0/locked] [get_bd_pins rst_gen/CE]
+connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins rst_gen/CLK]
+connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins rst_gen1/CLK]
+# end rst_gen
 
 make_bd_intf_pins_external  [get_bd_intf_pins c2c/GT_DIFF_REFCLK1]
 set_property name GT_REFCLK [get_bd_intf_ports GT_DIFF_REFCLK1_0]
@@ -132,15 +194,13 @@ connect_bd_net [get_bd_pins cc/icn_socket_c2c_tx_bits] [get_bd_pins c2c/s_axi_tx
 connect_bd_net [get_bd_pins c2c/s_axi_tx_tready] [get_bd_pins cc/icn_socket_c2c_tx_ready]
 connect_bd_net [get_bd_pins c2c/m_axi_rx_tdata] [get_bd_pins cc/icn_socket_c2c_rx_bits]
 connect_bd_net [get_bd_pins c2c/m_axi_rx_tvalid] [get_bd_pins cc/icn_socket_c2c_rx_valid]
-connect_bd_net [get_bd_pins const_0/dout] [get_bd_pins cc/icn_socket_chipRx]
 
 connect_bd_net [get_bd_ports osc_clock] [get_bd_pins clk_wiz_0/clk_in1]
 connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins c2c/init_clk]
+connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins cc/icn_osc_clock]
 
-connect_bd_net [get_bd_pins rst_ctrl/probe_out0] [get_bd_pins c2c/pma_init]
-connect_bd_net [get_bd_pins rst_ctrl/probe_out1] [get_bd_pins c2c/reset_pb]
-connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins rst_ctrl/clk]
-connect_bd_net [get_bd_pins clk_wiz_0/locked] [get_bd_pins rst_ctrl/probe_in0]
+connect_bd_net [get_bd_pins rst_gen/QN] [get_bd_pins c2c/pma_init]
+connect_bd_net [get_bd_pins rst_gen1/QN] [get_bd_pins c2c/reset_pb]
 
 connect_bd_net [get_bd_pins const_0/dout] [get_bd_pins c2c/gt_rxcdrovrden_in]
 connect_bd_net [get_bd_pins const_0/dout] [get_bd_pins c2c/loopback]
@@ -152,9 +212,9 @@ connect_bd_net [get_bd_pins c2c/mmcm_not_locked_out] [get_bd_pins rst_concat/In1
 connect_bd_net [get_bd_pins c2c/sys_reset_out] [get_bd_pins rst_concat/In2]
 connect_bd_net [get_bd_pins rst_concat/dout] [get_bd_pins rst_red_or/Op1]
 connect_bd_net [get_bd_pins rst_red_or/Res] [get_bd_pins cc/icn_socket_resetRx]
-connect_bd_net [get_bd_pins c2c/user_clk_out] [get_bd_pins cc/icn_osc_clock]
+connect_bd_net [get_bd_pins cc/icn_socket_c2cClock] [get_bd_pins c2c/user_clk_out]
 
-regenerate_bd_layout -routing
+regenerate_bd_layout
 
 set bd_dir [join [ list [format "%s.srcs" $project_name ] "sources_1" "bd" $project_name] "/"]
 set bd_file [join [ list $bd_dir [format "%s.bd" $project_name] ] "/"]
@@ -169,6 +229,6 @@ update_compile_order -fileset sources_1
 set_param synth.maxThreads 8
 set_property STEPS.SYNTH_DESIGN.ARGS.GATED_CLOCK_CONVERSION on [get_runs synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.KEEP_EQUIVALENT_REGISTERS true [get_runs synth_1]
-launch_runs synth_1 -jobs 8
+# launch_runs synth_1 -jobs 8
 
 cd ..
