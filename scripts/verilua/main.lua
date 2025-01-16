@@ -230,7 +230,7 @@ local function init_components()
     end
 
     for i = 0, cfg.nr_dj_pcu - 1 do
-        local dj_hier = tostring(dut.soc.noc["pcu_" .. i])
+        local dj_hier = tostring(dut.soc.uncore.noc["pcu_" .. i])
 
         local rxreq = ([[
             | valid
@@ -340,7 +340,7 @@ local function init_components()
     end
 
     for i = 0, cfg.nr_dj_dcu - 1 do
-        local dj_hier = tostring(dut.soc.noc["dcu_" .. i])
+        local dj_hier = tostring(dut.soc.uncore.noc["dcu_" .. i])
 
         local rxreqs = {}
         local rxdats = {}
@@ -425,7 +425,7 @@ local function init_components()
 
 
     do
-        local dj_ddr_hier = tostring(dut.soc.noc.memSubSys)
+        local dj_ddr_hier = tostring(dut.soc.uncore.noc.memSubSys)
 
         local rxreq = ([[
             | valid
