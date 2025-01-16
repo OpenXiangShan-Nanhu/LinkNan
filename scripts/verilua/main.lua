@@ -62,11 +62,7 @@ local function init_components()
         local l2_prefix = ""
         local l2_hier = ""
 
-        if l2_id == 0 then
-            l2_hier = tostring(dut.soc.cc.csu.l2cache)
-        else
-            l2_hier = tostring(dut.soc["cc_" .. l2_id].csu.l2cache)
-        end
+        l2_hier = tostring(dut.soc["cc_" .. l2_id].csu.l2cache)
 
         local gen_l2_prefix = function (chnl, idx)
             if nr_slice == 1 then
@@ -508,7 +504,7 @@ local print = function(...) print("[main.lua]", ...) end
 
 fork {
     function ()
-        local l2 = dut.soc.cc.csu.l2cache
+        local l2 = dut.soc.cc_0.csu.l2cache
         local clock = l2.clock:chdl()
         local timer = dut.timer:chdl()
 
