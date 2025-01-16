@@ -7,7 +7,7 @@ import linknan.generator.TestIoOptionsKey
 import linknan.soc.device.DevicesWrapper
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.debug.{DomainInfo, HardwareAssertion}
-import zhujiang.axi.{AxiParams, BaseAxiXbar}
+import zhujiang.axi.{AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
 import zhujiang.{DftWires, HasZJParams, NocIOHelper, ZJRawModule, Zhujiang}
 
 class AxiDmaXBar(dmaAxiParams: Seq[AxiParams])(implicit val p: Parameters) extends BaseAxiXbar(dmaAxiParams) with HasZJParams {
@@ -36,9 +36,9 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   devWrp.io.slv <> cfgPort
   dmaPort <> dmaXBar.io.downstream.head
 
-  val ddrDrv = noc.ddrIO
-  val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr == "main")
-  val dmaDrv = Seq(dmaXBar.io.upstream.last) ++ noc.dmaIO.filterNot(_.params.attr == "main")
+  val ddrDrv = AxiUtils.getIntnl(noc.ddrIO)
+  val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr == "main").map(AxiUtils.getIntnl)
+  val dmaDrv = Seq(dmaXBar.io.upstream.last) ++ noc.dmaIO.filterNot(_.params.attr == "main").map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   runIOAutomation()
 

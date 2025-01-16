@@ -9,6 +9,7 @@ import linknan.generator.{MiscKey, TestIoOptionsKey}
 import zhujiang.{DftWires, NocIOHelper, ZJModule}
 import org.chipsalliance.cde.config.Parameters
 import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
+import zhujiang.axi.AxiUtils
 
 class LNTop(implicit p:Parameters) extends ZJModule with NocIOHelper {
   private val mod = this.toNamed
@@ -30,9 +31,9 @@ class LNTop(implicit p:Parameters) extends ZJModule with NocIOHelper {
     val dft = Input(new DftWires)
   })
 
-  val ddrDrv = uncore.ddrIO
-  val cfgDrv = uncore.cfgIO
-  val dmaDrv = uncore.dmaIO
+  val ddrDrv = AxiUtils.getIntnl(uncore.ddrIO)
+  val cfgDrv = uncore.cfgIO.map(AxiUtils.getIntnl)
+  val dmaDrv = uncore.dmaIO.map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   runIOAutomation()
 

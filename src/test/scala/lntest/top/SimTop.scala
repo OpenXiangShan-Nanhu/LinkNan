@@ -37,7 +37,7 @@ import xijiang.tfb.TrafficBoardFileManager
 import xs.utils.perf.DebugOptionsKey
 import xs.utils.tl.{TLUserKey, TLUserParams}
 import zhujiang.ZJParametersKey
-import zhujiang.axi.AxiBundle
+import zhujiang.axi.{AxiBundle, AxiUtils}
 
 class SimTop(implicit p: Parameters) extends Module {
   override def resetType = Module.ResetType.Asynchronous
@@ -79,8 +79,8 @@ class SimTop(implicit p: Parameters) extends Module {
     soc.io.ext_intr := simMMIO.get.io.interrupt.intrVec
     val periCfg = simMMIO.get.cfg.head
     val periDma = simMMIO.get.dma.head
-    val socCfg = cfgMain
-    val socDma = dmaMain
+    val socCfg = AxiUtils.getIntnl(cfgMain)
+    val socDma = AxiUtils.getIntnl(dmaMain)
 
     connByName(periCfg.aw, socCfg.aw)
     connByName(periCfg.ar, socCfg.ar)
@@ -98,11 +98,12 @@ class SimTop(implicit p: Parameters) extends Module {
   private val l_simAXIMem = LazyModule(new DummyDramMoudle(soc.ddrIO.params))
   private val simAXIMem = Module(l_simAXIMem.module)
   private val memAxi = simAXIMem.axi.head
-  connByName(memAxi.aw, soc.ddrIO.aw)
-  connByName(memAxi.ar, soc.ddrIO.ar)
-  connByName(memAxi.w, soc.ddrIO.w)
-  connByName(soc.ddrIO.r, memAxi.r)
-  connByName(soc.ddrIO.b, memAxi.b)
+  private val socDdr = AxiUtils.getIntnl(soc.ddrIO)
+  connByName(memAxi.aw, socDdr.aw)
+  connByName(memAxi.ar, socDdr.ar)
+  connByName(memAxi.w, socDdr.w)
+  connByName(socDdr.r, memAxi.r)
+  connByName(socDdr.b, memAxi.b)
 
   val freq = 100
   val cnt = RegInit((freq - 1).U)
