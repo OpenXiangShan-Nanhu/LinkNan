@@ -153,7 +153,7 @@ class SimTop(implicit p: Parameters) extends Module {
     }).reduce((a, b) => s"$a, $b")
     val luaScb = Module(new LuaScoreboard(s"{ $l2Str }", nrPcu, dcuSeq.groupBy(_.bankId).size, s"{ $dcuStr }"))
     luaScb.io.clock := clock
-    luaScb.io.reset := reset
+    luaScb.io.reset := reset.asBool
     luaScb.io.sim_final := io.simFinal.get
   }
 
