@@ -115,7 +115,7 @@ class AlwaysOnDomain(node: Node, ioParams:TLBundleParameters)(implicit p: Parame
   for(i <- 0 until node.cpuNum) {
     val cpuDev = io.cluster.cpu(i)
     val cpuCtl = clusterPeriCx.io.cpu(i)
-    cpuCtl.defaultBootAddr := clusterHub.io.cpu.defaultBootAddr(i)
+    cpuCtl.defaultBootAddr := clusterHub.io.cpu.defaultBootAddr
     if(p(TestIoOptionsKey).removeCore || p(TestIoOptionsKey).removeCsu) {
       cpuCtl.defaultEnable := true.B
     } else if(i == 0) {
