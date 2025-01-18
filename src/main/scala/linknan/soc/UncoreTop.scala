@@ -69,7 +69,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   devWrp.io.debug.dmactiveAck := devWrp.io.debug.dmactive
   devWrp.io.debug.clock := DontCare
   devWrp.io.debug.reset := DontCare
-  devWrp.io.hwa := assertionNode.assertion
+  devWrp.io.hwa <> assertionNode.assertion
   devWrp.clock := io.noc_clock
   devWrp.reset := io.reset
   io.ndreset := devWrp.io.debug.ndreset

@@ -80,7 +80,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams, hwaNode: HwAsrt
   val io = IO(new Bundle {
     val slv = Flipped(new AxiBundle(cfgParams))
     val mst = new AxiBundle(dmaParams)
-    val hwa = Input(hwaNode.assertion.cloneType)
+    val hwa = Flipped(hwaNode.assertion.cloneType)
 
     val ext = new Bundle {
       val cfg = new AxiBundle(cfgXBar.io.downstream.last.params.copy(attr = cfgParams.attr))
@@ -105,6 +105,8 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams, hwaNode: HwAsrt
   resetGen.dft := io.dft.reset
   implicitReset := resetGen.o_reset
   resetGen.reset := reset
+  //TODO: add hwa dev
+  io.hwa.ready := true.B
   dontTouch(io)
 
   cfgXBar.misc.chip := io.chip
