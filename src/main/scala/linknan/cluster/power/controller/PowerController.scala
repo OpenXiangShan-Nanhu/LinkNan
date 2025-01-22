@@ -120,11 +120,15 @@ class PowerController(tlParams:TilelinkParams) extends Module {
 
   private val policyMask = UIntToOH(tlSlv.ctl.powerPolicy, devActiveBits)
   private val effectiveActive = policyMask | devMst.io.active
-  private val nextMode = Mux(tlSlv.ctl.dynamicEn, PriorityEncoder(effectiveActive.asBools.reverse), tlSlv.ctl.powerPolicy)
+  private val nextDynMode = Wire(UInt(PowerMode.powerModeBits.W))
+  nextDynMode := PriorityMux(effectiveActive.asBools.zipWithIndex.map(e => (e._1, e._2.U)).reverse)
+  private val nextMode = Mux(tlSlv.ctl.dynamicEn, nextDynMode, tlSlv.ctl.powerPolicy)
   private val currentMode = RegInit(PowerMode.OFF)
   private val modeUpdate = currentMode =/= nextMode && fsm(idleBit)
   private val modeUpdateReg = RegNext(modeUpdate, false.B)
   private val nextModeReg = RegEnable(nextMode, modeUpdate)
+  dontTouch(nextDynMode)
+  assert(nextDynMode >= tlSlv.ctl.powerPolicy)
 
   tlSlv.tls <> io.tls
   tlSlv.tls.a.valid := io.tls.a.valid & fsm(idleBit)
@@ -139,8 +143,8 @@ class PowerController(tlParams:TilelinkParams) extends Module {
   io.dev <> devMst.io.p
   tlSlv.ctl.transResp.valid := fsm(denyBit) | fsm(compBit) | modeUpdateReg && io.deactivate
   tlSlv.ctl.transResp.bits := fsm(compBit)
-  pcsmMst.io.defaultPState := currentMode
-  devMst.io.defaultPState := currentMode
+  pcsmMst.io.defaultPState := PowerMode.OFF
+  devMst.io.defaultPState := PowerMode.OFF
 
   io.mode := RegNext(currentMode)
 
