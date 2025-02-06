@@ -6,12 +6,13 @@ import chisel3.experimental.{ChiselAnnotation, annotate}
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import linknan.cluster.{BlockTestIO, CpuCluster}
 import linknan.generator.{MiscKey, TestIoOptionsKey}
-import zhujiang.{DftWires, NocIOHelper, ZJModule}
+import zhujiang.{DftWires, NocIOHelper, ZJModule, ZJRawModule}
 import org.chipsalliance.cde.config.Parameters
 import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
 import zhujiang.axi.AxiUtils
 
-class LNTop(implicit p:Parameters) extends ZJModule with NocIOHelper {
+class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
+
   private val mod = this.toNamed
   annotate(new ChiselAnnotation {
     def toFirrtl = NestedPrefixModulesAnnotation(mod, p(MiscKey).prefix, inclusive = true)
@@ -19,7 +20,8 @@ class LNTop(implicit p:Parameters) extends ZJModule with NocIOHelper {
   private val uncore = Module(new UncoreTop)
   private val clusterNum = uncore.cluster.size
 
-  val io = IO(new Bundle{
+  val io = IO(new Bundle {
+    val reset = Input(AsyncReset())
     val cluster_clocks = Input(Vec(clusterNum, Clock()))
     val noc_clock = Input(Clock())
     val rtc_clock = Input(Bool())
@@ -37,7 +39,7 @@ class LNTop(implicit p:Parameters) extends ZJModule with NocIOHelper {
   val ccnDrv = Seq()
   runIOAutomation()
 
-  uncore.io.reset := reset
+  uncore.io.reset := io.reset
   uncore.io.noc_clock := io.noc_clock
   uncore.io.rtc_clock := io.rtc_clock
   uncore.io.ext_intr := io.ext_intr
