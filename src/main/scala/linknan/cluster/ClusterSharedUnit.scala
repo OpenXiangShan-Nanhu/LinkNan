@@ -19,6 +19,7 @@ import org.chipsalliance.cde.config.Parameters
 import xiangshan.{HasXSParameter, XSCoreParamsKey}
 import xijiang.Node
 import xijiang.router.base.DeviceIcnBundle
+import xs.utils.perf.HasPerfLogging
 import xs.utils.{ClockGate, ResetGen}
 import xs.utils.tl.{TLUserKey, TLUserParams}
 import zhujiang.HasZJParams
@@ -56,7 +57,7 @@ class ClusterSharedUnit(cioEdge: TLEdgeIn, l2EdgeIn: TLEdgeIn, node:Node)(implic
   cioOutNode :*= TLBuffer.chainNode(1, Some(s"cio_out_buffer")) :*= cioXbar.node
 
   lazy val module = new Impl
-  class Impl extends LazyRawModuleImp(this) with ImplicitClock with ImplicitReset {
+  class Impl extends LazyRawModuleImp(this) with ImplicitClock with ImplicitReset with HasPerfLogging {
     override def provideImplicitClockToLazyChildren = true
     val io = IO(new Bundle{
       val core = Vec(node.cpuNum, Flipped(new CoreWrapperIO(cioEdge.bundle, l2EdgeIn.bundle)))
@@ -164,5 +165,8 @@ class ClusterSharedUnit(cioEdge: TLEdgeIn, l2EdgeIn: TLEdgeIn, node:Node)(implic
     l2.io.chi_tx_linkactiveack := true.B
     l2.io.chi_rx_linkactivereq := true.B
     l2.io.nodeID := DontCare
+
+    XSPerfAccumulate("l2_tx_req_cnt", txreq.fire)
+    XSPerfAccumulate("l2_rx_snp_cnt", rxsnp.fire)
   }
 }
