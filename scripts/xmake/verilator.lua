@@ -8,7 +8,23 @@ function emu_comp(num_cores)
   table.join2(chisel_dep_srcs, {path.join(abs_base, "build.sc")})
   table.join2(chisel_dep_srcs, {path.join(abs_base, "xmake.lua")})
 
+  local vtop = "SimTop"
   local build_dir = path.join(abs_base, "build")
+  local comp_dir = path.join(abs_base, "sim", "emu", "comp")
+  if not os.exists(comp_dir) then os.mkdir(comp_dir) end
+  local dpi_export_dir = path.join(comp_dir, "dpi_export")
+  local difftest = path.join(abs_base, "dependencies", "difftest")
+  local comp_target = path.join(comp_dir, "emu")
+  local design_csrc = path.join(abs_base, "build", "generated-src")
+  local design_vsrc = path.join(abs_base, "build", "rtl")
+  local difftest_vsrc = path.join(difftest, "src", "test", "vsrc", "common")
+  local difftest_csrc = path.join(difftest, "src", "test", "csrc")
+  local difftest_csrc_common = path.join(difftest_csrc, "common")
+  local difftest_csrc_difftest = path.join(difftest_csrc, "difftest")
+  local difftest_csrc_spikedasm = path.join(difftest_csrc, "plugin", "spikedasm")
+  local difftest_csrc_verilator = path.join(difftest_csrc, "verilator")
+  local difftest_config = path.join(difftest, "config")
+
   depend.on_changed(function ()
     if os.exists(build_dir) then os.rmdir(build_dir) end
     task.run("soc", {
@@ -17,33 +33,42 @@ function emu_comp(num_cores)
       socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
       core = option.get("core")
     })
+    local vsrc = os.files(path.join(design_vsrc, "*v"))
+    table.join2(vsrc, os.files(path.join(difftest_vsrc, "*v")))
+
+    if option.get("lua_scoreboard") then
+      local dpi_cfg_lua = path.join(abs_base, "scripts", "verilua", "dpi_cfg.lua")
+      if os.exists(dpi_export_dir) then os.rmdir(dpi_export_dir) end
+      os.mkdir(dpi_export_dir)
+      local dpi_exp_opts =  {"dpi_exporter"}
+      table.join2(dpi_exp_opts, {"--config", dpi_cfg_lua})
+      table.join2(dpi_exp_opts, {"--out-dir", dpi_export_dir})
+      table.join2(dpi_exp_opts, {"--work-dir", dpi_export_dir})
+      table.join2(dpi_exp_opts, {"--top", vtop})
+      table.join2(dpi_exp_opts, vsrc)
+      local cmd_file = path.join(comp_dir, "dpi_exp_cmd.sh")
+      io.writefile(cmd_file, table.concat(dpi_exp_opts, " "))
+      os.execv(os.shell(), { cmd_file })
+    end
   end,{
     files = chisel_dep_srcs,
     dependfile = path.join("out", "chisel.verilator.dep"),
     dryrun = option.get("rebuild")
   })
-  local comp_dir = path.join(abs_base, "sim", "emu", "comp")
-  local comp_target = path.join(comp_dir, "emu")
-  if not os.exists(comp_dir) then os.mkdir(comp_dir) end
-  local design_vsrc = path.join(abs_base, "build", "rtl")
-  local design_csrc = path.join(abs_base, "build", "generated-src")
-  local difftest = path.join(abs_base, "dependencies", "difftest")
-  local difftest_vsrc = path.join(difftest, "src", "test", "vsrc")
-  local difftest_vsrc_common = path.join(difftest_vsrc, "common")
-  local difftest_csrc = path.join(difftest, "src", "test", "csrc")
-  local difftest_csrc_common = path.join(difftest_csrc, "common")
-  local difftest_csrc_difftest = path.join(difftest_csrc, "difftest")
-  local difftest_csrc_spikedasm = path.join(difftest_csrc, "plugin", "spikedasm")
-  local difftest_csrc_verilator = path.join(difftest_csrc, "verilator")
-  local difftest_config = path.join(difftest, "config")
 
   local vsrc = os.files(path.join(design_vsrc, "*v"))
-  table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
+  table.join2(vsrc, os.files(path.join(difftest_vsrc, "*v")))
+  if option.get("lua_scoreboard") then
+    vsrc = os.files(path.join(dpi_export_dir, "*v"))
+  end
 
   local csrc = os.files(path.join(design_csrc, "*.cpp"))
   table.join2(csrc, os.files(path.join(difftest_csrc_common, "*.cpp")))
   table.join2(csrc, os.files(path.join(difftest_csrc_spikedasm, "*.cpp")))
   table.join2(csrc, os.files(path.join(difftest_csrc_verilator, "*.cpp")))
+  if option.get("lua_scoreboard") then
+    table.join2(csrc, path.join(dpi_export_dir, "dpi_func.cpp"))
+  end
 
   local headers = os.files(path.join(design_csrc, "*.h"))
   table.join2(headers, os.files(path.join(difftest_csrc_common, "*.h")))
@@ -102,21 +127,11 @@ function emu_comp(num_cores)
   local f = string.format
   local verilator_bin = "verilator"
   if option.get("lua_scoreboard") then
-    verilator_bin = "vl-verilator-p"
+    verilator_bin = "vl-verilator-dpi"
   end
 
-  local verilator_flags = f("%s --exe --cc --top-module SimTop --assert --x-assign unique", verilator_bin)
-  if option.get("lua_scoreboard") then
-    io.writefile("$(tmpdir)/ln_config.vlt", [[
-`verilator_config
-public_flat_rd -module "SimTop" -var "timer"
-public_flat_rd -module "SimpleL2CacheDecoupled" -var "*"
-public_flat_rd -module "ProtocolCtrlUnit" -var "*"
-public_flat_rd -module "DataCtrlUnit" -var "*"
-public_flat_rd -module "MemoryComplex" -var "*"
-]])
-    verilator_flags = verilator_flags .. " " .. path.join(os.tmpdir(), "ln_config.vlt")
-  end
+  local ln_cfg_vlt = path.join(abs_base, "scripts", "linknan", "verilator.vlt")
+  local verilator_flags = f("%s --exe --cc --top-module %s --assert --x-assign unique %s", verilator_bin, vtop, ln_cfg_vlt)
 
   verilator_flags = verilator_flags .. " +define+VERILATOR=1 +define+PRINTF_COND=1"
   verilator_flags = verilator_flags .. " +define+RANDOMIZE_REG_INIT +define+RANDOMIZE_MEM_INIT"
@@ -154,7 +169,7 @@ public_flat_rd -module "MemoryComplex" -var "*"
   local verilator_depends_files = vsrc
   table.join2(verilator_depends_files, { path.join(abs_base, "scripts", "xmake", "verilator.lua") })
   table.join2(verilator_depends_files, { path.join(abs_base, "scripts", "xmake", "dramsim.lua") })
-  table.join2(verilator_depends_files, { cmd_file })
+  table.join2(verilator_depends_files, { cmd_file, ln_cfg_vlt})
 
   depend.on_changed(function()
     print(verilator_flags)
@@ -165,12 +180,13 @@ public_flat_rd -module "MemoryComplex" -var "*"
   })
 
   local gmake_depend_files = csrc
+  local vmk = f("V%s.mk", vtop)
   table.join2(gmake_depend_files, headers)
-  table.join2(gmake_depend_files, {path.join(comp_dir, "VSimTop.mk"), dramsim_a})
+  table.join2(gmake_depend_files, {path.join(comp_dir, vmk), dramsim_a})
 
   depend.on_changed(function()
     local make_opts = {"VM_PARALLEL_BUILDS=1",  "OPT_FAST=-O3"}
-    table.join2(make_opts, {"-f", "VSimTop.mk", "-j", option.get("jobs")})
+    table.join2(make_opts, {"-f", vmk, "-j", option.get("jobs")})
     os.execv("make", make_opts)
   end, {
     files = gmake_depend_files,
@@ -181,8 +197,6 @@ public_flat_rd -module "MemoryComplex" -var "*"
   if not os.exists(emu_target) then
     os.ln(path.join(comp_dir, "emu"), emu_target)
   end
-  
-  os.rm("$(tmpdir)/ln_config.vlt")
 end
 
 function emu_run()
