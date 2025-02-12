@@ -60,8 +60,8 @@ class FullNocConfig(core:String, socket:String) extends Config((site, here, up) 
       NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true, dpId = 1),
 
       NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data"),
+      NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
       NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg")
     )
   )
 })
