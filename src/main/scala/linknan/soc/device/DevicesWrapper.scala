@@ -96,8 +96,8 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams, hwaNode: HwAsrt
       val dbip = Output(UInt(coreNum.W))
     }
     val chip = Input(UInt(nodeAidBits.W))
-    val debug = pb.io.debug.cloneType
-    val resetCtrl = pb.io.resetCtrl.cloneType
+    val debug = pb.dev.debug.cloneType
+    val resetCtrl = pb.dev.resetCtrl.cloneType
     val dft = Input(new DftWires)
   })
   private val resetGen = Module(new ResetGen)
@@ -129,15 +129,15 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams, hwaNode: HwAsrt
     connectByName(tl2axi.io.tl.a, sba.a)
     connectByName(sba.d, tl2axi.io.tl.d)
   })
-
-  io.cpu.msip := ShiftSync(pb.io.msip)
-  io.cpu.mtip := ShiftSync(pb.io.mtip)
-  io.cpu.meip := ShiftSync(pb.io.meip)
-  io.cpu.seip := ShiftSync(pb.io.seip)
-  io.cpu.dbip := ShiftSync(pb.io.dbip)
-  pb.io.extIntr := io.ext.intr
-  pb.io.timerTick := io.ext.timerTick
-  pb.io.debug <> io.debug
-  io.resetCtrl.hartResetReq.foreach(_ := ShiftSync(pb.io.resetCtrl.hartResetReq.get))
-  pb.io.resetCtrl.hartIsInReset := ShiftSync(io.resetCtrl.hartIsInReset)
+  pb.dfx := io.dft
+  io.cpu.msip := ShiftSync(pb.dev.msip)
+  io.cpu.mtip := ShiftSync(pb.dev.mtip)
+  io.cpu.meip := ShiftSync(pb.dev.meip)
+  io.cpu.seip := ShiftSync(pb.dev.seip)
+  io.cpu.dbip := ShiftSync(pb.dev.dbip)
+  pb.dev.extIntr := io.ext.intr
+  pb.dev.timerTick := io.ext.timerTick
+  pb.dev.debug <> io.debug
+  io.resetCtrl.hartResetReq.foreach(_ := ShiftSync(pb.dev.resetCtrl.hartResetReq.get))
+  pb.dev.resetCtrl.hartIsInReset := ShiftSync(io.resetCtrl.hartIsInReset)
 }
