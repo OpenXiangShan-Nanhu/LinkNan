@@ -101,8 +101,9 @@ function simv_comp(num_cores)
   vcs_flags = vcs_flags .. " -debug_access +lint=TFIPC-L -l vcs.log -top tb_top"
   vcs_flags = vcs_flags .. " -fgp -lca -kdb +nospecify +notimingcheck -no_save"
   vcs_flags = vcs_flags .. " +define+PRINTF_COND=1 +define+VCS"
-  vcs_flags = vcs_flags .. " +define+CONSIDER_FSDB=tb_top.sim +vcs+initreg+random"
+  vcs_flags = vcs_flags .. " +define+CONSIDER_FSDB=tb_top.sim"
   vcs_flags = vcs_flags .. " +define+SIM_TOP_MODULE_NAME=tb_top.sim -j200"
+  vcs_flags = vcs_flags .. string.format(" +vcs+initreg+config+%s", path.join(abs_base, "scripts", "linknan", "vcs.cfg"))
   if not option.get("no_fsdb") then
     novas = path.join(os.getenv("VERDI_HOME"), "share", "PLI", "VCS", "LINUX64")
     vcs_flags = vcs_flags .. " -P " .. path.join(novas, "novas.tab")
@@ -192,7 +193,6 @@ function simv_run()
   sh_str = sh_str .. " -fgp=num_threads:4,num_fsdb_threads:4"
   sh_str = sh_str .. " -assert finish_maxfail=30"
   sh_str = sh_str .. " -assert global_finish_maxfail=10000"
-  sh_str = sh_str .. string.format(" +vcs+initreg+config+%s", path.join(abs_dir, "scripts", "linknan", "vcs.cfg"))
   sh_str = sh_str .. " ) 2>assert.log |tee run.log"
   io.writefile("tmp.sh", sh_str)
   print(sh_str)
