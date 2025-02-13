@@ -192,7 +192,7 @@ function simv_run()
   sh_str = sh_str .. " -fgp=num_threads:4,num_fsdb_threads:4"
   sh_str = sh_str .. " -assert finish_maxfail=30"
   sh_str = sh_str .. " -assert global_finish_maxfail=10000"
-  sh_str = sh_str .. f(" +vcs+initreg+config+%s", path.join(abs_dir, "scripts", "linknan", "vcs.cfg"))
+  sh_str = sh_str .. string.format(" +vcs+initreg+config+%s", path.join(abs_dir, "scripts", "linknan", "vcs.cfg"))
   sh_str = sh_str .. " ) 2>assert.log |tee run.log"
   io.writefile("tmp.sh", sh_str)
   print(sh_str)
