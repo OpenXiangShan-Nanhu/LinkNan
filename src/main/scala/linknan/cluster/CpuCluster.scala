@@ -3,7 +3,6 @@ package linknan.cluster
 import chisel3._
 import chisel3.experimental.hierarchy.core.IsLookupable
 import chisel3.experimental.hierarchy.{Definition, Instance, instantiable, public}
-import darecreek.exu.vfu.{VFuParameters, VFuParamsKey}
 import org.chipsalliance.diplomacy.lazymodule.{LazyModule, LazyModuleImp}
 import freechips.rocketchip.tilelink.{TLBundle, TLBundleParameters, TLClientNode, TLEdgeIn, TLManagerNode, TLXbar}
 import linknan.cluster.core.{BoomV4CoreWrapper, NanhuCoreWrapper}

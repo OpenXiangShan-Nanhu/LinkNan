@@ -31,7 +31,6 @@ class BaseConfig(core:String) extends Config((site, here, up) => {
   case MiscKey => MiscOpts("", core == "boom")
   case TestIoOptionsKey => TestIoOptions()
   case LinkNanParamsKey => LinkNanParams()
-  case DebugOptionsKey => DebugOptions()
   case DcacheKey => DCacheParameters()
   case L2ParamKey => L2Param(useDiplomacy = true)
 })

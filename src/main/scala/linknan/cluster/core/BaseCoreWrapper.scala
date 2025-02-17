@@ -44,7 +44,7 @@ class CoreWrapperIO(ioParams:TLBundleParameters, l2Params: TLBundleParameters)(i
 abstract class BaseCoreWrapper(legacyMmap:Boolean = true)(implicit p:Parameters) extends LazyModule with BindingScope {
   private val paddrBits = p(ZJParametersKey).requestAddrBits
   private val allSpace = AddressSet(0x0L, (0x1L << paddrBits) - 1)
-  private val mmioSpace = AddressSet(0x1L << (paddrBits - 1), (0x1L << paddrBits - 1) - 1)
+  private val mmioSpace = AddressSet(0x1L << (paddrBits - 1), (0x1L << paddrBits - 2) - 1)
   private val mmioAddressSets = if(legacyMmap) {
     Seq(AddressSet(0L, 0x7FFF_FFFF), mmioSpace)
   } else {

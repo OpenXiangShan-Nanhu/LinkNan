@@ -53,7 +53,7 @@ class SimTop(implicit p: Parameters) extends Module {
   val io = IO(new Bundle(){
     val simFinal = if(hasCsu) Some(Input(Bool())) else None
     val logCtrl = if(doBlockTest) None else Some(new LogCtrlIO)
-    val perfInfo = if(doBlockTest) None else Some(new PerfInfoIO)
+    val perfInfo = if(doBlockTest) None else Some(new PerfCtrlIO)
     val uart = if(doBlockTest) None else Some(new UARTIO)
     val dma = if(doBlockTest) Some(MixedVec(soc.dmaIO.map(drv => Flipped(new AxiBundle(drv.params))))) else None
     val cfg = if(doBlockTest) Some(new AxiBundle(cfgMain.params)) else None
@@ -185,7 +185,7 @@ class SimTop(implicit p: Parameters) extends Module {
     val logEnable = Wire(Bool())
     val clean = Wire(Bool())
     val dump = Wire(Bool())
-    logEnable := (timer >= io.logCtrl.get.log_begin) && (timer < io.logCtrl.get.log_end)
+    logEnable := (timer >= io.logCtrl.get.begin) && (timer < io.logCtrl.get.end)
     clean := RegNext(io.perfInfo.get.clean, false.B)
     dump := io.perfInfo.get.dump
     dontTouch(timer)

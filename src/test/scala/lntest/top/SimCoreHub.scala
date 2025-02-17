@@ -26,10 +26,9 @@ class SimCoreHub(params:BlockTestIOParams)(implicit p: Parameters) extends LazyM
     tagECC = None,
     dataECC = None,
     replacer = Some("setplru"),
-    nPrefetchEntries = 2,
   )
   private val l2tlbImplParams = L2TLBParameters()
-  private val icacheOutstanding = icacheImplParams.nMissEntries + icacheImplParams.nReleaseEntries + icacheImplParams.nPrefetchEntries
+  private val icacheOutstanding = icacheImplParams.nFetchMshr + icacheImplParams.nPrefetchMshr
   private val ptwOustanding = l2tlbImplParams.llptwsize + 1
   private val icacheDplmcParams = TLMasterPortParameters.v1(
     Seq(TLMasterParameters.v1(

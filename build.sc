@@ -72,6 +72,7 @@ object xsutils extends SbtModule with CommonModule {
 
 object difftest extends SbtModule with CommonModule {
   override def millSourcePath = os.pwd / "dependencies" / "difftest"
+  override def moduleDeps = super.moduleDeps ++ Seq(rocketchip)
 }
 
 object zhujiang extends SbtModule with CommonModule {
@@ -86,10 +87,35 @@ object nhl2 extends SbtModule with CommonModule {
 
 object nanhu extends SbtModule with CommonModule {
   override def millSourcePath = os.pwd / "dependencies" / "nanhu"
-  override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, fudian, difftest)
+  override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, fudian, huancun, coupledL2, yunsuan, openLLC, difftest)
 
   object fudian extends SbtModule with CommonModule {
     override def millSourcePath = os.pwd / "dependencies" / "nanhu" / "fudian"
+  }
+
+  object utility extends SbtModule with CommonModule {
+    override def millSourcePath = os.pwd / "dependencies" / "nanhu" / "utility"
+    override def moduleDeps = super.moduleDeps ++ Seq(rocketchip)
+  }
+
+  object huancun extends SbtModule with CommonModule {
+    override def millSourcePath = os.pwd / "dependencies" / "nanhu" / "huancun"
+    override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, utility, xsutils)
+  }
+
+  object coupledL2 extends SbtModule with CommonModule {
+    override def millSourcePath = os.pwd / "dependencies" / "nanhu" / "coupledL2"
+    override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, utility, xsutils, huancun)
+  }
+
+  object yunsuan extends SbtModule with CommonModule {
+    override def millSourcePath = os.pwd / "dependencies" / "nanhu" / "yunsuan"
+    override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils)
+  }
+
+  object openLLC extends SbtModule with CommonModule {
+    override def millSourcePath = os.pwd / "dependencies" / "nanhu" / "openLLC"
+    override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, coupledL2)
   }
 }
 
