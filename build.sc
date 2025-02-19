@@ -109,7 +109,7 @@ object nanhu extends SbtModule with CommonModule {
   }
 
   object yunsuan extends SbtModule with CommonModule {
-    override def millSourcePath = os.pwd / "dependencies" / "nanhu" / "yunsuan"
+    override def millSourcePath = os.pwd / "dependencies" / "nanhu" / "YunSuan"
     override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils)
   }
 
