@@ -39,27 +39,25 @@ class BaseConfig(core:String) extends Config((site, here, up) => {
 class FullNocConfig(core:String, socket:String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
-      NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true, dpId = 0),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true, hfpId = 0),
       NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true, dpId = 0),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.S, bankId = 2, splitFlit = true, dpId = 0),
+      NodeParam(nodeType = NodeType.HF, bankId = 1, splitFlit = true, hfpId = 0),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, splitFlit = true, hfpId = 0),
       NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.S, bankId = 3, splitFlit = true, dpId = 0),
+      NodeParam(nodeType = NodeType.HF, bankId = 3, splitFlit = true, hfpId = 0),
 
       NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, outstanding = 32, attr = "main"),
       NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
       NodeParam(nodeType = NodeType.RI, attr = "", splitFlit = true),
 
-      NodeParam(nodeType = NodeType.S, bankId = 3, splitFlit = true, dpId = 1),
+      NodeParam(nodeType = NodeType.HF, bankId = 3, splitFlit = true, hfpId = 1),
       NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.S, bankId = 2, splitFlit = true, dpId = 1),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, splitFlit = true),
-      NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true, dpId = 1),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, splitFlit = true, hfpId = 1),
+      NodeParam(nodeType = NodeType.HF, bankId = 1, splitFlit = true, hfpId = 1),
       NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true, dpId = 1),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data"),
+      NodeParam(nodeType = NodeType.S, splitFlit = true, outstanding = 32, attr = "ddr_data"),
       NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
       NodeParam(nodeType = NodeType.P),
     )
@@ -69,15 +67,15 @@ class FullNocConfig(core:String, socket:String) extends Config((site, here, up) 
 class ReducedNocConfig(core:String, socket:String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
-      NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true),
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "main"),
-      NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
-      NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
-      NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data")
+//      NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
+//      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
+//      NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
+//      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
+//      NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true),
+//      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "main"),
+//      NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
+//      NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
+//      NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data")
     )
   )
 })
@@ -85,14 +83,14 @@ class ReducedNocConfig(core:String, socket:String) extends Config((site, here, u
 class MinimalNocConfig(core:String, socket:String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     localNodeParams = Seq(
-      NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 1, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true),
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "main"),
-      NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
-      NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
-      NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data")
+//      NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
+//      NodeParam(nodeType = NodeType.CC, cpuNum = 1, splitFlit = true, outstanding = 8, attr = core, socket = socket),
+//      NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
+//      NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true),
+//      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "main"),
+//      NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
+//      NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
+//      NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data")
     )
   )
 })
