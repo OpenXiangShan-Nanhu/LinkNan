@@ -9,9 +9,11 @@ import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import org.chipsalliance.diplomacy.bundlebridge._
 import xs.utils.IntBuffer
+import xs.utils.common._
 import xiangshan.{XLen, PMParameKey, PMParameters, XSCore, XSCoreParameters, XSCoreParamsKey, NonmaskableInterruptIO}
 import xs.utils.tl.{TLUserKey, TLUserParams}
 import xs.utils.perf.{DebugOptionsKey, PerfCounterOptions, PerfCounterOptionsKey, LogUtilsOptionsKey, LogUtilsOptions}
+import xiangshan._
 
 
 class NanhuCoreWrapper(implicit p:Parameters) extends BaseCoreWrapper {
@@ -36,8 +38,8 @@ class NanhuCoreWrapper(implicit p:Parameters) extends BaseCoreWrapper {
   private val plicIntSrc = IntSourceNode(IntSourcePortSimple(1, 2))
   private val debugIntSrc = IntSourceNode(IntSourcePortSimple(1, 1))
   private val nmiIntNode = IntSourceNode(IntSourcePortSimple(1, 1, (new NonmaskableInterruptIO).elements.size))
-  private val l2_pf_recv_node: BundleBridgeSink[coupledL2.PrefetchRecv] = BundleBridgeSink(Some(() => new coupledL2.PrefetchRecv))
-  private val l3_pf_recv_node: BundleBridgeSink[huancun.PrefetchRecv] = BundleBridgeSink(Some(() => new huancun.PrefetchRecv))
+  private val l2_pf_recv_node: BundleBridgeSink[PrefetchRecv] = BundleBridgeSink(Some(() => new PrefetchRecv))
+  private val l3_pf_recv_node: BundleBridgeSink[PrefetchRecv] = BundleBridgeSink(Some(() => new PrefetchRecv))
 
   core.memBlock.inner.clint_int_sink :*= clintIntBuf.node :*= clintIntSrc
   core.memBlock.inner.plic_int_sink :*= plicIntBuf.node :*= plicIntSrc
