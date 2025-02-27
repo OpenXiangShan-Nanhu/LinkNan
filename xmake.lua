@@ -111,7 +111,7 @@ task("emu-run", function ()
       {'W', "warmup", "kv", "0", "gz image name"},
       {'I', "instr", "kv", "0", "gz image name"},
       {nil, "case_dir", "kv", "ready-to-run", "image base dir"},
-      {nil, "ref", "kv", "riscv64-spike-so", "reference model"},
+      {nil, "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
       {'s', "seed", "kv", "1234", "random seed"},
     }
