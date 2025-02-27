@@ -187,7 +187,10 @@ class SimTop(implicit p: Parameters) extends Module {
     dontTouch(dump)
   }
 
-  if(!doBlockTest) DifftestModule.finish("XiangShan")
+  if(!doBlockTest) {
+    val difftest = DifftestModule.finish("XiangShan")
+    difftest.uart <> simMMIO.get.io.uart  // workaround for kmh difftest wrapper
+  }
 }
 
 object SimGenerator extends App {
