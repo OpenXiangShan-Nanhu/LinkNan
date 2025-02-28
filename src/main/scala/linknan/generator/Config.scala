@@ -115,7 +115,7 @@ class L2Config(sizeInKiB:Int = 1024, ways:Int = 8, slices:Int = 2) extends Confi
     )
 })
 
-class L1DConfig(sizeInKiB:Int = 64, ways:Int = 4) extends Config((site, here, up) => {
+class L1DConfig(sizeInKiB:Int = 32, ways:Int = 4) extends Config((site, here, up) => {
   case DcacheKey =>
     up(DcacheKey).copy(
       nSets = sizeInKiB * 1024 / ways / 64,
@@ -124,8 +124,9 @@ class L1DConfig(sizeInKiB:Int = 64, ways:Int = 4) extends Config((site, here, up
       dataECC = Some("secded"),
       replacer = Some("setplru"),
       nMissEntries = 16,
-      nProbeEntries = 8,
-      nReleaseEntries = 18
+      nProbeEntries = 4,
+      nReleaseEntries = 4,
+      nMaxPrefetchEntry = 6,
     )
 })
 

@@ -5,22 +5,59 @@ import chisel3.experimental.hierarchy.instantiable
 import freechips.rocketchip.interrupts.{IntSourceNode, IntSourcePortSimple}
 import freechips.rocketchip.tilelink.{TLBuffer, TLXbar}
 import linknan.generator.DcacheKey
-import org.chipsalliance.cde.config.Parameters
+import org.chipsalliance.cde.config.{Config, Parameters}
 import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import org.chipsalliance.diplomacy.bundlebridge._
 import xs.utils.IntBuffer
 import xs.utils.common._
-import xiangshan.{XLen, PMParameKey, PMParameters, XSCore, XSCoreParameters, XSCoreParamsKey, NonmaskableInterruptIO}
+import xiangshan.{NonmaskableInterruptIO, PMParameKey, PMParameters, XSCore, XSCoreParameters, XSCoreParamsKey}
 import xs.utils.tl.{TLUserKey, TLUserParams}
-import xs.utils.perf.{DebugOptionsKey, PerfCounterOptions, PerfCounterOptionsKey, LogUtilsOptionsKey, LogUtilsOptions}
+import xs.utils.perf.{DebugOptionsKey, LogUtilsOptions, LogUtilsOptionsKey, PerfCounterOptions, PerfCounterOptionsKey}
 import xiangshan._
+import xiangshan.cache.DCacheParameters
+import xiangshan.frontend.icache.ICacheParameters
 
+
+class WithNKBL1I(n: Int, ways: Int = 4) extends Config((site, here, up) => {
+  case XSCoreParamsKey =>
+    val sets = n * 1024 / ways / 64
+    up(XSCoreParamsKey).copy(
+      icacheParameters = ICacheParameters(
+        nSets = sets,
+        nWays = ways,
+        tagECC = Some("parity"),
+        dataECC = Some("parity"),
+        replacer = Some("setplru")
+      )
+    )
+})
+
+
+class WithNKBL1D(n: Int, ways: Int = 8) extends Config((site, here, up) => {
+  case XSCoreParamsKey =>
+    val sets = n * 1024 / ways / 64
+    up(XSCoreParamsKey).copy(
+      dcacheParametersOpt = Some(DCacheParameters(
+        nSets = sets,
+        nWays = ways,
+        tagECC = Some("secded"),
+        dataECC = Some("secded"),
+        replacer = Some("setplru"),
+        nMissEntries = 16,
+        nProbeEntries = 4,
+        nReleaseEntries = 4,
+        nMaxPrefetchEntry = 6,
+      )
+    ))
+})
 
 class NanhuCoreWrapper(implicit p:Parameters) extends BaseCoreWrapper {
 
   private val dcacheParams = p(DcacheKey)
   private val debugParams = p(DebugOptionsKey)
-  private val core = LazyModule(new XSCore()(p.alterPartial({
+  private val core = LazyModule(new XSCore()(
+    new WithNKBL1I(32,4) ++ new WithNKBL1D(32,4) ++
+    p.alterPartial({
     case XLen => 64
     case XSCoreParamsKey => XSCoreParameters()
     case TLUserKey => TLUserParams(aliasBits = dcacheParams.aliasBitsOpt.getOrElse(0))
