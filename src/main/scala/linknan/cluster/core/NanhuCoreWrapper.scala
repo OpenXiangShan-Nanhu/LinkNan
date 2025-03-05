@@ -62,7 +62,7 @@ class NanhuV5CoreConfig extends Config((site, here, up) => {
 
 class NanhuCoreWrapper(implicit p:Parameters) extends BaseCoreWrapper {
 
-  private val coreConfig = new NanhuV5CoreConfig ++ new WithNKBL1I(32,4) ++ new WithNKBL1D(32,4) ++ p
+  private val coreConfig = new WithNKBL1I(32,4) ++ new WithNKBL1D(32,4) ++ new NanhuV5CoreConfig ++ p
   private val core = LazyModule(new XSCore()(coreConfig))
   private val coreXBar = LazyModule(new TLXbar)
   private val mmioXbar = LazyModule(new TLXbar)
