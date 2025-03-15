@@ -21,7 +21,7 @@ case class ClusterPeriParams(
 }
 
 class PeriXBar(tlParams: Seq[TilelinkParams], periParams: Seq[ClusterPeriParams], coreNum:Int)(implicit p: Parameters) extends BaseTLULXbar {
-  private val coreIdBits = clusterIdBits - nodeAidBits
+  private val coreIdBits = cpuIdBits
   private val cpuSpaceBits = p(ZJParametersKey).cpuSpaceBits
   private val mstAddrBits = cpuSpaceBits + coreIdBits
   val mstParams = tlParams.map(_.copy(addrBits = mstAddrBits))

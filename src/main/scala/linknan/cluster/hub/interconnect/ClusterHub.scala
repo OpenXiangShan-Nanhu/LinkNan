@@ -11,11 +11,11 @@ import zhujiang.device.socket.{SocketDevSide, SocketDevSideBundle, SocketIcnSide
 import zhujiang.{DftWires, ZJBundle, ZJModule}
 
 class ClusterAddrBundle(implicit p:Parameters) extends ZJBundle {
-  val mmio = Bool()
-  val chip = UInt(nodeAidBits.W)
-  val tag = UInt((raw - 1 - clusterIdBits - zjParams.cpuSpaceBits).W)
-  val cpu = UInt((clusterIdBits - nodeAidBits).W)
+  val ci = UInt(ciIdBits.W)
+  val tag = UInt((raw - clusterIdBits - zjParams.cpuSpaceBits).W)
+  val cpu = UInt(cpuIdBits.W)
   val dev = UInt(zjParams.cpuSpaceBits.W)
+  require(this.getWidth == raw)
 }
 
 class ClusterMiscWires(node: Node)(implicit p: Parameters) extends ZJBundle {
@@ -131,7 +131,7 @@ class ClusterHub(node: Node)(implicit p: Parameters) extends ZJModule {
     (chn, pipe.io.enq)
   }).toMap
 
-  private val icnTxReqArb = Module(new ResetRRArbiter(UInt(reqFlitBits.W), 2))
+  private val icnTxReqArb = Module(new ResetRRArbiter(UInt(rreqFlitBits.W), 2))
   txChnMap("REQ") <> icnTxReqArb.io.out
   private val icnTxRespArb = Module(new ResetRRArbiter(UInt(respFlitBits.W), 3))
   txChnMap("RSP") <> icnTxRespArb.io.out

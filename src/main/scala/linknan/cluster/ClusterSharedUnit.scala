@@ -113,7 +113,7 @@ class ClusterSharedUnit(cioEdge: TLEdgeIn, l2EdgeIn: TLEdgeIn, node:Node)(implic
       coreCtl.pchn.active := core.pchn.active | RegNext(Cat(probeValid, !probeValid, false.B))
     }
     io.hub.csu.cio <> cioOutNode.in.head._1
-    io.hub.csu.cio.a.bits.address := cioOutNode.in.head._1.a.bits.address | (1L << (raw - 1)).U
+    io.hub.csu.cio.a.bits.address := cioOutNode.in.head._1.a.bits.address
 
     private val l2 = l2cache.module
     private val l2Chi = Wire(new DeviceIcnBundle(node))
@@ -157,7 +157,7 @@ class ClusterSharedUnit(cioEdge: TLEdgeIn, l2EdgeIn: TLEdgeIn, node:Node)(implic
     connectByName(l2.io.chi.rxdat, rxdat)
     connectByName(l2.io.chi.rxsnp, rxsnp)
 //    txreq.bits.LPID := l2.io.chi.txreq.bits.lpID
-//    txreq.bits.SnoopMe := l2.io.chi.txreq.bits.snoopMe
+    txreq.bits.SnoopMe := l2.io.chi.txreq.bits.snoopMe
     txdat.bits.FwdState := l2.io.chi.txdat.bits.fwdState
     l2.io.chi.rxdat.bits.fwdState := rxdat.bits.FwdState
 

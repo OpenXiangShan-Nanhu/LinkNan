@@ -37,7 +37,12 @@ import xijiang.tfb.TrafficBoardFileManager
 import xs.utils.perf.DebugOptionsKey
 import xs.utils.tl.{TLUserKey, TLUserParams}
 import zhujiang.ZJParametersKey
-import zhujiang.axi.{AxiBundle, AxiUtils}
+import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
+
+class MasterBridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
+  val slvMatchersSeq = Seq(_ => true.B)
+  initialize()
+}
 
 class SimTop(implicit p: Parameters) extends Module {
   override def resetType = Module.ResetType.Asynchronous
@@ -45,9 +50,19 @@ class SimTop(implicit p: Parameters) extends Module {
   private val doBlockTest = p(TestIoOptionsKey).doBlockTest
   private val hasCsu = p(TestIoOptionsKey).hasCsu
   private val soc = Module(new LNTop)
-  private val cfgMain = soc.cfgIO.filter(_.params.attr == "main").head
-  private val dmaMain = soc.dmaIO.filter(_.params.attr == "main").head
-  private val l_simMMIO = if(doBlockTest) None else Some(LazyModule(new SimMMIO(cfgMain.params, dmaMain.params)))
+
+  private def genAxiMstPort(nocPorts:Seq[ExtAxiBundle]):AxiBundle = {
+    val intnls = nocPorts.map(AxiUtils.getIntnl)
+    val xbar = Module(new MasterBridge(intnls.map(_.params)))
+    xbar.io.upstream.zip(intnls).foreach({case(a, b) => a <> b})
+    xbar.io.downstream.head
+  }
+
+  soc.dmaIO.foreach(_ := DontCare)
+  private val cfgPort = genAxiMstPort(soc.cfgIO)
+  private val memPort = genAxiMstPort(soc.ddrIO)
+
+  private val l_simMMIO = if(doBlockTest) None else Some(LazyModule(new SimMMIO(cfgPort.params, soc.dmaIO.head.params)))
   private val simMMIO = if(doBlockTest) None else Some(Module(l_simMMIO.get.module))
 
   val io = IO(new Bundle(){
@@ -56,7 +71,7 @@ class SimTop(implicit p: Parameters) extends Module {
     val perfInfo = if(doBlockTest) None else Some(new PerfInfoIO)
     val uart = if(doBlockTest) None else Some(new UARTIO)
     val dma = if(doBlockTest) Some(MixedVec(soc.dmaIO.map(drv => Flipped(new AxiBundle(drv.params))))) else None
-    val cfg = if(doBlockTest) Some(new AxiBundle(cfgMain.params)) else None
+    val cfg = if(doBlockTest) Some(new AxiBundle(cfgPort.params)) else None
   })
 
   private def connByName(sink:ReadyValidIO[Bundle], src:ReadyValidIO[Bundle]):Unit = {
@@ -73,44 +88,42 @@ class SimTop(implicit p: Parameters) extends Module {
   soc.cfgIO.filterNot(_.params.attr == "main").foreach(_ := DontCare)
   if(doBlockTest) {
     io.dma.get.zip(soc.dmaIO).foreach({case(a, b) => a <> b})
-    io.cfg.get <> cfgMain
+    io.cfg.get <> cfgPort
     soc.io.ext_intr := 0.U
   } else {
     soc.io.ext_intr := simMMIO.get.io.interrupt.intrVec
     val periCfg = simMMIO.get.cfg.head
     val periDma = simMMIO.get.dma.head
-    val socCfg = AxiUtils.getIntnl(cfgMain)
-    val socDma = AxiUtils.getIntnl(dmaMain)
+    val dmaMain = AxiUtils.getIntnl(soc.dmaIO.head)
 
-    connByName(periCfg.aw, socCfg.aw)
-    connByName(periCfg.ar, socCfg.ar)
-    connByName(periCfg.w, socCfg.w)
-    connByName(socCfg.r, periCfg.r)
-    connByName(socCfg.b, periCfg.b)
+    connByName(periCfg.aw, cfgPort.aw)
+    connByName(periCfg.ar, cfgPort.ar)
+    connByName(periCfg.w, cfgPort.w)
+    connByName(cfgPort.r, periCfg.r)
+    connByName(cfgPort.b, periCfg.b)
 
-    connByName(socDma.aw, periDma.aw)
-    connByName(socDma.ar, periDma.ar)
-    connByName(socDma.w, periDma.w)
-    connByName(periDma.r, socDma.r)
-    connByName(periDma.b, socDma.b)
+    connByName(dmaMain.aw, periDma.aw)
+    connByName(dmaMain.ar, periDma.ar)
+    connByName(dmaMain.w, periDma.w)
+    connByName(periDma.r, dmaMain.r)
+    connByName(periDma.b, dmaMain.b)
   }
 
-  private val l_simAXIMem = LazyModule(new DummyDramMoudle(soc.ddrIO.params))
+  private val l_simAXIMem = LazyModule(new DummyDramMoudle(soc.ddrIO.head.params))
   private val simAXIMem = Module(l_simAXIMem.module)
   private val memAxi = simAXIMem.axi.head
-  private val socDdr = AxiUtils.getIntnl(soc.ddrIO)
-  connByName(memAxi.aw, socDdr.aw)
-  connByName(memAxi.ar, socDdr.ar)
-  connByName(memAxi.w, socDdr.w)
-  connByName(socDdr.r, memAxi.r)
-  connByName(socDdr.b, memAxi.b)
+  connByName(memAxi.aw, memPort.aw)
+  connByName(memAxi.ar, memPort.ar)
+  connByName(memAxi.w, memPort.w)
+  connByName(memPort.r, memAxi.r)
+  connByName(memPort.b, memAxi.b)
 
   val freq = 100
   val cnt = RegInit((freq - 1).U)
   val tick = cnt < (freq / 2).U
   cnt := Mux(cnt === 0.U, (freq - 1).U, cnt - 1.U)
 
-  private val ccns = p(ZJParametersKey).localRing.filter(_.nodeType == NodeType.CC).map(_.attr)
+  private val ccns = p(ZJParametersKey).island.filter(_.nodeType == NodeType.CC).map(_.attr)
   private val bootAddr = if(ccns.contains("boom")) 0x80000000L.U else 0x10000000L.U
   private val socReset = reset.asAsyncReset.asBool || soc.io.ndreset
   soc.io.rtc_clock := tick
@@ -120,7 +133,7 @@ class SimTop(implicit p: Parameters) extends Module {
   soc.io.dft := DontCare
   soc.io.dft.reset.lgc_rst_n := true.B.asAsyncReset
   soc.io.default_reset_vector := bootAddr
-  soc.io.chip := 0.U
+  soc.io.ci := 0.U
 
 
   if(doBlockTest) {
@@ -145,13 +158,8 @@ class SimTop(implicit p: Parameters) extends Module {
   if(hasCsu && p(DebugOptionsKey).EnableLuaScoreBoard) {
     val l2StrSeq = soc.ccns.zipWithIndex.map(n => s"[${n._2}] = { ${p(L2ParamKey).nrSlice}, ${n._1.cpuNum} }")
     val l2Str = l2StrSeq.reduce((a, b) => s"$a, $b")
-    val nrPcu = p(ZJParametersKey).localRing.count(_.nodeType == NodeType.HF)
-    val dcuSeq = p(ZJParametersKey).localRing.filter(n => n.nodeType == NodeType.S && !n.mainMemory)
-    val dcuStr = dcuSeq.groupBy(_.bankId).map(ns => {
-      val nodeIdStr = ns._2.map(n => s"0x${n.nodeId.toHexString}").reduce((a, b) => s"$a, $b")
-      s"[${ns._1}] = {$nodeIdStr}"
-    }).reduce((a, b) => s"$a, $b")
-    val luaScb = Module(new LuaScoreboard(s"{ $l2Str }", nrPcu, dcuSeq.groupBy(_.bankId).size, s"{ $dcuStr }"))
+    val nrHnf = p(ZJParametersKey).island.count(_.nodeType == NodeType.HF)
+    val luaScb = Module(new LuaScoreboard(s"{ $l2Str }", nrHnf))
     luaScb.io.clock := clock
     luaScb.io.reset := reset.asBool
     luaScb.io.sim_final := io.simFinal.get

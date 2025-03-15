@@ -35,11 +35,11 @@ object ShiftSync {
 
 class AxiCfgXBar(icnAxiParams: AxiParams)(implicit val p: Parameters) extends BaseAxiXbar(Seq(icnAxiParams)) with HasZJParams {
   val misc = IO(new Bundle {
-    val chip = Input(UInt(zjParams.nodeAidBits.W))
+    val ci = Input(UInt(zjParams.ciIdBits.W))
   })
   private def slvMatcher(internal: Boolean)(addr: UInt): Bool = {
     val reqAddr = addr.asTypeOf(new ReqAddrBundle)
-    val matchRes = WireInit(reqAddr.chip === misc.chip && 0x3800_0000.U <= reqAddr.devAddr && reqAddr.devAddr < 0x4000_0000.U)
+    val matchRes = WireInit(reqAddr.ci === misc.ci && 0x3800_0000.U <= reqAddr.devAddr && reqAddr.devAddr < 0x4000_0000.U)
     if(internal) {
       matchRes
     } else {
@@ -57,7 +57,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams, hwaNode: HwAsrt
   val implicitClock = clock
   val implicitReset = Wire(AsyncReset())
 
-  private val coreNum = zjParams.localRing.filter(_.nodeType == NodeType.CC).map(_.cpuNum).sum
+  private val coreNum = zjParams.island.filter(_.nodeType == NodeType.CC).map(_.cpuNum).sum
   private val extIntrNum = p(LinkNanParamsKey).nrExtIntr
   private val extDmaParams = dmaParams.copy(idBits = dmaParams.idBits - 1)
 
@@ -95,7 +95,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams, hwaNode: HwAsrt
       val seip = Output(UInt(coreNum.W))
       val dbip = Output(UInt(coreNum.W))
     }
-    val chip = Input(UInt(nodeAidBits.W))
+    val ci = Input(UInt(ciIdBits.W))
     val debug = pb.dev.debug.cloneType
     val resetCtrl = pb.dev.resetCtrl.cloneType
     val dft = Input(new DftWires)
@@ -109,7 +109,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams, hwaNode: HwAsrt
   io.hwa.ready := true.B
   dontTouch(io)
 
-  cfgXBar.misc.chip := io.chip
+  cfgXBar.misc.ci := io.ci
   cfgXBar.io.upstream.head <> AxiBuffer(io.slv, name = Some("slv_port_buf"))
   axi2tl.io.axi <> cfgXBar.io.downstream.head
   cfgBuf.io.in <> cfgXBar.io.downstream.last

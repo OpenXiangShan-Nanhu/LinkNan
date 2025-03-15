@@ -64,7 +64,7 @@ class CpuCtlBundle(implicit p:Parameters) extends ZJBundle {
   val pcsm = new PcsmCtrlIO
   val defaultBootAddr = Input(UInt(64.W))
   val defaultEnable = Input(Bool())
-  val coreId = Input(UInt((clusterIdBits - nodeAidBits).W))
+  val coreId = Input(UInt(cpuIdBits.W))
   val blockProbe = Output(Bool())
 }
 

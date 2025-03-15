@@ -37,81 +37,102 @@ class BaseConfig(core:String) extends Config((site, here, up) => {
 
 class FullNocConfig(core:String, socket:String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
-    localNodeParams = Seq(
-      NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true, dpId = 0),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true, dpId = 0),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.S, bankId = 2, splitFlit = true, dpId = 0),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.S, bankId = 3, splitFlit = true, dpId = 0),
-
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, outstanding = 32, attr = "main"),
-      NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
-      NodeParam(nodeType = NodeType.RI, attr = "", splitFlit = true),
-
-      NodeParam(nodeType = NodeType.S, bankId = 3, splitFlit = true, dpId = 1),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.S, bankId = 2, splitFlit = true, dpId = 1),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, splitFlit = true),
-      NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true, dpId = 1),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true, dpId = 1),
-
-      NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data"),
-      NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
+    nodeParams = Seq(
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
       NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+
+      NodeParam(nodeType = NodeType.RI, attr = "main"),
+      NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main"),
+      NodeParam(nodeType = NodeType.P),
+
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 1),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
+
+      NodeParam(nodeType = NodeType.S, bankId = 0),
+      NodeParam(nodeType = NodeType.S, bankId = 1),
+      NodeParam(nodeType = NodeType.P)
     )
   )
 })
 
 class ReducedNocConfig(core:String, socket:String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
-    localNodeParams = Seq(
-      NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 2, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true),
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "main"),
-      NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
-      NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
-      NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data")
+    nodeParams = Seq(
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 2, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+
+      NodeParam(nodeType = NodeType.RI, attr = "main"),
+      NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main"),
+      NodeParam(nodeType = NodeType.P),
+
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 1),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
+
+      NodeParam(nodeType = NodeType.S, bankId = 0),
+      NodeParam(nodeType = NodeType.S, bankId = 1),
+      NodeParam(nodeType = NodeType.P)
     )
   )
 })
 
 class MinimalNocConfig(core:String, socket:String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
-    localNodeParams = Seq(
-      NodeParam(nodeType = NodeType.S, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 1, splitFlit = true, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, splitFlit = true),
-      NodeParam(nodeType = NodeType.S, bankId = 1, splitFlit = true),
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, splitFlit = true, attr = "main"),
-      NodeParam(nodeType = NodeType.RI, attr = "main", splitFlit = true),
-      NodeParam(nodeType = NodeType.HI, addressRange = (0x3803_0000, 0x3804_0000), splitFlit = true, attr = "ddr_cfg"),
-      NodeParam(nodeType = NodeType.S, mainMemory = true, splitFlit = true, outstanding = 32, attr = "ddr_data")
+    nodeParams = Seq(
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 1, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
+
+      NodeParam(nodeType = NodeType.RI, attr = "main"),
+      NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main"),
+      NodeParam(nodeType = NodeType.P),
+
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
+
+      NodeParam(nodeType = NodeType.S, bankId = 0),
+      NodeParam(nodeType = NodeType.S, bankId = 1),
+      NodeParam(nodeType = NodeType.P)
     )
   )
 })
 
-class LLCConfig(sizeInMiB:Int = 16, ways:Int = 16, sfWays:Int = 16) extends Config((site, here, up) => {
+class LLCConfig(sizeInMiB:Int = 8, ways:Int = 16, sfWays:Int = 16) extends Config((site, here, up) => {
   case ZJParametersKey => up(ZJParametersKey).copy(
-      cacheSizeInMiB = sizeInMiB,
-      cacheWays = ways,
-      snoopFilterWays = sfWays
+    cacheSizeInB = sizeInMiB * 1024 * 1024,
+    cacheWays = ways,
+    snoopFilterWays = sfWays
   )
 })
 
-class L2Config(sizeInKiB:Int = 1024, ways:Int = 8, slices:Int = 2) extends Config((site, here, up) => {
+class L2Config(sizeInKiB:Int = 512, ways:Int = 8, slices:Int = 2) extends Config((site, here, up) => {
   case L2ParamKey => up(L2ParamKey).copy(
     ways = ways,
     nrSlice = slices,
     sets = sizeInKiB * 1024 / ways / slices / up(L2ParamKey).blockBytes
   )
   case ZJParametersKey => up(ZJParametersKey).copy(
-      clusterCacheSizeInKiB = sizeInKiB
+      clusterCacheSizeInB = sizeInKiB * 1024
     )
 })
 

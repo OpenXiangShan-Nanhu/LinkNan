@@ -92,7 +92,7 @@ class AlwaysOnDomain(node: Node, ioParams:TLBundleParameters)(implicit p: Parame
   io.icn <> clusterHub.io.icn
   l2Buf.io.in <> clusterHub.io.l2cache
   io.cluster.csu.l2cache <> l2Buf.io.out
-  cioXbar.misc.chip := clusterHub.io.cpu.clusterId.head(nodeAidBits)
+  cioXbar.misc.ci := clusterHub.io.cpu.clusterId.head(ciIdBits)
 
   implicitClock := pll.io.cpu_clock
   implicitReset := resetSync
@@ -136,7 +136,7 @@ class AlwaysOnDomain(node: Node, ioParams:TLBundleParameters)(implicit p: Parame
     cpuDev.imsic <> cpuCtl.imsic
     cpuDev.blockProbe := cpuCtl.blockProbe
     clusterHub.io.cpu.resetState(i) := cpuDev.reset_state
-    cioXbar.misc.core(i) := cpuDev.mhartid.tail(nodeAidBits)
-    cpuCtl.coreId := cpuDev.mhartid.tail(nodeAidBits)
+    cioXbar.misc.core(i) := cpuDev.mhartid.tail(cpuIdBits)
+    cpuCtl.coreId := cpuDev.mhartid.tail(cpuIdBits)
   }
 }

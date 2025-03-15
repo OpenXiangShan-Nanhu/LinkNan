@@ -25,10 +25,10 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   HardwareAssertion.placePipe(1)
   private val assertionNode = HardwareAssertion.placePipe(Int.MaxValue, moduleTop = true)
 
-  require(noc.cfgIO.count(_.params.attr == "main") == 1)
-  require(noc.dmaIO.count(_.params.attr == "main") == 1)
-  private val cfgPort = noc.cfgIO.filter(_.params.attr == "main").head
-  private val dmaPort = noc.dmaIO.filter(_.params.attr == "main").head
+  require(noc.cfgIO.count(_.params.attr.contains("_main")) == 1)
+  require(noc.dmaIO.count(_.params.attr.contains("_main")) == 1)
+  private val cfgPort = noc.cfgIO.filter(_.params.attr.contains("_main")).head
+  private val dmaPort = noc.dmaIO.filter(_.params.attr.contains("_main")).head
   private val devWrp = Module(new DevicesWrapper(cfgPort.params, dmaPort.params, assertionNode))
   private val dmaXBar = Module(new AxiDmaXBar(Seq.fill(2)(devWrp.io.mst.params)))
 
@@ -36,9 +36,9 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   devWrp.io.slv <> cfgPort
   dmaPort <> dmaXBar.io.downstream.head
 
-  val ddrDrv = AxiUtils.getIntnl(noc.ddrIO)
-  val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr == "main").map(AxiUtils.getIntnl)
-  val dmaDrv = Seq(dmaXBar.io.upstream.last) ++ noc.dmaIO.filterNot(_.params.attr == "main").map(AxiUtils.getIntnl)
+  val ddrDrv = noc.ddrIO.map(AxiUtils.getIntnl)
+  val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr.contains("_main")).map(AxiUtils.getIntnl)
+  val dmaDrv = Seq(dmaXBar.io.upstream.last) ++ noc.dmaIO.filterNot(_.params.attr.contains("_main")).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   runIOAutomation()
 
@@ -49,7 +49,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val noc_clock = Input(Clock())
     val rtc_clock = Input(Bool())
     val ext_intr = Input(UInt(zjParams.externalInterruptNum.W))
-    val chip = Input(UInt(nodeAidBits.W))
+    val ci = Input(UInt(ciIdBits.W))
     val ndreset = Output(Bool())
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = devWrp.io.debug.systemjtag.map(t => chiselTypeOf(t))
@@ -62,7 +62,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
 
   devWrp.io.ext.timerTick := io.rtc_clock
   devWrp.io.ext.intr := io.ext_intr
-  devWrp.io.chip := io.chip
+  devWrp.io.ci := io.ci
   devWrp.io.debug.systemjtag.foreach(_ <> io.jtag.get)
   devWrp.clock := io.noc_clock
   devWrp.io.dft := io.dft
@@ -73,7 +73,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   devWrp.clock := io.noc_clock
   devWrp.reset := io.reset
   io.ndreset := devWrp.io.debug.ndreset
-  noc.io.chip := io.chip
+  noc.io.ci := io.ci
   noc.io.dft := io.dft
 
   HardwareAssertion.setTopNode(assertionNode)
@@ -89,7 +89,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     }
     ext.dft := io.dft
     ext.socket <> noc
-    ext.misc.clusterId := Cat(io.chip, clusterId.U((clusterIdBits - nodeAidBits).W))
+    ext.misc.clusterId := Cat(io.ci, clusterId.U((clusterIdBits - ciIdBits).W))
     ext.misc.defaultBootAddr := io.default_reset_vector
     for(i <- 0 until node.cpuNum) {
       val cid = clusterId + i

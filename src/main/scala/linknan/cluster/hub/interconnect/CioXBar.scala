@@ -8,21 +8,19 @@ import zhujiang.chi.ReqAddrBundle
 import zhujiang.tilelink.{BaseTLULXbar, TilelinkParams}
 
 class CioXBar(val mstParams: Seq[TilelinkParams], coreNum:Int)(implicit p: Parameters) extends BaseTLULXbar {
-  private val coreIdBits = clusterIdBits - nodeAidBits
   private val cpuSpaceBits = p(ZJParametersKey).cpuSpaceBits
   mstParams.foreach(m => require(m.addrBits == raw))
   val slvAddrBits = raw
   val misc = IO(new Bundle {
-    val chip = Input(UInt(nodeAidBits.W))
-    val core = Input(Vec(coreNum, UInt(coreIdBits.W)))
+    val ci = Input(UInt(ciIdBits.W))
+    val core = Input(Vec(coreNum, UInt(cpuIdBits.W)))
   })
   private def slvMatcher(local: Boolean)(addr: UInt): Bool = {
     val reqAddr = addr.asTypeOf(new ReqAddrBundle)
-    val mmio = reqAddr.mmio
-    val chipMatch = reqAddr.chip === misc.chip
-    val tagMatch = addr(raw - nodeAidBits - 2, cpuSpaceBits + coreIdBits) === 0.U
-    val coreMatch = Cat(misc.core.map(_ === addr(cpuSpaceBits + coreIdBits - 1, cpuSpaceBits))).orR
-    val matchRes = WireInit(mmio & chipMatch & tagMatch & coreMatch)
+    val chipMatch = reqAddr.ci === misc.ci
+    val tagMatch = addr(raw - ciIdBits - 1, cpuSpaceBits + cpuIdBits) === 0.U
+    val coreMatch = Cat(misc.core.map(_ === addr(cpuSpaceBits + cpuIdBits - 1, cpuSpaceBits))).orR
+    val matchRes = WireInit(chipMatch & tagMatch & coreMatch)
     if(local) matchRes else !matchRes
   }
   val slvMatchersSeq = Seq(slvMatcher(local = true), slvMatcher(local = false))

@@ -26,14 +26,14 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     val noc_clock = Input(Clock())
     val rtc_clock = Input(Bool())
     val ext_intr = Input(UInt(p(LinkNanParamsKey).nrExtIntr.W))
-    val chip = Input(UInt(nodeAidBits.W))
+    val ci = Input(UInt(ciIdBits.W))
     val ndreset = Output(Bool())
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = uncore.io.jtag.map(t => chiselTypeOf(t))
     val dft = Input(new DftWires)
   })
 
-  val ddrDrv = AxiUtils.getIntnl(uncore.ddrIO)
+  val ddrDrv = uncore.ddrIO.map(AxiUtils.getIntnl)
   val cfgDrv = uncore.cfgIO.map(AxiUtils.getIntnl)
   val dmaDrv = uncore.dmaIO.map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
@@ -43,7 +43,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   uncore.io.noc_clock := io.noc_clock
   uncore.io.rtc_clock := io.rtc_clock
   uncore.io.ext_intr := io.ext_intr
-  uncore.io.chip := io.chip
+  uncore.io.ci := io.ci
   uncore.io.default_reset_vector := io.default_reset_vector
   uncore.io.jtag.foreach(_ <> io.jtag.get)
   uncore.io.dft := io.dft

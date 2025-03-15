@@ -3,12 +3,10 @@ package lntest.top
 import chisel3._
 import chisel3.util._
 
-class LuaScoreboard(l2Str:String, nrPcu:Int, nrDcu:Int, dcuStr:String) extends BlackBox(
+class LuaScoreboard(l2Str:String, nrHnf:Int) extends BlackBox(
   Map(
     "L2_CFG_STR" -> l2Str,
-    "NR_PCU" -> nrPcu,
-    "NR_DCU" -> nrDcu,
-    "DCU_NODE_STR" -> dcuStr
+    "NR_HNF" -> nrHnf
   )
 ) with HasBlackBoxInline {
   val io = IO(new Bundle {
@@ -20,9 +18,7 @@ class LuaScoreboard(l2Str:String, nrPcu:Int, nrDcu:Int, dcuStr:String) extends B
     s"""
        |module LuaScoreboard #(
        |  parameter string L2_CFG_STR,
-       |  parameter NR_PCU,
-       |  parameter NR_DCU,
-       |  parameter string DCU_NODE_STR
+       |  parameter NR_HNF
        |)(
        |  input  wire clock,
        |  input  wire reset,
@@ -38,13 +34,8 @@ class LuaScoreboard(l2Str:String, nrPcu:Int, nrDcu:Int, dcuStr:String) extends B
        |
        |    $$c("setenv(\\"L2_CFG_STR\\",", L2_CFG_STR, ".c_str(), 1);");
        |
-       |    $$c("sprintf(value, \\"%d\\",", NR_PCU, ");");
-       |    $$c("setenv(\\"NR_PCU\\", value, 1);");
-       |
-       |    $$c("sprintf(value, \\"%d\\",", NR_DCU, ");");
-       |    $$c("setenv(\\"NR_DCU\\", value, 1);");
-       |
-       |    $$c("setenv(\\"DCU_NODE_STR\\",", DCU_NODE_STR, ".c_str(), 1);");
+       |    $$c("sprintf(value, \\"%d\\",", NR_HNF, ");");
+       |    $$c("setenv(\\"NR_HNF\\", value, 1);");
        |
        |    verilua_init();
        |  end
@@ -53,9 +44,7 @@ class LuaScoreboard(l2Str:String, nrPcu:Int, nrDcu:Int, dcuStr:String) extends B
        |
        |  initial begin 
        |    setenv("L2_CFG_STR", L2_CFG_STR, 1);
-       |    setenv("NR_PCU", $$sformatf("%d", NR_PCU), 1);
-       |    setenv("NR_DCU", $$sformatf("%d", NR_DCU), 1);
-       |    setenv("DCU_NODE_STR", DCU_NODE_STR, 1);
+       |    setenv("NR_HNF", $$sformatf("%d", NR_HNF), 1);
        |
        |    #1 verilua_init();
        |  end
