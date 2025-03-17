@@ -1,5 +1,6 @@
 package linknan.generator
 
+import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.perf.DebugOptionsKey
 import zhujiang.ZJParametersKey
@@ -68,17 +69,12 @@ object ArgParser {
 
         case "--no-cores" :: tail =>
           parse(config.alter((site, here, up) => {
-            case TestIoOptionsKey => up(TestIoOptionsKey).copy(removeCore = true)
-          }), tail)
-
-        case "--no-csu" :: tail =>
-          parse(config.alter((site, here, up) => {
-            case TestIoOptionsKey => up(TestIoOptionsKey).copy(removeCsu = true)
+            case LinkNanParamsKey => up(LinkNanParamsKey).copy(removeCore = true)
           }), tail)
 
         case "--prefix" :: confString :: tail =>
           parse(config.alter((site, here, up) => {
-            case MiscKey => up(MiscKey).copy(prefix = confString)
+            case LinkNanParamsKey => up(LinkNanParamsKey).copy(prefix = confString)
           }), tail)
 
         case option :: tail =>

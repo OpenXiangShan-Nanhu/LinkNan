@@ -3,11 +3,11 @@ package linknan.soc
 import chisel3._
 import chisel3.util.Cat
 import linknan.cluster.hub.interconnect.ClusterIcnBundle
-import linknan.generator.TestIoOptionsKey
 import linknan.soc.device.DevicesWrapper
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.debug.{DomainInfo, HardwareAssertion}
 import zhujiang.axi.{AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
+import zhujiang.chi.NodeIdBundle
 import zhujiang.{DftWires, HasZJParams, NocIOHelper, ZJRawModule, Zhujiang}
 
 class AxiDmaXBar(dmaAxiParams: Seq[AxiParams])(implicit val p: Parameters) extends BaseAxiXbar(dmaAxiParams) with HasZJParams {
@@ -60,7 +60,10 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   implicitClock := io.noc_clock
   implicitReset := io.reset
 
-  devWrp.io.ext.timerTick := io.rtc_clock
+  private val rtcSampler = Reg(UInt(2.W))
+  rtcSampler := Cat(rtcSampler, io.rtc_clock)(1, 0)
+  private val rtcTick = rtcSampler === 1.U & !RegNext(noc.io.onReset)
+  devWrp.io.ext.timerTick := RegNext(rtcTick)
   devWrp.io.ext.intr := io.ext_intr
   devWrp.io.ci := io.ci
   devWrp.io.debug.systemjtag.foreach(_ <> io.jtag.get)
@@ -91,6 +94,8 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     ext.socket <> noc
     ext.misc.clusterId := Cat(io.ci, clusterId.U((clusterIdBits - ciIdBits).W))
     ext.misc.defaultBootAddr := io.default_reset_vector
+    ext.misc.nodeNid := noc.node.nodeId.U.asTypeOf(new NodeIdBundle).nid
+    ext.misc.rtcTick := RegNext(rtcTick)
     for(i <- 0 until node.cpuNum) {
       val cid = clusterId + i
       ext.misc.msip(i) := devWrp.io.cpu.msip(cid)

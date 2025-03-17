@@ -2,8 +2,7 @@ package linknan.generator
 
 import chisel3.stage.ChiselGeneratorAnnotation
 import circt.stage.{ChiselStage, FirtoolOption}
-import difftest.DifftestModule
-import linknan.soc.LNTop
+import linknan.soc.{LNTop, LinkNanParamsKey}
 import xijiang.tfb.TrafficBoardFileManager
 import xs.utils.FileRegisters
 import zhujiang.ZJParametersKey
@@ -28,12 +27,12 @@ object Generator {
 
 object SocGenerator extends App {
   val (config, firrtlOpts) = ArgParser(args)
-  xs.utils.GlobalData.prefix = config(MiscKey).prefix
-  difftest.GlobalData.prefix = config(MiscKey).prefix
-  (new ChiselStage).execute(firrtlOpts, Generator.firtoolOpts(config(MiscKey).random) ++ Seq(
+  xs.utils.GlobalData.prefix = config(LinkNanParamsKey).prefix
+  difftest.GlobalData.prefix = config(LinkNanParamsKey).prefix
+  (new ChiselStage).execute(firrtlOpts, Generator.firtoolOpts(config(LinkNanParamsKey).random) ++ Seq(
     ChiselGeneratorAnnotation(() => new LNTop()(config))
   ))
 
   if(config(ZJParametersKey).tfbParams.isDefined) TrafficBoardFileManager.release("cosim", "cosim", config)
-  FileRegisters.write(filePrefix = config(MiscKey).prefix + "LNTop.")
+  FileRegisters.write(filePrefix = config(LinkNanParamsKey).prefix + "LNTop.")
 }

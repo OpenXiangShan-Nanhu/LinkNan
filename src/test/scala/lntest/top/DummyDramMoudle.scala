@@ -5,7 +5,7 @@ import freechips.rocketchip.amba.axi4.{AXI4MasterNode, AXI4MasterParameters, AXI
 import freechips.rocketchip.diplomacy.{AddressSet, IdRange, RegionType, TransferSizes}
 import freechips.rocketchip.resources.MemoryDevice
 import org.chipsalliance.diplomacy.lazymodule._
-import linknan.generator.TestIoOptionsKey
+import linknan.soc.LinkNanParamsKey
 import lntest.peripheral.AXI4MemorySlave
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.perf.DebugOptionsKey
@@ -53,7 +53,7 @@ class DummyDramMoudle(memParams: AxiParams)(implicit p: Parameters) extends Lazy
       16L * 1024 * 1024 * 1024,
       useBlackBox = true,
       dynamicLatency = p(DebugOptionsKey).UseDRAMSim,
-      pureDram = p(TestIoOptionsKey).doBlockTest
+      pureDram = p(LinkNanParamsKey).removeCore
     )
 
     private val simAXIMem = Module(l_simAXIMem.module)

@@ -12,7 +12,7 @@ class PowerControllerTop(tlParams:TilelinkParams, csu:Boolean, csuRetClkDiv:Int 
     val pcsmCtrl = new PcsmCtrlIO
     val powerOnState = Input(UInt(PowerMode.powerModeBits.W))
     val intr = Output(Bool())
-    val blockProbe = Output(Bool())
+    val blockReq = Output(Bool())
     val deactivate = Input(Bool())
     val mode = Output(UInt(PowerMode.powerModeBits.W))
   })
@@ -24,19 +24,8 @@ class PowerControllerTop(tlParams:TilelinkParams, csu:Boolean, csuRetClkDiv:Int 
   io.pcsmCtrl <> pcsm.io.ctrl
   pcu.io.powerOnState := io.powerOnState
   io.intr := pcu.io.intr
-  io.blockProbe := pcu.io.blockProbe
+  io.blockReq := pcu.io.blockReq
   io.mode := pcu.io.mode
   pcsm.io.cfg <> pcu.io.pcsm
   pcu.io.deactivate := io.deactivate
-
-  if(csu) {
-    val clken = RegInit(1.U(csuRetClkDiv.W))
-    val isRet = pcsm.io.cfg.modestat === PowerMode.RET
-    when(isRet) {
-      clken := Cat(clken(0), clken) >> 1
-    }.otherwise {
-      clken := 1.U
-    }
-    io.pcsmCtrl.clkEn := pcsm.io.ctrl.clkEn & clken(0)
-  }
 }

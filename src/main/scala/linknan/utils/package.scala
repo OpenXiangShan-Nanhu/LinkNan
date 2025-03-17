@@ -15,6 +15,14 @@ package object utils {
       if(sendMap.contains(name)) data := sendMap(name).asTypeOf(data)
     }
   }
+
+  def connectChiChn(sink: ReadyValidIO[Data], src: ReadyValidIO[Data]):Unit = {
+    require(sink.bits.getWidth == src.bits.getWidth)
+    sink.valid := src.valid
+    sink.bits := src.bits.asTypeOf(sink.bits)
+    src.ready := sink.ready
+  }
+
   class BareTLBuffer(params: TLBundleParameters, depth:Int = 2, pipe:Boolean = false) extends Module {
     val io = IO(new Bundle {
       val slv = Flipped(new TLBundle(params))

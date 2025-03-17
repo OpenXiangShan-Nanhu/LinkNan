@@ -79,17 +79,17 @@ object zhujiang extends SbtModule with CommonModule {
   override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils)
 }
 
-object nhl2 extends SbtModule with CommonModule {
-  override def millSourcePath = os.pwd / "dependencies" / "nhl2"
+object cpl2 extends SbtModule with CommonModule {
+  override def millSourcePath = os.pwd / "dependencies" / "cpl2"
   override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils)
 }
 
 object nanhu extends SbtModule with CommonModule {
   override def millSourcePath = os.pwd / "dependencies" / "nanhu"
-  override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, fudian, difftest)
+  override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, difftest, yunsuan)
 
-  object fudian extends SbtModule with CommonModule {
-    override def millSourcePath = os.pwd / "dependencies" / "nanhu" / "fudian"
+  object yunsuan extends SbtModule with CommonModule {
+    override def millSourcePath = os.pwd / "dependencies" / "nanhu" / "YunSuan"
   }
 }
 
@@ -105,7 +105,7 @@ object boom extends CommonModule {
 
 object linknan extends SbtModule with CommonModule {
   override def millSourcePath = os.pwd
-  override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, nhl2, zhujiang, nanhu, aia, boom)
+  override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, cpl2, zhujiang, nanhu, aia, boom)
 
   object test extends SbtModuleTests with TestModule.ScalaTest {
     override def ivyDeps = super.ivyDeps() ++ Agg(

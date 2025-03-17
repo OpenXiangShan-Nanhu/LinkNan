@@ -14,7 +14,7 @@ import freechips.rocketchip.tilelink._
 import freechips.rocketchip.util.{FastToSlow, SlowToFast}
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
-import xs.utils.{ClockGate, DFTResetSignals, ResetGen}
+import xs.utils.{ClockGate, DFTResetSignals, IntBuffer, ResetGen}
 import zhujiang.{DftWires, ZJParametersKey}
 
 class TLDeviceBlockIO(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) extends Bundle {
@@ -37,10 +37,6 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
   private val plic = LazyModule(new TLPLIC(PLICParams(baseAddress = 0x3c000000L), 8))
   private val clint = LazyModule(new CLINT(CLINTParams(0x38000000L), 8))
   private val debug = LazyModule(new DebugModule(coreNum))
-  private val aplic = LazyModule(new TLAPLIC(
-    p(LinkNanParamsKey).aplicParams,
-    beatBytes = 8
-  ))
   private val sbaXBar = LazyModule(new TLXbar)
 
   private val intSourceNode = IntSourceNode(IntSourcePortSimple(extIntrNum, ports = 1, sources = 1))
@@ -52,15 +48,13 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
   plic.node :*= xbar.node
   clint.node :*= xbar.node
   debug.debug.node :*= xbar.node
-  aplic.fromCPU :*= xbar.node
-  plic.intnode := intSourceNode
+  plic.intnode := IntBuffer(3, cdc = true) := intSourceNode
 
-  clintIntSink :*= clint.intnode
-  debugIntSink :*= debug.debug.dmOuter.dmOuter.intnode
-  plicIntSink :*= plic.intnode
+  clintIntSink :*= IntBuffer(3, cdc = true) :*= clint.intnode
+  debugIntSink :*= IntBuffer(3, cdc = true) :*= debug.debug.dmOuter.dmOuter.intnode
+  plicIntSink :*= IntBuffer(3, cdc = true) :*= plic.intnode
 
   sbaXBar.node :=* TLBuffer() :=* TLWidthWidget(1) :=* debug.debug.dmInner.dmInner.sb2tlOpt.get.node
-  sbaXBar.node :=* TLBuffer() :=* TLWidthWidget(8) :=* aplic.toIMSIC
   rationalSourceNode :=* TLBuffer() :=* sbaXBar.node
 
   lazy val module = new Impl
@@ -81,11 +75,7 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
 
     require(intSourceNode.out.head._1.length == io.extIntr.getWidth)
     for(idx <- 0 until extIntrNum) {
-      val intrSyncReg = RegInit(0.U(3.W))
-      intrSyncReg := Cat(io.extIntr(idx), intrSyncReg)(intrSyncReg.getWidth, 1)
-      intSourceNode.out.head._1(idx) := intrSyncReg(0)
-      aplic.module.intSrcs(idx) := intrSyncReg(0)
-      intrSyncReg.suggestName(s"intrSyncReg${idx}")
+      intSourceNode.out.head._1(idx) := io.extIntr(idx)
     }
     clint.module.io.rtcTick := io.timerTick
     private val meip = Wire(Vec(coreNum, Bool()))

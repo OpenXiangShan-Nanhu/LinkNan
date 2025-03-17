@@ -16,7 +16,6 @@
 
 package lntest.top
 
-import SimpleL2.Configs.L2ParamKey
 import chisel3.Module.ResetType
 import org.chipsalliance.cde.config.Parameters
 import chisel3.stage.ChiselGeneratorAnnotation
@@ -28,10 +27,11 @@ import xs.utils.{FileRegisters, GTimer}
 import difftest._
 import circt.stage.ChiselStage
 import linknan.cluster.BlockTestIO
-import linknan.generator.{DcacheKey, Generator, MiscKey, TestIoOptionsKey}
-import linknan.soc.LNTop
+import linknan.generator.Generator
+import linknan.soc.{LNTop, LinkNanParamsKey}
 import org.chipsalliance.diplomacy.DisableMonitors
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
+import xiangshan.XSCoreParamsKey
 import xijiang.NodeType
 import xijiang.tfb.TrafficBoardFileManager
 import xs.utils.perf.DebugOptionsKey
@@ -47,8 +47,7 @@ class MasterBridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
 class SimTop(implicit p: Parameters) extends Module {
   override def resetType = Module.ResetType.Asynchronous
   private val debugOpts = p(DebugOptionsKey)
-  private val doBlockTest = p(TestIoOptionsKey).doBlockTest
-  private val hasCsu = p(TestIoOptionsKey).hasCsu
+  private val doBlockTest = p(LinkNanParamsKey).removeCore
   private val soc = Module(new LNTop)
 
   private def genAxiMstPort(nocPorts:Seq[ExtAxiBundle]):AxiBundle = {
@@ -66,9 +65,9 @@ class SimTop(implicit p: Parameters) extends Module {
   private val simMMIO = if(doBlockTest) None else Some(Module(l_simMMIO.get.module))
 
   val io = IO(new Bundle(){
-    val simFinal = if(hasCsu) Some(Input(Bool())) else None
+    val simFinal = Input(Bool())
     val logCtrl = if(doBlockTest) None else Some(new LogCtrlIO)
-    val perfInfo = if(doBlockTest) None else Some(new PerfInfoIO)
+    val perfInfo = if(doBlockTest) None else Some(new PerfCtrlIO)
     val uart = if(doBlockTest) None else Some(new UARTIO)
     val dma = if(doBlockTest) Some(MixedVec(soc.dmaIO.map(drv => Flipped(new AxiBundle(drv.params))))) else None
     val cfg = if(doBlockTest) Some(new AxiBundle(cfgPort.params)) else None
@@ -155,35 +154,21 @@ class SimTop(implicit p: Parameters) extends Module {
 
   }
 
-  if(hasCsu && p(DebugOptionsKey).EnableLuaScoreBoard) {
-    val l2StrSeq = soc.ccns.zipWithIndex.map(n => s"[${n._2}] = { ${p(L2ParamKey).nrSlice}, ${n._1.cpuNum} }")
+  if(p(DebugOptionsKey).EnableLuaScoreBoard) {
+    val l2StrSeq = soc.ccns.zipWithIndex.map(n => s"[${n._2}] = { ${p(XSCoreParamsKey).L2NBanks}, ${n._1.cpuNum} }")
     val l2Str = l2StrSeq.reduce((a, b) => s"$a, $b")
     val nrHnf = p(ZJParametersKey).island.count(_.nodeType == NodeType.HF)
     val luaScb = Module(new LuaScoreboard(s"{ $l2Str }", nrHnf))
     luaScb.io.clock := clock
     luaScb.io.reset := reset.asBool
-    luaScb.io.sim_final := io.simFinal.get
+    luaScb.io.sim_final := io.simFinal
   }
 
-  if(p(TestIoOptionsKey).removeCsu) {
+  if(doBlockTest) {
     for(i <- soc.core.get.indices) {
       val ext = IO(new BlockTestIO(soc.core.get(i).params))
       ext.suggestName(s"core_icn_$i")
       ext <> soc.core.get(i)
-    }
-  } else if(p(TestIoOptionsKey).removeCore) {
-    for(i <- soc.core.get.indices) {
-      val noc = soc.core.get(i)
-      val hub = LazyModule(new SimCoreHub(noc.params)(p.alterPartial({
-        case MonitorsEnabled => false
-        case TLUserKey => TLUserParams(aliasBits = p(DcacheKey).aliasBitsOpt.getOrElse(0))
-      })))
-      val _hub = Module(hub.module)
-      val ext = IO(new SimCoreHubExtIO(_hub.io.ext.cio.params, _hub.io.ext.dcache.params, _hub.io.ext.icache.params))
-      ext.suggestName(s"core_$i")
-      hub.suggestName(s"corehub_$i")
-      ext <> _hub.io.ext
-      noc <> _hub.io.noc
     }
   }
   private val timer = Wire(UInt(64.W))
@@ -193,7 +178,7 @@ class SimTop(implicit p: Parameters) extends Module {
     val logEnable = Wire(Bool())
     val clean = Wire(Bool())
     val dump = Wire(Bool())
-    logEnable := (timer >= io.logCtrl.get.log_begin) && (timer < io.logCtrl.get.log_end)
+    logEnable := (timer >= io.logCtrl.get.begin) && (timer < io.logCtrl.get.end)
     clean := RegNext(io.perfInfo.get.clean, false.B)
     dump := io.perfInfo.get.dump
     dontTouch(timer)
@@ -207,13 +192,13 @@ class SimTop(implicit p: Parameters) extends Module {
 
 object SimGenerator extends App {
   val (config, firrtlOpts) = SimArgParser(args)
-  xs.utils.GlobalData.prefix = config(MiscKey).prefix
-  difftest.GlobalData.prefix = config(MiscKey).prefix
-  (new ChiselStage).execute(firrtlOpts, Generator.firtoolOpts(config(MiscKey).random) ++ Seq(
+  xs.utils.GlobalData.prefix = config(LinkNanParamsKey).prefix
+  difftest.GlobalData.prefix = config(LinkNanParamsKey).prefix
+  (new ChiselStage).execute(firrtlOpts, Generator.firtoolOpts(config(LinkNanParamsKey).random) ++ Seq(
     ChiselGeneratorAnnotation(() => {
       DisableMonitors(p => new SimTop()(p))(config)
     })
   ))
   if(config(ZJParametersKey).tfbParams.isDefined) TrafficBoardFileManager.release("generated-src", "generated-src", config)
-  FileRegisters.write(filePrefix = config(MiscKey).prefix + "LNTop.")
+  FileRegisters.write(filePrefix = config(LinkNanParamsKey).prefix + "LNTop.")
 }

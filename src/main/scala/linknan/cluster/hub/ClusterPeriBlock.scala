@@ -58,14 +58,13 @@ class ImsicWrapper(mst:TilelinkParams)(implicit p:Parameters) extends LazyModule
 }
 
 class CpuCtlBundle(implicit p:Parameters) extends ZJBundle {
-  val imsic = new ImsicBundle
   val bootAddr = Output(UInt(64.W))
   val pchn = new PChannel(devActiveBits, PowerMode.powerModeBits)
   val pcsm = new PcsmCtrlIO
   val defaultBootAddr = Input(UInt(64.W))
   val defaultEnable = Input(Bool())
   val coreId = Input(UInt(cpuIdBits.W))
-  val blockProbe = Output(Bool())
+  val blockReq = Output(Bool())
 }
 
 class CsuCtlBundle(implicit p:Parameters) extends ZJBundle {
@@ -74,31 +73,22 @@ class CsuCtlBundle(implicit p:Parameters) extends ZJBundle {
 }
 
 class ClusterCtlBundle(implicit p:Parameters) extends ZJBundle {
-  val clusterClkEn = Output(Bool())
   val pllCfg = Output(Vec(8, UInt(32.W)))
   val pllLock = Input(Bool())
 }
 
 class ClusterPeriBlock(tlParams: Seq[TilelinkParams], coreNum:Int)(implicit p:Parameters) extends Module {
   private val privateSeq = Seq.tabulate(coreNum)(i => Seq(
-    ClusterPeriParams(s"imisc_$i", Seq((0x0000, 0x8000), (0x8000, 0x9000)), Some(i)),
-    ClusterPeriParams(s"cpu_boot_ctl_$i", Seq((0x9000, 0xA000)), Some(i)),
-    ClusterPeriParams(s"cpu_pwr_ctl_$i", Seq((0xA000, 0xB000)), Some(i))
+    ClusterPeriParams(s"cpu_boot_ctl_$i", Seq((0x0000, 0x1000)), Some(i)),
+    ClusterPeriParams(s"cpu_pwr_ctl_$i", Seq((0x1000, 0x2000)), Some(i))
   )).reduce(_ ++ _)
 
   private val sharedSeq = Seq(
     ClusterPeriParams("pll", Seq((0x1_0000, 0x1_1000)), None),
-    ClusterPeriParams("csu_pwr_ctl", Seq((0x1_1000, 0x1_2000)), None),
   )
   private val periSeq = privateSeq ++ sharedSeq
   private val periXBar = Module(new PeriXBar(tlParams, periSeq, coreNum))
 
-  private val imsicSeq = Seq.tabulate(coreNum) { i=>
-    val imsic = LazyModule(new ImsicWrapper(periXBar.io.downstream.head.params))
-    val _imisc = Module(imsic.module)
-    _imisc.suggestName(s"imisc_$i")
-    (i, _imisc)
-  }
   private val cpuBootCtlSeq = Seq.tabulate(coreNum) { i=>
     val cpuCtl = Module(new CpuBootCtrl(periXBar.io.downstream.head.params))
     cpuCtl.suggestName(s"cpu_boot_ctl_$i")
@@ -111,8 +101,6 @@ class ClusterPeriBlock(tlParams: Seq[TilelinkParams], coreNum:Int)(implicit p:Pa
   }
 
   private val pllCtl = Module(new ClusterPLL(periXBar.io.downstream.head.params))
-  private val csuPwrCtl = Module(new PowerControllerTop(periXBar.io.downstream.head.params, true))
-  private val clusterClkEn = cpuPwrCtlSeq.map(_._2.io.pcsmCtrl.clkEn).reduce(_ || _) || csuPwrCtl.io.pcsmCtrl.clkEn
 
   private val downstreams = periSeq.zip(periXBar.io.downstream)
   private def cpuDevConn(tlSeq: Seq[(Int, TLULBundle)], pfx:String):Unit = {
@@ -121,38 +109,30 @@ class ClusterPeriBlock(tlParams: Seq[TilelinkParams], coreNum:Int)(implicit p:Pa
       tls <> tlm
     }
   }
-  cpuDevConn(imsicSeq.map(e => (e._1, e._2.io.tls)), "imisc_")
+
   cpuDevConn(cpuBootCtlSeq.map(e => (e._1, e._2.tls)), "cpu_boot_ctl_")
   cpuDevConn(cpuPwrCtlSeq.map(e => (e._1, e._2.io.tls)), "cpu_pwr_ctl_")
 
   pllCtl.tls <> downstreams.filter(_._1.name == s"pll").map(_._2).head
-  csuPwrCtl.io.tls <> downstreams.filter(_._1.name == s"csu_pwr_ctl").map(_._2).head
 
   val io = IO(new Bundle{
     val tls = MixedVec(tlParams.map(t => Flipped(new TLULBundle(t))))
     val cpu = Vec(coreNum, new CpuCtlBundle)
-    val csu = new CsuCtlBundle
     val cluster = new ClusterCtlBundle
   })
-  io.cluster.clusterClkEn := RegNext(clusterClkEn)
   pllCtl.io.lock := io.cluster.pllLock
   io.cluster.pllCfg := pllCtl.io.cfg
-  io.csu.pchn <> csuPwrCtl.io.pChnMst
-  io.csu.pcsm <> csuPwrCtl.io.pcsmCtrl
-  csuPwrCtl.io.powerOnState := Mux(io.cpu.map(_.defaultEnable).reduce(_ | _), PowerMode.ON, PowerMode.OFF)
-  csuPwrCtl.io.deactivate := false.B
 
   periXBar.cores.zip(io.cpu).foreach({case(a, b) => a := b.coreId})
   io.tls.zip(periXBar.io.upstream).foreach {case(a, b) => a <> b}
 
   for(i <- 0 until coreNum) {
-    io.cpu(i).imsic <> imsicSeq(i)._2.io.imsic
     io.cpu(i).bootAddr := cpuBootCtlSeq(i)._2.io.cpuBootAddr
     io.cpu(i).pchn <> cpuPwrCtlSeq(i)._2.io.pChnMst
     io.cpu(i).pcsm <> cpuPwrCtlSeq(i)._2.io.pcsmCtrl
-    io.cpu(i).blockProbe := RegNext(cpuPwrCtlSeq(i)._2.io.blockProbe)
+    io.cpu(i).blockReq := RegNext(cpuPwrCtlSeq(i)._2.io.blockReq)
     cpuBootCtlSeq(i)._2.io.defaultBootAddr := io.cpu(i).defaultBootAddr
     cpuPwrCtlSeq(i)._2.io.powerOnState := Mux(io.cpu(i).defaultEnable, PowerMode.ON, PowerMode.OFF)
-    cpuPwrCtlSeq(i)._2.io.deactivate := csuPwrCtl.io.mode === PowerMode.OFF
+    cpuPwrCtlSeq(i)._2.io.deactivate := false.B
   }
 }

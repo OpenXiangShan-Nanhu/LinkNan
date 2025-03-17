@@ -1,21 +1,9 @@
-[submodule "dependencies/nanhu"]
-	path = dependencies/nanhu
-	url = https://github.com/Siudya/Nanhu
 [submodule "dependencies/hardfloat"]
 	path = dependencies/hardfloat
 	url = https://github.com/ucb-bar/berkeley-hardfloat
 [submodule "dependencies/cde"]
 	path = dependencies/cde
 	url = https://github.com/chipsalliance/cde
-[submodule "dependencies/difftest"]
-	path = dependencies/difftest
-	url = https://github.com/OpenXiangShan/difftest
-[submodule "dependencies/nhl2"]
-	path = dependencies/nhl2
-	url = https://github.com/OpenXiangShan-Nanhu/NHL2
-[submodule "ready-to-run"]
-	path = ready-to-run
-	url = https://github.com/Siudya/ready-to-run
 [submodule "dependencies/dramsim"]
 	path = dependencies/dramsim
 	url = https://github.com/OpenXiangShan/DRAMsim3
@@ -42,3 +30,15 @@
 	path = dependencies/boom
 	url = https://github.com/Siudya/riscv-boom
 	branch = linknan
+[submodule "dependencies/nanhu"]
+	path = dependencies/nanhu
+	url = https://github.com/OpenXiangShan-Nanhu/Nanhu-V5
+[submodule "dependencies/cpl2"]
+	path = dependencies/cpl2
+	url = https://github.com/OpenXiangShan-Nanhu/CoupledL2
+[submodule "dependencies/difftest"]
+	path = dependencies/difftest
+	url = https://github.com/OpenXiangShan-Nanhu/difftest
+[submodule "ready-to-run"]
+	path = ready-to-run
+	url = https://github.com/OpenXiangShan/ready-to-run

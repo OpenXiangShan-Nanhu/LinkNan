@@ -3,21 +3,54 @@ package linknan.soc
 import chisel3._
 import chisel3.experimental.hierarchy.{Definition, Instance}
 import chisel3.experimental.{ChiselAnnotation, annotate}
+import chisel3.util.{log2Ceil, log2Up}
+import coupledL2.tl2chi.{CHIIssue, Issue}
+import coupledL2.{BankBitsKey, L1Param, L2Param, L2ParamKey}
+import freechips.rocketchip.tile.MaxHartIdBits
+import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import linknan.cluster.{BlockTestIO, CpuCluster}
-import linknan.generator.{MiscKey, TestIoOptionsKey}
-import zhujiang.{DftWires, NocIOHelper, ZJModule, ZJRawModule}
-import org.chipsalliance.cde.config.Parameters
+import zhujiang.{DftWires, NocIOHelper, ZJParametersKey, ZJRawModule}
+import org.chipsalliance.cde.config.{Config, Parameters}
 import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
+import xiangshan.{XLen, XSCoreParameters, XSCoreParamsKey}
+import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
 import zhujiang.axi.AxiUtils
 
-class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
+object GlobalStaticParameters {
+  var lnParams:LinkNanParams = null
+  var xsParams:XSCoreParameters = null
+  var l2Params:L2Param = null
+}
 
+class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
+  GlobalStaticParameters.lnParams = p(LinkNanParamsKey).copy()
+  GlobalStaticParameters.xsParams = p(XSCoreParamsKey).copy()
+  private val coreP = p(XSCoreParamsKey)
+  private val dcacheP = p(XSCoreParamsKey).dcacheParametersOpt.get
+  GlobalStaticParameters.l2Params = p(L2ParamKey).copy(
+    clientCaches = Seq(L1Param(
+      name = "dcache",
+      sets = dcacheP.nSets / p(XSCoreParamsKey).L2NBanks,
+      ways = dcacheP.nWays,
+      aliasBitsOpt = dcacheP.aliasBitsOpt,
+      vaddrBitsOpt = Some(coreP.GPAddrBitsSv48x4 - log2Up(dcacheP.blockBytes)),
+      isKeywordBitsOpt = dcacheP.isKeywordBitsOpt
+    )),
+    FPGAPlatform = p(DebugOptionsKey).FPGAPlatform
+  )
   private val mod = this.toNamed
   annotate(new ChiselAnnotation {
-    def toFirrtl = NestedPrefixModulesAnnotation(mod, p(MiscKey).prefix, inclusive = true)
+    def toFirrtl = NestedPrefixModulesAnnotation(mod, p(LinkNanParamsKey).prefix, inclusive = true)
   })
-  private val uncore = Module(new UncoreTop)
+  private val uncore = Module(new UncoreTop()(
+    new Config((_,_,_) => {
+      case ZJParametersKey => p(ZJParametersKey)
+      case LinkNanParamsKey => GlobalStaticParameters.lnParams
+      case DebugOptionsKey => p(DebugOptionsKey)
+      case MonitorsEnabled => false
+    })
+  ))
   private val clusterNum = uncore.cluster.size
 
   val io = IO(new Bundle {
@@ -50,28 +83,39 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   io.ndreset := uncore.io.ndreset
   uncore.io.cluster_clocks := io.cluster_clocks
 
-  private val ccnNodeMap = uncore.cluster.map(_.socket).groupBy(_.node.attr)
-  private val clusterDefMap = for((name, nodes) <- ccnNodeMap) yield {
-    val cdef = Definition(new CpuCluster(nodes.head.node)(p.alterPartial({
-      case MonitorsEnabled => false
-    })))
-    (name, cdef)
-  }
-  private val cpuNum = uncore.cluster.map(_.socket.node.cpuNum).sum
+  private val clusterP = new Config((_,_,_) => {
+    case XSCoreParamsKey => GlobalStaticParameters.xsParams
+    case L2ParamKey => GlobalStaticParameters.l2Params
+    case LinkNanParamsKey => GlobalStaticParameters.lnParams
+    case LogUtilsOptionsKey => p(LogUtilsOptionsKey)
+    case PerfCounterOptionsKey => p(PerfCounterOptionsKey)
+    case DebugOptionsKey => p(DebugOptionsKey)
+    case ZJParametersKey => p(ZJParametersKey)
+    case MonitorsEnabled => false
+    case MaxHartIdBits => clusterIdBits
+    case XLen => 64
+    case BankBitsKey => log2Ceil(GlobalStaticParameters.xsParams.L2NBanks)
+    case CHIIssue => Issue.Eb
+    case xiangshan.EnableCHI => true
+    case coupledL2.EnableCHI => true
+  })
+  private val ccnNodes = uncore.cluster.map(_.socket)
+  private val ccGen = LazyModule(new CpuCluster(ccnNodes.head.node)(clusterP))
+  private val ccDef = Definition(ccGen.module)
 
-  val core = if(p(TestIoOptionsKey).doBlockTest) Some(IO(Vec(cpuNum, new BlockTestIO(clusterDefMap.head._2.coreIoParams)))) else None
+  val core = Option.when(p(LinkNanParamsKey).removeCore)(IO(Vec(uncore.cluster.size, new BlockTestIO(ccGen.btIoParams.get))))
   val ccns = uncore.cluster.map(_.socket.node)
 
   for(ccn <- uncore.cluster) {
     val clusterId = ccn.socket.node.clusterId
-    val cc = Instance(clusterDefMap(ccn.socket.node.attr))
+    val cc = Instance(ccDef)
     cc.icn <> ccn
     ccn.socket.c2cClock.foreach(_ := io.noc_clock)
     cc.icn.socket.c2cClock.foreach(_ := io.noc_clock)
     cc.suggestName(s"cc_${ccn.socket.node.domainId}")
     for(i <- 0 until ccn.socket.node.cpuNum) {
       val cid = clusterId + i
-      if(p(TestIoOptionsKey).doBlockTest) core.get(cid) <> cc.core.get(i)
+      if(p(LinkNanParamsKey).removeCore) core.get(cid) <> cc.btio.get
     }
   }
 }

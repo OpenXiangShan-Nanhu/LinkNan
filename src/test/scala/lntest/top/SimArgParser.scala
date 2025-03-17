@@ -1,6 +1,7 @@
 package lntest.top
 
 import linknan.generator._
+import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.perf.DebugOptionsKey
 import zhujiang.ZJParametersKey
@@ -80,14 +81,8 @@ object SimArgParser {
 
         case "--no-cores" :: tail =>
           parse(config.alter((site, here, up) => {
-            case TestIoOptionsKey => up(TestIoOptionsKey).copy(removeCore = true, keepImsic = false)
+            case LinkNanParamsKey => up(LinkNanParamsKey).copy(removeCore = true)
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDebug = true) // For ZhuJiang DontTouch IO
-          }), tail)
-
-        case "--no-csu" :: tail =>
-          parse(config.alter((site, here, up) => {
-            case TestIoOptionsKey => up(TestIoOptionsKey).copy(removeCsu = true, keepImsic = false)
-            case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDebug = true)
           }), tail)
 
         case "--lua-scoreboard" :: tail =>
@@ -97,7 +92,7 @@ object SimArgParser {
 
         case "--prefix" :: confString :: tail =>
           parse(config.alter((site, here, up) => {
-            case MiscKey => up(MiscKey).copy(prefix = confString)
+            case LinkNanParamsKey => up(LinkNanParamsKey).copy(prefix = confString)
           }), tail)
 
         case option :: tail =>
