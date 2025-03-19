@@ -66,7 +66,7 @@ class AlwaysOnDomain(node: Node, ioParams:TLBundleParameters)(implicit p: Parame
   )
   private val clusterHub = Module(new ClusterHub(node))
   private val chi2tl = Module(new TLULBridge(clusterHub.io.peripheral.node, 64, 3))
-  private val cioXbar = Module(new CioXBar(Seq(cioParams), node.cpuNum))
+  private val cioXbar = Module(new CioXBar(Seq(cioParams.copy(userBits = cioParams.userBits + 2)), node.cpuNum))
   private val tl2chi = Module(new TLUL2ChiBridge(clusterHub.io.cio.node, cioXbar.io.downstream.last.params))
   private val clusterPeriCx = Module(new ClusterPeriBlock(Seq(chi2tl.tl.params, cioXbar.io.downstream.head.params), node.cpuNum))
 
