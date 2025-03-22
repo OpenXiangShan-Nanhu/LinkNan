@@ -7,12 +7,12 @@ import freechips.rocketchip.resources.BindingScope
 import linknan.cluster.hub.ImsicBundle
 import linknan.cluster.power.controller.{PowerMode, devActiveBits}
 import linknan.cluster.power.pchannel.{PChannel, PChannelSlv}
-import linknan.utils.{ChiPdcDevSide, DevPdcBundle}
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.lazymodule.{LazyModule, LazyRawModuleImp}
 import xiangshan.BusErrorUnitInfo
 import xijiang.{Node, NodeType}
 import xs.utils.ResetGen
+import zhujiang.device.socket.{ChiPdcDevSide, DevPdcBundle}
 import zhujiang.{DftWires, ZJParametersKey}
 
 class CoreWrapperIO(node:Node)(implicit p:Parameters) extends Bundle {

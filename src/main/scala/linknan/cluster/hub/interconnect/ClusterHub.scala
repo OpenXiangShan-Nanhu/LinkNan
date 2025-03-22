@@ -2,13 +2,12 @@ package linknan.cluster.hub.interconnect
 
 import chisel3._
 import chisel3.util._
-import linknan.utils.{ChiPdcIcnSide, IcnPdcBundle}
 import org.chipsalliance.cde.config.Parameters
 import xijiang.{Node, NodeType}
 import xijiang.router.base.IcnBundle
 import xs.utils.ResetRRArbiter
 import zhujiang.chi._
-import zhujiang.device.socket.{SocketDevSide, SocketDevSideBundle, SocketIcnSideBundle}
+import zhujiang.device.socket.{ChiPdcIcnSide, IcnPdcBundle, SocketDevSide, SocketDevSideBundle, SocketIcnSideBundle}
 import zhujiang.tilelink.TLULBundle
 import zhujiang.{DftWires, ZJBundle, ZJModule}
 
