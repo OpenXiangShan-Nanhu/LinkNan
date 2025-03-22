@@ -60,10 +60,11 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   implicitClock := io.noc_clock
   implicitReset := io.reset
 
-  private val rtcSampler = Reg(UInt(2.W))
-  rtcSampler := Cat(rtcSampler, io.rtc_clock)(1, 0)
-  private val rtcTick = rtcSampler === 1.U & !RegNext(noc.io.onReset)
-  devWrp.io.ext.timerTick := RegNext(rtcTick)
+  private val resetVec = Wire(Vec(cluster.map(_.socket.node.cpuNum).sum + 1, Bool()))
+  private val rtcEn = RegNext(Cat(resetVec) === 0.U)
+  resetVec.last := RegNext(noc.io.onReset)
+  private val rtcClockGated = io.rtc_clock & rtcEn
+  devWrp.io.ext.timerTick := RegNext(rtcClockGated)
   devWrp.io.ext.intr := io.ext_intr
   devWrp.io.ci := io.ci
   devWrp.io.debug.systemjtag.foreach(_ <> io.jtag.get)
@@ -82,6 +83,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   HardwareAssertion.setTopNode(assertionNode)
   HardwareAssertion.release("hwa")
 
+  private var rstIdx = 0
   for(((ext, noc), idx) <- cluster.zip(noc.ccnIO).zipWithIndex) {
     val node = ext.socket.node
     val clusterId = node.clusterId
@@ -95,7 +97,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     ext.misc.clusterId := Cat(io.ci, clusterId.U((clusterIdBits - ciIdBits).W))
     ext.misc.defaultBootAddr := io.default_reset_vector
     ext.misc.nodeNid := noc.node.nodeId.U.asTypeOf(new NodeIdBundle).nid
-    ext.misc.rtcTick := RegNext(rtcTick)
+    ext.misc.rtcTick := RegNext(rtcClockGated)
     for(i <- 0 until node.cpuNum) {
       val cid = clusterId + i
       ext.misc.msip(i) := devWrp.io.cpu.msip(cid)
@@ -104,6 +106,8 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
       ext.misc.seip(i) := devWrp.io.cpu.seip(cid)
       ext.misc.dbip(i) := devWrp.io.cpu.dbip(cid)
       devWrp.io.resetCtrl.hartIsInReset(cid) := ext.misc.resetState(i)
+      resetVec(rstIdx) := RegNext(ext.misc.resetState(i))
+      rstIdx = rstIdx + 1
     }
   }
 }
