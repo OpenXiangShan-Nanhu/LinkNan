@@ -44,7 +44,7 @@ class PowerDomainCrossingRx[T <: Data](gen:T) extends Module {
     val deq = Decoupled(gen)
     val clean = Output(Bool())
   })
-  private val rxq = Module(new FastQueue(gen, 5, false))
+  private val rxq = Module(new Queue(gen = gen, entries = 5, flow = true))
   private val rxv = RegNext(io.pdc.valid, false.B)
   private val rxd = RegEnable(io.pdc.bits, io.pdc.valid)
   private val txg = RegNext(io.deq.fire)
