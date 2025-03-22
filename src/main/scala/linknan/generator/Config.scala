@@ -92,14 +92,12 @@ class MinimalNocConfig(core: String, socket: String) extends Config((site, here,
 
       NodeParam(nodeType = NodeType.RI, attr = "main"),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
-      NodeParam(nodeType = NodeType.P),
 
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
-      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.S, bankId = 0),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.S, bankId = 0),
-      NodeParam(nodeType = NodeType.S, bankId = 1),
+      NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.P)
     )
   )
