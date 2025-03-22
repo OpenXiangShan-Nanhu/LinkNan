@@ -18,8 +18,8 @@ class BaseConfig(core: String) extends Config((site, here, up) => {
   case DebugOptionsKey => DebugOptions()
   case L2ParamKey => L2Param()
   case XSCoreParamsKey => XSCoreParameters(hasMbist = true)
-  case LogUtilsOptionsKey => LogUtilsOptions(false, false, true)
-  case PerfCounterOptionsKey => PerfCounterOptions(false, false, XSPerfLevel.VERBOSE, 0)
+  case LogUtilsOptionsKey => LogUtilsOptions(false, true, false)
+  case PerfCounterOptionsKey => PerfCounterOptions(true, false, XSPerfLevel.VERBOSE, 0)
   case LinkNanParamsKey => LinkNanParams(random = core == "boom")
 })
 

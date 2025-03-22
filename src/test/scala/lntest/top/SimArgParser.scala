@@ -3,7 +3,7 @@ package lntest.top
 import linknan.generator._
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
-import xs.utils.perf.DebugOptionsKey
+import xs.utils.perf.{DebugOptionsKey, PerfCounterOptionsKey}
 import zhujiang.ZJParametersKey
 
 import scala.annotation.tailrec
@@ -62,11 +62,13 @@ object SimArgParser {
         case "--no-perf" :: tail =>
           parse(config.alter((site, here, up) => {
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnablePerfDebug = false)
+            case PerfCounterOptionsKey =>up(PerfCounterOptionsKey).copy(enablePerfPrint = false)
           }), tail)
 
         case "--fpga-platform" :: tail =>
           parse(config.alter((site, here, up) => {
-            case DebugOptionsKey => up(DebugOptionsKey).copy(FPGAPlatform = true)
+            case DebugOptionsKey => up(DebugOptionsKey).copy(EnablePerfDebug = false, FPGAPlatform = true)
+            case PerfCounterOptionsKey =>up(PerfCounterOptionsKey).copy(enablePerfPrint = false)
           }), tail)
 
         case "--enable-difftest" :: tail =>
