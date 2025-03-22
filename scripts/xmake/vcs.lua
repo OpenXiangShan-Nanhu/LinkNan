@@ -94,7 +94,7 @@ function simv_comp(num_cores)
     cxx_flags = cxx_flags .. " -DCONFIG_NO_DIFFTEST"
   end
 
-  local cxx_ldflags = "-Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz"
+  local cxx_ldflags = "-Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz -lzstd"
 
   local vcs_flags = "-cm_dir " .. path.join(comp_dir, "simv")
   vcs_flags = vcs_flags .. " -full64 +v2k -timescale=1ns/1ns -sverilog +rad"
@@ -116,6 +116,9 @@ function simv_comp(num_cores)
   vcs_flags = vcs_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""
   vcs_flags = vcs_flags .. " -f " .. vsrc_filelist_path
   vcs_flags = vcs_flags .. " -f " .. csrc_filelist_path
+  vcs_flags = vcs_flags .. " +incdir+" .. design_csrc
+  vcs_flags = vcs_flags .. " +incdir+" .. design_csrc
+  vcs_flags = vcs_flags .. " +incdir+" .. design_csrc
   if option.get("lua_scoreboard") then
     vcs_flags = "vl-vcs " .. vcs_flags
   else
