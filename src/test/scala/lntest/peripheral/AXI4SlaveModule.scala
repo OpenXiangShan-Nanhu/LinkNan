@@ -18,13 +18,12 @@ package lntest.peripheral
 
 import chisel3._
 import chisel3.util._
-import utils._
 import xs.utils._
 import org.chipsalliance.diplomacy.lazymodule._
 import freechips.rocketchip.diplomacy.{AddressSet, RegionType, TransferSizes}
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.amba.axi4.{AXI4Parameters, AXI4SlaveNode, AXI4SlaveParameters, AXI4SlavePortParameters}
-import xs.utils.perf.HasPerfLogging
+import xs.utils.perf.XSDebug
 
 abstract class AXI4SlaveModule[T <: Data]
 (
@@ -52,7 +51,7 @@ abstract class AXI4SlaveModule[T <: Data]
 }
 
 class AXI4SlaveModuleImp[T<:Data](outer: AXI4SlaveModule[T])
-  extends LazyModuleImp(outer) with HasPerfLogging
+  extends LazyModuleImp(outer)
 {
   val io = IO(new Bundle {
     val extra = if(outer._extra == null) None else Some(outer._extra.cloneType)

@@ -49,6 +49,8 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
       case LinkNanParamsKey => GlobalStaticParameters.lnParams
       case DebugOptionsKey => p(DebugOptionsKey)
       case MonitorsEnabled => false
+      case LogUtilsOptionsKey => p(LogUtilsOptionsKey)
+      case PerfCounterOptionsKey => p(PerfCounterOptionsKey)
     })
   ))
   private val clusterNum = uncore.cluster.size

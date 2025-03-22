@@ -23,6 +23,7 @@ import freechips.rocketchip.amba.axi4.{AXI4MasterNode, AXI4Parameters, AXI4Slave
 import org.chipsalliance.diplomacy.lazymodule._
 import freechips.rocketchip.diplomacy.AddressSet
 import xs.utils._
+import xs.utils.perf.XSError
 
 class MemoryRWHelper extends ExtModule with HasExtModuleInline {
   val DataBits = 64
