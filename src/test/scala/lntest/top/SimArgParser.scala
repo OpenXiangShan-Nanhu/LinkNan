@@ -10,7 +10,7 @@ import scala.annotation.tailrec
 
 object SimArgParser {
   private var core = "nanhu"
-  private var cfg = "full"
+  private var cfg = "minimal"
   private var socket = "async"
   private var opts = Array[String]()
   @tailrec
