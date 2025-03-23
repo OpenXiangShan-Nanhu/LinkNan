@@ -66,9 +66,6 @@ class SimTop(implicit p: Parameters) extends Module {
 
   val io = IO(new Bundle(){
     val simFinal = Input(Bool())
-    val logCtrl = if(doBlockTest) None else Some(new LogCtrlIO)
-    val perfInfo = if(doBlockTest) None else Some(new PerfCtrlIO)
-    val uart = if(doBlockTest) None else Some(new UARTIO)
     val dma = if(doBlockTest) Some(MixedVec(soc.dmaIO.map(drv => Flipped(new AxiBundle(drv.params))))) else None
     val cfg = if(doBlockTest) Some(new AxiBundle(cfgPort.params)) else None
   })
@@ -149,9 +146,7 @@ class SimTop(implicit p: Parameters) extends Module {
       soc_jtag.mfr_id := 0.U(11.W)
       soc_jtag.part_number := 0.U(16.W)
       soc_jtag.version := 0.U(4.W)
-      simMMIO.get.io.uart <> io.uart.get
     })
-
   }
 
   if(p(DebugOptionsKey).EnableLuaScoreBoard) {
@@ -171,21 +166,7 @@ class SimTop(implicit p: Parameters) extends Module {
       ext <> soc.core.get(i)
     }
   }
-  private val timer = Wire(UInt(64.W))
-  timer := GTimer()
-  dontTouch(timer)
-  if (!doBlockTest) {
-    val logEnable = Wire(Bool())
-    val clean = Wire(Bool())
-    val dump = Wire(Bool())
-    logEnable := (timer >= io.logCtrl.get.begin) && (timer < io.logCtrl.get.end)
-    clean := RegNext(io.perfInfo.get.clean, false.B)
-    dump := io.perfInfo.get.dump
-    dontTouch(timer)
-    dontTouch(logEnable)
-    dontTouch(clean)
-    dontTouch(dump)
-  }
+
 
   if(!doBlockTest) {
     val difftest = DifftestModule.finish("XiangShan")
