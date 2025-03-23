@@ -26,8 +26,6 @@ class CoreWrapperIO(node:Node)(implicit p:Parameters) extends Bundle {
   val isoEn = Input(Bool())
   val mhartid = Input(UInt(p(ZJParametersKey).clusterIdBits.W))
   val reset_vector = Input(UInt(p(ZJParametersKey).requestAddrBits.W))
-  val icacheErr = Output(new BusErrorUnitInfo)
-  val dcacheErr = Output(new BusErrorUnitInfo)
   val msip = Input(Bool())
   val mtip = Input(Bool())
   val meip = Input(Bool())
@@ -68,8 +66,6 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   dontTouch(io.isoEn)
   dontTouch(pSlv.io)
 
-  io.icacheErr := DontCare
-  io.dcacheErr := DontCare
   val reset_state = Wire(AsyncReset())
   reset_state := io.reset
   io.reset_state := withClockAndReset(childClock, reset_state) {

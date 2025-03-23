@@ -79,10 +79,6 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     _core.io.l2_hint := _l2.io.l2_hint
     _core.io.l2PfqBusy := false.B
 
-    
-    io.icacheErr := _core.io.beu_errors.icache
-    io.dcacheErr := _core.io.beu_errors.dcache
-
     _core.io.l2_tlb_req.req.bits := DontCare
     _core.io.l2_tlb_req.req.valid := _l2.io.l2_tlb_req.req.valid
     _core.io.l2_tlb_req.resp.ready := _l2.io.l2_tlb_req.resp.ready
