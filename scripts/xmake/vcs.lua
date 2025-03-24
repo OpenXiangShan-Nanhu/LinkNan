@@ -11,6 +11,7 @@ function simv_comp(num_cores)
   end
   local abs_base = os.curdir()
   local chisel_dep_srcs = os.filedirs(path.join(abs_base, "src", "**.scala"))
+  table.join2(chisel_dep_srcs, os.filedirs(path.join(abs_base, "dependencies", "**.scala")))
   table.join2(chisel_dep_srcs, {path.join(abs_base, "build.sc")})
   table.join2(chisel_dep_srcs, {path.join(abs_base, "xmake.lua")})
 
