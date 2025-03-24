@@ -97,12 +97,11 @@ function simv_comp(num_cores)
   local cxx_ldflags = "-Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz -lzstd"
 
   local vcs_flags = "-cm_dir " .. path.join(comp_dir, "simv")
-  vcs_flags = vcs_flags .. " -full64 +v2k -timescale=1ns/1ns -sverilog"
+  vcs_flags = vcs_flags .. " -full64 +v2k -timescale=1ns/1ns -sverilog -j200"
   vcs_flags = vcs_flags .. " -debug_access +lint=TFIPC-L -l vcs.log -top tb_top"
   vcs_flags = vcs_flags .. " -fgp -lca -kdb +nospecify +notimingcheck -no_save"
   vcs_flags = vcs_flags .. " +define+PRINTF_COND=1 +define+VCS"
-  vcs_flags = vcs_flags .. " +define+CONSIDER_FSDB=tb_top.sim"
-  vcs_flags = vcs_flags .. " +define+SIM_TOP_MODULE_NAME=tb_top.sim -j200"
+  vcs_flags = vcs_flags .. " +define+CONSIDER_FSDB +define+SIM_TOP_MODULE_NAME=tb_top.sim"
   vcs_flags = vcs_flags .. string.format(" +vcs+initreg+config+%s", path.join(abs_base, "scripts", "linknan", "vcs.cfg"))
   if not option.get("no_fsdb") then
     novas = path.join(os.getenv("VERDI_HOME"), "share", "PLI", "VCS", "LINUX64")
