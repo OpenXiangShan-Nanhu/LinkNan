@@ -41,4 +41,4 @@
 	url = https://github.com/OpenXiangShan-Nanhu/difftest
 [submodule "ready-to-run"]
 	path = ready-to-run
-	url = https://github.com/OpenXiangShan/ready-to-run
+	url = https://github.com/OpenXiangShan-Nanhu/ready-to-run
