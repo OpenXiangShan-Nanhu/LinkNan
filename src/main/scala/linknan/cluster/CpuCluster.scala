@@ -34,25 +34,23 @@ case class BlockTestIOParams(
 
 class CpuCluster(node:Node)(implicit p:Parameters) extends LazyModule {
   private val removeCore = p(LinkNanParamsKey).removeCore
-  private val tileWithCore = if(!removeCore) Some(LazyModule(new NanhuCoreWrapper(node.copy(nodeType = NodeType.RF)))) else None
-  private val tileNoCore = if(removeCore) Some(LazyModule(new NoCoreWrapper(node.copy(nodeType = NodeType.RF)))) else None
+  private val tile = if(removeCore) {
+    LazyModule(new NoCoreWrapper(node.copy(nodeType = NodeType.RF)))
+  } else {
+    LazyModule(new NanhuCoreWrapper(node.copy(nodeType = NodeType.RF)))
+  }
 
-  val btIoParams = tileNoCore.map(_.btioParams)
+  val btIoParams = Option.when(removeCore)(tile.asInstanceOf[NoCoreWrapper].btioParams)
   lazy val module = new CpuClusterImpl
   @instantiable
   class CpuClusterImpl(implicit p:Parameters) extends LazyRawModuleImp(this) {
     @public val icn = IO(new ClusterDeviceBundle(node))
     @public val btio = if(removeCore) Some(IO(new BlockTestIO(btIoParams.get))) else None
-
-    private val _tileWithCore = tileWithCore.map(m => m.module)
-    private val _tileNoCore = tileNoCore.map(m => m.module)
     private val hub = Module(new AlwaysOnDomain(node))
     icn <> hub.io.icn
+    hub.io.cpu <> tile.module.io
     if(removeCore) {
-      btio.get <> _tileNoCore.get.btio
-      hub.io.cpu <> _tileNoCore.get.io
-    } else {
-      hub.io.cpu <> _tileWithCore.get.io
+      btio.get <> tile.asInstanceOf[NoCoreWrapper].module.btio
     }
     PerfCounterUtils.genXmrHelper()
   }
