@@ -14,7 +14,7 @@ import zhujiang.{DftWires, NocIOHelper, ZJParametersKey, ZJRawModule}
 import org.chipsalliance.cde.config.{Config, Parameters}
 import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
 import xiangshan.{XLen, XSCoreParameters, XSCoreParamsKey}
-import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey, PerfCounterUtils}
+import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
 import zhujiang.axi.AxiUtils
 
 object GlobalStaticParameters {
@@ -120,5 +120,4 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
       if(p(LinkNanParamsKey).removeCore) core.get(cid) <> cc.btio.get
     }
   }
-  PerfCounterUtils.genXmrHelper()
 }

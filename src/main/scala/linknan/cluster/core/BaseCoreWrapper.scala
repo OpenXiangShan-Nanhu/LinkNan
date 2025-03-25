@@ -12,7 +12,6 @@ import org.chipsalliance.diplomacy.lazymodule.{LazyModule, LazyRawModuleImp}
 import xiangshan.BusErrorUnitInfo
 import xijiang.{Node, NodeType}
 import xs.utils.ResetGen
-import xs.utils.perf.PerfCounterUtils
 import zhujiang.device.socket.{ChiPdcDevSide, DevPdcBundle}
 import zhujiang.{DftWires, ZJParametersKey}
 
@@ -73,5 +72,4 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
     rstStateReg := Cat(0.U(1.W), rstStateReg(2, 1))
     rstStateReg(0)
   }
-  PerfCounterUtils.genXmrHelper()
 }

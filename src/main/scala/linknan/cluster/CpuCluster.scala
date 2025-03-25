@@ -11,7 +11,6 @@ import linknan.cluster.hub.interconnect.ClusterDeviceBundle
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
 import xijiang.{Node, NodeType}
-import xs.utils.perf.PerfCounterUtils
 import zhujiang.{ZJParametersKey, ZJRawModule}
 
 class BlockTestIO(val params:BlockTestIOParams)(implicit p:Parameters) extends Bundle {
@@ -52,6 +51,5 @@ class CpuCluster(node:Node)(implicit p:Parameters) extends LazyModule {
     if(removeCore) {
       btio.get <> tile.asInstanceOf[NoCoreWrapper].module.btio
     }
-    PerfCounterUtils.genXmrHelper()
   }
 }
