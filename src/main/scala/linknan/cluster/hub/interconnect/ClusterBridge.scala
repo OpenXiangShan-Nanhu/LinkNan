@@ -6,9 +6,8 @@ import org.chipsalliance.cde.config.Parameters
 import xijiang.router.base.{DeviceIcnBundle, IcnBundle}
 import xijiang.{Node, NodeType}
 import xs.utils.ResetRRArbiter
-import xs.utils.queue.FastQueue
-import zhujiang.{HasZJParams, ZJModule}
-import zhujiang.chi.{DataFlit, Flit, NodeIdBundle, RReqFlit, ReqAddrBundle, RespFlit, RingFlit}
+import zhujiang.ZJModule
+import zhujiang.chi.{DeviceReqAddrBundle, NodeIdBundle, RReqFlit, ReqAddrBundle, RingFlit}
 import zhujiang.device.bridge.tlul.TLULBridge
 import zhujiang.tilelink.TLULBundle
 
@@ -78,10 +77,9 @@ class ReqXBar(implicit p: Parameters) extends ZJModule with ClusterInterconnectH
   })
   private val ci = io.clusterId.head(ciIdBits)
   private val hart = io.clusterId.tail(ciIdBits)
-  private val cpb = zjParams.cpuSpaceBits
   private val periMatch = (flit:RReqFlit) => {
-    val addr = flit.Addr
-    addr.head(ciIdBits) === ci && addr(cpuIdBits + cpb - 1, cpb) === hart
+    val addr = flit.Addr.asTypeOf(new DeviceReqAddrBundle)
+    addr.ci === ci && addr.core === hart && addr.tag === 0.U
   }
   private val icnMatch = (flit:RReqFlit) => !periMatch(flit)
 
