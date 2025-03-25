@@ -36,8 +36,11 @@ trait ClusterInterconnectHelper {
     for(sidx <- slvs.indices) {
       val dirvers = slvDrivers(sidx)
       val arb = Module(new ResetRRArbiter(downstream.head.bits.cloneType, dirvers.size))
+      val q = Module(new Queue(downstream.head.bits.cloneType, entries = 2))
       arb.suggestName(s"${name}_arb_$sidx")
-      downstream(sidx) <> FastQueue(arb.io.out, Some(s"${name}_q_$sidx"))
+      q.suggestName(s"${name}_q_$sidx")
+      q.io.enq <> arb.io.out
+      downstream(sidx) <> q.io.deq
 
       for(midx <- 0 until mstSize) {
         val uin = upstream(midx)
