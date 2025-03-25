@@ -23,19 +23,17 @@ import chisel3._
 import chisel3.util.{MixedVec, ReadyValidIO}
 import lntest.peripheral.SimJTAG
 import org.chipsalliance.diplomacy.lazymodule._
-import xs.utils.{FileRegisters, GTimer}
+import xs.utils.FileRegisters
 import difftest._
 import circt.stage.ChiselStage
 import linknan.cluster.BlockTestIO
 import linknan.generator.Generator
 import linknan.soc.{LNTop, LinkNanParamsKey}
 import org.chipsalliance.diplomacy.DisableMonitors
-import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import xiangshan.XSCoreParamsKey
 import xijiang.NodeType
 import xijiang.tfb.TrafficBoardFileManager
 import xs.utils.perf.DebugOptionsKey
-import xs.utils.tl.{TLUserKey, TLUserParams}
 import zhujiang.ZJParametersKey
 import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
 
@@ -81,7 +79,6 @@ class SimTop(implicit p: Parameters) extends Module {
     }
   }
 
-  soc.cfgIO.filterNot(_.params.attr == "main").foreach(_ := DontCare)
   if(doBlockTest) {
     io.dma.get.zip(soc.dmaIO).foreach({case(a, b) => a <> b})
     io.cfg.get <> cfgPort
