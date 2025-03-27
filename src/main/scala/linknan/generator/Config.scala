@@ -26,29 +26,29 @@ class BaseConfig(core: String) extends Config((site, here, up) => {
 class FullNocConfig(core: String, socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     nodeParams = Seq(
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 0, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, splitFlit = true, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 1, hfpId = 0),
+      NodeParam(nodeType = NodeType.P, splitFlit = true),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 2, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, splitFlit = true, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 3, hfpId = 0),
 
-      NodeParam(nodeType = NodeType.RI, attr = "main"),
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
-      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.RI, splitFlit = true, attr = "main"),
+      NodeParam(nodeType = NodeType.HI, splitFlit = true, defaultHni = true, attr = "main", outstanding = 32),
+      NodeParam(nodeType = NodeType.P, splitFlit = true),
 
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 1),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 3, hfpId = 1),
+      NodeParam(nodeType = NodeType.CC, splitFlit = true, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 2, hfpId = 1),
+      NodeParam(nodeType = NodeType.P, splitFlit = true),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 1, hfpId = 1),
+      NodeParam(nodeType = NodeType.CC, splitFlit = true, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 0, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.S, bankId = 0),
-      NodeParam(nodeType = NodeType.S, bankId = 1),
-      NodeParam(nodeType = NodeType.P)
+      NodeParam(nodeType = NodeType.S, splitFlit = true, bankId = 0),
+      NodeParam(nodeType = NodeType.S, splitFlit = true, bankId = 1),
+      NodeParam(nodeType = NodeType.P, splitFlit = true)
     )
   )
 })
@@ -56,29 +56,29 @@ class FullNocConfig(core: String, socket: String) extends Config((site, here, up
 class ReducedNocConfig(core: String, socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     nodeParams = Seq(
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 0, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, splitFlit = true, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 1, hfpId = 0),
+      NodeParam(nodeType = NodeType.P, splitFlit = true),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 2, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, splitFlit = true, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 3, hfpId = 0),
 
-      NodeParam(nodeType = NodeType.RI, attr = "main"),
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
-      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.RI, splitFlit = true, attr = "main"),
+      NodeParam(nodeType = NodeType.HI, splitFlit = true, defaultHni = true, attr = "main", outstanding = 32),
+      NodeParam(nodeType = NodeType.P, splitFlit = true),
 
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 1),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 3, hfpId = 1),
+      NodeParam(nodeType = NodeType.P, splitFlit = true),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 2, hfpId = 1),
+      NodeParam(nodeType = NodeType.P, splitFlit = true),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 1, hfpId = 1),
+      NodeParam(nodeType = NodeType.P, splitFlit = true),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 0, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.S, bankId = 0),
-      NodeParam(nodeType = NodeType.S, bankId = 1),
-      NodeParam(nodeType = NodeType.P)
+      NodeParam(nodeType = NodeType.S, splitFlit = true, bankId = 0),
+      NodeParam(nodeType = NodeType.S, splitFlit = true, bankId = 1),
+      NodeParam(nodeType = NodeType.P, splitFlit = true)
     )
   )
 })
@@ -86,19 +86,19 @@ class ReducedNocConfig(core: String, socket: String) extends Config((site, here,
 class MinimalNocConfig(core: String, socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     nodeParams = Seq(
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 1, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 0, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, splitFlit = true, cpuNum = 1, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 1, hfpId = 0),
 
-      NodeParam(nodeType = NodeType.RI, attr = "main"),
-      NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
+      NodeParam(nodeType = NodeType.RI, splitFlit = true, attr = "main"),
+      NodeParam(nodeType = NodeType.HI, splitFlit = true, defaultHni = true, attr = "main", outstanding = 32),
 
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
-      NodeParam(nodeType = NodeType.S, bankId = 0),
+      NodeParam(nodeType = NodeType.HF, splitFlit = true, bankId = 1, hfpId = 1),
+      NodeParam(nodeType = NodeType.S, splitFlit = true, bankId = 0),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.P)
+      NodeParam(nodeType = NodeType.P, splitFlit = true),
+      NodeParam(nodeType = NodeType.P, splitFlit = true)
     )
   )
 })
