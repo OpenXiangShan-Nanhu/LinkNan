@@ -60,9 +60,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   implicitClock := io.noc_clock
   implicitReset := io.reset
 
-  private val resetVec = Wire(Vec(cluster.map(_.socket.node.cpuNum).sum + 1, Bool()))
-  private val rtcEn = RegNext(Cat(resetVec) === 0.U)
-  resetVec.last := RegNext(noc.io.onReset)
+  private val rtcEn = RegNext(!noc.io.onReset)
   private val rtcClockGated = io.rtc_clock & rtcEn
   devWrp.io.ext.timerTick := RegNext(rtcClockGated)
   devWrp.io.ext.intr := io.ext_intr
@@ -106,7 +104,6 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
       ext.misc.seip(i) := devWrp.io.cpu.seip(cid)
       ext.misc.dbip(i) := devWrp.io.cpu.dbip(cid)
       devWrp.io.resetCtrl.hartIsInReset(cid) := ext.misc.resetState(i)
-      resetVec(rstIdx) := RegNext(ext.misc.resetState(i))
       rstIdx = rstIdx + 1
     }
   }
