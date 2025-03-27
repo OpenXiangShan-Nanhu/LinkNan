@@ -120,7 +120,7 @@ class L2Config(sizeInKiB: Int = 512, ways: Int = 8, slices: Int = 2) extends Con
       dataECC = Some("secded"),
       enableTagECC = true,
       enableDataECC = true,
-      dataCheck = Some("oddparity"),
+      dataCheck = None,
       ways = ways,
       sets = sizeInKiB * 1024 / ways / slices / up(L2ParamKey).blockBytes,
       prefetch = Seq(BOPParameters()) ++ (if(core.prefetcher.nonEmpty) Seq(PrefetchReceiverParams()) else Nil),
