@@ -32,21 +32,13 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   implicitClock := pll.io.cpu_clock
   implicitReset := resetSync
 
-  private val rtcSampler = Reg(UInt(2.W))
-  private val timer = RegInit(0.U(64.W))
-  private val timerUpdate = Wire(Valid(UInt(64.W)))
-  private val rtcPosedge = rtcSampler === 1.U
-  rtcSampler := Cat(rtcSampler, io.icn.misc.rtcTick)(1, 0)
-  when (rtcPosedge) { timer := timer + 1.U }
-  timerUpdate.valid := RegNext(rtcPosedge)
-  timerUpdate.bits := timer
-
   clusterPeriCx.io.tls.head <> clusterHub.io.tlm
   clusterHub.io.icn <> io.icn
   clusterHub.io.core <> io.cpu.chiPdc
 
   pll.io.cfg := clusterPeriCx.io.cluster.pllCfg
   clusterPeriCx.io.cluster.pllLock := pll.io.lock
+  clusterPeriCx.io.cluster.rtc := io.icn.misc.rtc
   pll.io.in_clock := io.icn.osc_clock
   coreCg.io.CK := pll.io.cpu_clock
   coreCg.io.TE := io.icn.dft.func.cgen
@@ -77,7 +69,7 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   cpuDev.meip := clusterHub.io.cpu.meip(0)
   cpuDev.seip := clusterHub.io.cpu.seip(0)
   cpuDev.dbip := clusterHub.io.cpu.dbip(0)
-  cpuDev.timerUpdate := Pipe(timerUpdate)
+  cpuDev.timerUpdate := cpuCtl.timerUpdate
   clusterHub.io.cpu.resetState(0) := RegNext(cpuDev.reset_state, true.B)
   cpuDev.dft := io.icn.dft
   cpuCtl.coreId := cpuDev.mhartid.tail(ciIdBits)

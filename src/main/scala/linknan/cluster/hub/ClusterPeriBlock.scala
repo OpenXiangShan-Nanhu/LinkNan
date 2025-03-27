@@ -65,6 +65,10 @@ class CpuCtlBundle(implicit p:Parameters) extends ZJBundle {
   val defaultEnable = Input(Bool())
   val coreId = Input(UInt(cpuIdBits.W))
   val blockReq = Output(Bool())
+  val msip = Output(Bool())
+  val ssip = Output(Bool())
+  val mtip = Output(Bool())
+  val timerUpdate = Output(Valid(UInt(64.W)))
 }
 
 class CsuCtlBundle(implicit p:Parameters) extends ZJBundle {
@@ -75,12 +79,14 @@ class CsuCtlBundle(implicit p:Parameters) extends ZJBundle {
 class ClusterCtlBundle(implicit p:Parameters) extends ZJBundle {
   val pllCfg = Output(Vec(8, UInt(32.W)))
   val pllLock = Input(Bool())
+  val rtc = Input(Bool())
 }
 
 class ClusterPeriBlock(tlParams: Seq[TilelinkParams], coreNum:Int)(implicit p:Parameters) extends Module {
   private val privateSeq = Seq.tabulate(coreNum)(i => Seq(
     ClusterPeriParams(s"cpu_boot_ctl_$i", Seq((0x0000, 0x1000)), Some(i)),
-    ClusterPeriParams(s"cpu_pwr_ctl_$i", Seq((0x1000, 0x2000)), Some(i))
+    ClusterPeriParams(s"cpu_pwr_ctl_$i", Seq((0x1000, 0x2000)), Some(i)),
+    ClusterPeriParams(s"cpu_daclint_$i", Seq((0x2000, 0x3000)), Some(i)),
   )).reduce(_ ++ _)
 
   private val sharedSeq = Seq(
@@ -99,6 +105,11 @@ class ClusterPeriBlock(tlParams: Seq[TilelinkParams], coreNum:Int)(implicit p:Pa
     cpuCtl.suggestName(s"cpu_pwr_ctl_$i")
     (i, cpuCtl)
   }
+  private val cpuDaclintSeq = Seq.tabulate(coreNum) { i=>
+    val cpuCtl = Module(new DistributedAclint(periXBar.io.downstream.head.params))
+    cpuCtl.suggestName(s"cpu_daclint_$i")
+    (i, cpuCtl)
+  }
 
   private val pllCtl = Module(new ClusterPLL(periXBar.io.downstream.head.params))
 
@@ -112,6 +123,7 @@ class ClusterPeriBlock(tlParams: Seq[TilelinkParams], coreNum:Int)(implicit p:Pa
 
   cpuDevConn(cpuBootCtlSeq.map(e => (e._1, e._2.tls)), "cpu_boot_ctl_")
   cpuDevConn(cpuPwrCtlSeq.map(e => (e._1, e._2.io.tls)), "cpu_pwr_ctl_")
+  cpuDevConn(cpuDaclintSeq.map(e => (e._1, e._2.io.tls)), "cpu_daclint_")
 
   pllCtl.tls <> downstreams.filter(_._1.name == s"pll").map(_._2).head
 
@@ -131,6 +143,11 @@ class ClusterPeriBlock(tlParams: Seq[TilelinkParams], coreNum:Int)(implicit p:Pa
     io.cpu(i).pchn <> cpuPwrCtlSeq(i)._2.io.pChnMst
     io.cpu(i).pcsm <> cpuPwrCtlSeq(i)._2.io.pcsmCtrl
     io.cpu(i).blockReq := RegNext(cpuPwrCtlSeq(i)._2.io.blockReq)
+    io.cpu(i).msip := cpuDaclintSeq(i)._2.io.msip
+    io.cpu(i).ssip := cpuDaclintSeq(i)._2.io.ssip
+    io.cpu(i).mtip := cpuDaclintSeq(i)._2.io.mtip
+    io.cpu(i).timerUpdate := cpuDaclintSeq(i)._2.io.timerUpdate
+    cpuDaclintSeq(i)._2.io.rtc := io.cluster.rtc
     cpuBootCtlSeq(i)._2.io.defaultBootAddr := io.cpu(i).defaultBootAddr
     cpuPwrCtlSeq(i)._2.io.powerOnState := Mux(io.cpu(i).defaultEnable, PowerMode.ON, PowerMode.OFF)
     cpuPwrCtlSeq(i)._2.io.deactivate := false.B

@@ -5,7 +5,7 @@ import chisel3.util._
 import linknan.cluster.power.pchannel.PChannel
 import zhujiang.tilelink.{TLULBundle, TilelinkParams}
 
-class PowerControllerTop(tlParams:TilelinkParams, csu:Boolean, csuRetClkDiv:Int = 4) extends Module {
+class PowerControllerTop(tlParams:TilelinkParams, csu:Boolean) extends Module {
   val io =  IO(new Bundle {
     val tls = Flipped(new TLULBundle(tlParams))
     val pChnMst = new PChannel(devActiveBits, PowerMode.powerModeBits)

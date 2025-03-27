@@ -16,8 +16,8 @@ case class LinkNanParams(
   remapMask: Long = 0xE0_1FFF_FFFFL,
   imiscSgBase: Int = 0x0000_0000,
   imsicMBase: Int = 0x0080_0000,
-  mswiBase: Int = 0x3400_0000,
-  sswiBase: Int = 0x3500_0000
+  mswiBase: Int = 0x0100_0000,
+  sswiBase: Int = 0x0100_4000
 ) {
   lazy val remapBaseMaskBits = Seq.tabulate(64)(i => (remapMask >> i) & 0x1L).sum.toInt
   lazy val finalSgBase = remapBase + imiscSgBase

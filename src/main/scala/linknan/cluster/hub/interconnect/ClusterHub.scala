@@ -29,7 +29,7 @@ class ClusterMiscWires(node: Node)(implicit p: Parameters) extends ZJBundle {
   val resetState = Output(Vec(node.cpuNum, Bool()))
   val clusterId = Input(UInt(clusterIdBits.W))
   val nodeNid = Input(UInt(nodeNidBits.W))
-  val rtcTick = Input(Bool())
+  val rtc = Input(Bool())
 }
 
 class ClusterDeviceBundle(node: Node)(implicit p: Parameters) extends ZJBundle {
