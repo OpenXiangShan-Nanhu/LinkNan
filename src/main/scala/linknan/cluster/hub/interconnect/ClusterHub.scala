@@ -63,7 +63,7 @@ class ClusterHub(node: Node)(implicit p: Parameters) extends ZJModule {
 
   private val socket = Module(new SocketDevSide(node))
   private val pdc = Module(new ChiPdcIcnSide(node.copy(nodeType = NodeType.RF)))
-  private val bridge = Module(new ClusterBridge)
+  private val bridge = Module(new ClusterBridge(node))
 
   val io = IO(new Bundle {
     val icn = new ClusterDeviceBundle(node)

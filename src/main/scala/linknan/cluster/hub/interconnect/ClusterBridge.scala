@@ -153,13 +153,13 @@ class DatXBar(implicit p: Parameters) extends ZJModule with ClusterInterconnectH
   conn(slvs, msts, "dat")
 }
 
-class ClusterBridge(implicit p: Parameters) extends ZJModule with ClusterInterconnectHelper {
-  private val chi2tl = Module(new TLULBridge(Node(nodeType = NodeType.HI, splitFlit = true), 64, 3))
+class ClusterBridge(node:Node)(implicit p: Parameters) extends ZJModule with ClusterInterconnectHelper {
+  private val chi2tl = Module(new TLULBridge(node.copy(nodeType = NodeType.HI), 64, 3))
   val io = IO(new Bundle {
     val nodeNid = Input(UInt(nodeNidBits.W))
     val clusterId = Input(UInt(clusterIdBits.W))
-    val icn = new DeviceIcnBundle(Node(nodeType = NodeType.CC))
-    val core = new IcnBundle(Node(nodeType = NodeType.RF))
+    val icn = new DeviceIcnBundle(node)
+    val core = new IcnBundle(node.copy(nodeType = NodeType.RF))
     val tlm = new TLULBundle(chi2tl.tl.params)
     val blockSnp = Input(Bool())
     val snpPending = Output(Bool())
