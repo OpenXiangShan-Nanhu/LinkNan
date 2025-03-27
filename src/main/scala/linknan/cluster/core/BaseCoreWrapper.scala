@@ -52,6 +52,7 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
 
   val pdc = Module(new ChiPdcDevSide(node))
   io.chiPdc <> pdc.io.dev
+  pdc.io.icn.rx.debug.foreach(_ := DontCare)
 
   val cpuHalt = Wire(Bool())
   val pSlv = Module(new PChannelSlv(devActiveBits, PowerMode.powerModeBits))

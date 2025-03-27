@@ -16,11 +16,10 @@
 
 package lntest.top
 
-import chisel3.Module.ResetType
 import org.chipsalliance.cde.config.Parameters
 import chisel3.stage.ChiselGeneratorAnnotation
 import chisel3._
-import chisel3.util.{MixedVec, ReadyValidIO}
+import chisel3.util.{MixedVec, ReadyValidIO, Decoupled}
 import lntest.peripheral.SimJTAG
 import org.chipsalliance.diplomacy.lazymodule._
 import xs.utils.FileRegisters
@@ -33,9 +32,11 @@ import org.chipsalliance.diplomacy.DisableMonitors
 import xiangshan.XSCoreParamsKey
 import xijiang.NodeType
 import xijiang.tfb.TrafficBoardFileManager
+import xs.utils.debug.HardwareAssertionKey
 import xs.utils.perf.DebugOptionsKey
 import zhujiang.ZJParametersKey
 import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
+import zhujiang.device.misc.ZJDebugBundle
 
 class MasterBridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
   val slvMatchersSeq = Seq(_ => true.B)
@@ -66,7 +67,14 @@ class SimTop(implicit p: Parameters) extends Module {
     val simFinal = Input(Bool())
     val dma = if(doBlockTest) Some(MixedVec(soc.dmaIO.map(drv => Flipped(new AxiBundle(drv.params))))) else None
     val cfg = if(doBlockTest) Some(new AxiBundle(cfgPort.params)) else None
+    val hwa = if(doBlockTest && p(HardwareAssertionKey).enable) Some(Decoupled(new ZJDebugBundle)) else None
   })
+  if(doBlockTest && p(HardwareAssertionKey).enable) {
+    io.hwa.get <> soc.io.hwa.get
+  } else if(p(HardwareAssertionKey).enable) {
+    soc.io.hwa.get.ready := true.B
+  }
+
 
   private def connByName(sink:ReadyValidIO[Bundle], src:ReadyValidIO[Bundle]):Unit = {
     sink.valid := src.valid
@@ -180,6 +188,6 @@ object SimGenerator extends App {
       DisableMonitors(p => new SimTop()(p))(config)
     })
   ))
-  if(config(ZJParametersKey).tfbParams.isDefined) TrafficBoardFileManager.release("generated-src", "generated-src", config)
+  if(config(ZJParametersKey).tfbParams.isDefined) TrafficBoardFileManager.release("generated-src", "generated-src")(config)
   FileRegisters.write(filePrefix = config(LinkNanParamsKey).prefix + "LNTop.")
 }

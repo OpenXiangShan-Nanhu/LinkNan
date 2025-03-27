@@ -3,19 +3,21 @@ package linknan.soc
 import chisel3._
 import chisel3.experimental.hierarchy.{Definition, Instance}
 import chisel3.experimental.{ChiselAnnotation, annotate}
-import chisel3.util.{log2Ceil, log2Up}
+import chisel3.util.{Decoupled, log2Ceil, log2Up}
 import coupledL2.tl2chi.{CHIIssue, Issue}
 import coupledL2.{BankBitsKey, L1Param, L2Param, L2ParamKey}
 import freechips.rocketchip.tile.MaxHartIdBits
+import linknan.cluster.{BlockTestIO, CpuCluster}
+import org.chipsalliance.cde.config.{Config, Parameters}
 import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
-import linknan.cluster.{BlockTestIO, CpuCluster}
-import zhujiang.{DftWires, NocIOHelper, ZJParametersKey, ZJRawModule}
-import org.chipsalliance.cde.config.{Config, Parameters}
 import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
 import xiangshan.{XLen, XSCoreParameters, XSCoreParamsKey}
+import xs.utils.debug.HardwareAssertionKey
 import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
 import zhujiang.axi.AxiUtils
+import zhujiang.device.misc.ZJDebugBundle
+import zhujiang.{DftWires, NocIOHelper, ZJParametersKey, ZJRawModule}
 
 object GlobalStaticParameters {
   var lnParams:LinkNanParams = null
@@ -45,6 +47,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   })
   private val uncore = Module(new UncoreTop()(
     new Config((_,_,_) => {
+      case HardwareAssertionKey => p(HardwareAssertionKey)
       case ZJParametersKey => p(ZJParametersKey)
       case LinkNanParamsKey => GlobalStaticParameters.lnParams
       case DebugOptionsKey => p(DebugOptionsKey)
@@ -66,7 +69,9 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = uncore.io.jtag.map(t => chiselTypeOf(t))
     val dft = Input(new DftWires)
+    val hwa = Option.when(p(HardwareAssertionKey).enable)(Decoupled(new ZJDebugBundle))
   })
+  io.hwa.foreach(_ <> uncore.io.hwa.get)
 
   val ddrDrv = uncore.ddrIO.map(AxiUtils.getIntnl)
   val cfgDrv = uncore.cfgIO.map(AxiUtils.getIntnl)
@@ -86,6 +91,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   uncore.io.cluster_clocks := io.cluster_clocks
 
   private val clusterP = new Config((_,_,_) => {
+    case HardwareAssertionKey => p(HardwareAssertionKey)
     case XSCoreParamsKey => GlobalStaticParameters.xsParams
     case L2ParamKey => GlobalStaticParameters.l2Params
     case LinkNanParamsKey => GlobalStaticParameters.lnParams

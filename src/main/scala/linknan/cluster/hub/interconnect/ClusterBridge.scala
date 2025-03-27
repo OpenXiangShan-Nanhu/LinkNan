@@ -6,6 +6,7 @@ import org.chipsalliance.cde.config.Parameters
 import xijiang.router.base.{DeviceIcnBundle, IcnBundle}
 import xijiang.{Node, NodeType}
 import xs.utils.ResetRRArbiter
+import xs.utils.debug.HardwareAssertionKey
 import zhujiang.ZJModule
 import zhujiang.chi.{DeviceReqAddrBundle, NodeIdBundle, RReqFlit, ReqAddrBundle, RingFlit}
 import zhujiang.device.bridge.tlul.TLULBridge
@@ -209,4 +210,6 @@ class ClusterBridge(node:Node)(implicit p: Parameters) extends ZJModule with Clu
   io.core.tx.snoop.get.valid := io.icn.rx.snoop.get.valid & !io.blockSnp
   io.icn.rx.snoop.get.ready := io.core.tx.snoop.get.ready & !io.blockSnp
   io.snpPending := RegNext(io.blockSnp & io.icn.rx.snoop.get.valid)
+
+  if(p(HardwareAssertionKey).enable) connChn(io.icn.tx.debug.get, io.core.rx.debug.get, Some(coreNodeId))
 }

@@ -2,6 +2,7 @@ package linknan.generator
 
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
+import xs.utils.debug.HardwareAssertionKey
 import xs.utils.perf.{DebugOptionsKey, PerfCounterOptionsKey}
 import zhujiang.ZJParametersKey
 
@@ -71,6 +72,11 @@ object ArgParser {
         case "--no-cores" :: tail =>
           parse(config.alter((site, here, up) => {
             case LinkNanParamsKey => up(LinkNanParamsKey).copy(removeCore = true)
+          }), tail)
+
+        case "--enable-hardware-assertion" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case HardwareAssertionKey => up(HardwareAssertionKey).copy(enable = true)
           }), tail)
 
         case "--prefix" :: confString :: tail =>

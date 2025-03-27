@@ -1,14 +1,15 @@
 package linknan.soc
 
 import chisel3._
-import chisel3.util.Cat
+import chisel3.util.{Cat, Decoupled}
 import linknan.cluster.hub.interconnect.ClusterIcnBundle
 import linknan.soc.device.DevicesWrapper
 import org.chipsalliance.cde.config.Parameters
-import xs.utils.debug.{DomainInfo, HardwareAssertion}
-import zhujiang.axi.{AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
+import xs.utils.debug.HardwareAssertionKey
+import zhujiang.axi.{AxiParams, AxiUtils, BaseAxiXbar}
 import zhujiang.chi.NodeIdBundle
-import zhujiang.{DftWires, HasZJParams, NocIOHelper, ZJRawModule, Zhujiang}
+import zhujiang.device.misc.ZJDebugBundle
+import zhujiang._
 
 class AxiDmaXBar(dmaAxiParams: Seq[AxiParams])(implicit val p: Parameters) extends BaseAxiXbar(dmaAxiParams) with HasZJParams {
   val slvMatchersSeq = Seq((_: UInt) => true.B)
@@ -21,15 +22,12 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   override protected val implicitReset = Wire(AsyncReset())
 
   private val noc = Module(new Zhujiang)
-  HardwareAssertion.fromDomain(noc.io.assertionOut, noc.assertionInfo, level = 0, s"noc")
-  HardwareAssertion.placePipe(1)
-  private val assertionNode = HardwareAssertion.placePipe(Int.MaxValue, moduleTop = true)
 
   require(noc.cfgIO.count(_.params.attr.contains("_main")) == 1)
   require(noc.dmaIO.count(_.params.attr.contains("_main")) == 1)
   private val cfgPort = noc.cfgIO.filter(_.params.attr.contains("_main")).head
   private val dmaPort = noc.dmaIO.filter(_.params.attr.contains("_main")).head
-  private val devWrp = Module(new DevicesWrapper(cfgPort.params, dmaPort.params, assertionNode))
+  private val devWrp = Module(new DevicesWrapper(cfgPort.params, dmaPort.params))
   private val dmaXBar = Module(new AxiDmaXBar(Seq.fill(2)(devWrp.io.mst.params)))
 
   dmaXBar.io.upstream.head <> devWrp.io.mst
@@ -54,6 +52,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = devWrp.io.debug.systemjtag.map(t => chiselTypeOf(t))
     val dft = Input(new DftWires)
+    val hwa = Option.when(p(HardwareAssertionKey).enable)(Decoupled(new ZJDebugBundle))
   })
   val cluster = noc.ccnIO.map(ccn => IO(new ClusterIcnBundle(ccn.node)))
   cluster.foreach(c => dontTouch(c))
@@ -71,15 +70,12 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   devWrp.io.debug.dmactiveAck := devWrp.io.debug.dmactive
   devWrp.io.debug.clock := DontCare
   devWrp.io.debug.reset := DontCare
-  devWrp.io.hwa <> assertionNode.assertion
   devWrp.clock := io.noc_clock
   devWrp.reset := io.reset
   io.ndreset := devWrp.io.debug.ndreset
   noc.io.ci := io.ci
   noc.io.dft := io.dft
-
-  HardwareAssertion.setTopNode(assertionNode)
-  HardwareAssertion.release("hwa")
+  io.hwa.foreach(_ <> noc.io.debug.get)
 
   private var rstIdx = 0
   for(((ext, noc), idx) <- cluster.zip(noc.ccnIO).zipWithIndex) {

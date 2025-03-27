@@ -6,6 +6,7 @@ task("soc" , function()
     description = "Generate soc rtl",
     options = {
       {'a', "all_in_one", "k", nil, "do not split generated rtl"},
+      {'A', "hardware_assertion", "k", nil, "do not split generated rtl"},
       {'b', "block_test_l2l3", "k", nil, "leave core interfaces to the top"},
       {'c', "clean_difftest", "k", nil, "generate verilog without any difftest components"},
       {'d', "dramsim3", "k", nil, "use dramsim3 as simulation main memory"},
@@ -35,6 +36,7 @@ task("soc" , function()
     if not option.get("clean_difftest") and not option.get("pldm_verilog") then table.join2(chisel_opts, {"--enable-difftest"}) end
     if not option.get("enable_perf") then table.join2(chisel_opts, {"--fpga-platform"}) end
     if option.get("lua_scoreboard") then table.join2(chisel_opts, {"--lua-scoreboard"}) end
+    if option.get("hardware_assertion") then table.join2(chisel_opts, {"--enable-hardware-assertion"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
     if option.get("config") then table.join2(chisel_opts, {"--config", option.get("config")}) end
     local build_dir = path.join("build", "rtl")

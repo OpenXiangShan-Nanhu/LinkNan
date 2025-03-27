@@ -50,7 +50,7 @@ class AxiCfgXBar(icnAxiParams: AxiParams)(implicit val p: Parameters) extends Ba
   initialize()
 }
 
-class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams, hwaNode: HwAsrtNode)(implicit p: Parameters) extends ZJRawModule
+class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Parameters) extends ZJRawModule
   with ImplicitClock with ImplicitReset {
   val clock = IO(Input(Clock()))
   val reset = IO(Input(AsyncReset()))
@@ -80,7 +80,6 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams, hwaNode: HwAsrt
   val io = IO(new Bundle {
     val slv = Flipped(new AxiBundle(cfgParams))
     val mst = new AxiBundle(dmaParams)
-    val hwa = Flipped(hwaNode.assertion.cloneType)
 
     val ext = new Bundle {
       val cfg = new AxiBundle(cfgXBar.io.downstream.last.params.copy(attr = cfgParams.attr))
@@ -105,8 +104,6 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams, hwaNode: HwAsrt
   resetGen.dft := io.dft.reset
   implicitReset := resetGen.o_reset
   resetGen.reset := reset
-  //TODO: add hwa dev
-  io.hwa.ready := true.B
   dontTouch(io)
 
   cfgXBar.misc.ci := io.ci

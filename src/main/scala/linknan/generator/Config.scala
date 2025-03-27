@@ -10,11 +10,13 @@ import xiangshan.cache.DCacheParameters
 import xiangshan.frontend.icache.ICacheParameters
 import xijiang.{NodeParam, NodeType}
 import xs.utils.common.DirtyField
+import xs.utils.debug.{HardwareAssertionKey, HwaParams}
 import xs.utils.perf.{DebugOptions, DebugOptionsKey, LogUtilsOptions, LogUtilsOptionsKey, PerfCounterOptions, PerfCounterOptionsKey, XSPerfLevel}
 import xs.utils.tl.ReqSourceField
 import zhujiang.{ZJParameters, ZJParametersKey}
 
 class BaseConfig(core: String) extends Config((site, here, up) => {
+  case HardwareAssertionKey => HwaParams()
   case DebugOptionsKey => DebugOptions()
   case L2ParamKey => L2Param()
   case XSCoreParamsKey => XSCoreParameters(hasMbist = true)
@@ -36,7 +38,7 @@ class FullNocConfig(core: String, socket: String) extends Config((site, here, up
 
       NodeParam(nodeType = NodeType.RI, attr = "main"),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
-      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.M),
 
       NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
       NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
@@ -66,7 +68,7 @@ class ReducedNocConfig(core: String, socket: String) extends Config((site, here,
 
       NodeParam(nodeType = NodeType.RI, attr = "main"),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
-      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.M),
 
       NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
       NodeParam(nodeType = NodeType.P),
@@ -97,7 +99,7 @@ class MinimalNocConfig(core: String, socket: String) extends Config((site, here,
       NodeParam(nodeType = NodeType.S,  bankId = 0),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.M),
       NodeParam(nodeType = NodeType.P)
     )
   )

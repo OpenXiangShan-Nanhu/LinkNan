@@ -33,6 +33,6 @@ object SocGenerator extends App {
     ChiselGeneratorAnnotation(() => new LNTop()(config))
   ))
 
-  if(config(ZJParametersKey).tfbParams.isDefined) TrafficBoardFileManager.release("cosim", "cosim", config)
+  if(config(ZJParametersKey).tfbParams.isDefined) TrafficBoardFileManager.release("cosim", "cosim")(config)
   FileRegisters.write(filePrefix = config(LinkNanParamsKey).prefix + "LNTop.")
 }
