@@ -15,8 +15,10 @@ import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import xiangshan.{HasXSParameter, XSCoreParamsKey}
 import xijiang.Node
 import xs.utils.common.{AliasField, IsKeywordField, PrefetchField, PrefetchRecv, VaddrField}
+import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import xs.utils.tl.ReqSourceField
-import zhujiang.chi.{DataFlit, RReqFlit, RespFlit, SnoopFlit}
+import zhujiang.HasZJParams
+import zhujiang.chi.{DataFlit, RReqFlit, RespFlit, RingFlit, SnoopFlit}
 
 class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper with HasXSParameter {
   private val coreP = p(XSCoreParamsKey)
@@ -91,7 +93,7 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
     node = node
   )
   @instantiable
-  class NoCoreWrapperImpl extends BaseCoreWrapperImpl(this, node) {
+  class NoCoreWrapperImpl extends BaseCoreWrapperImpl(this, node) with HasZJParams {
     @public
     val btio = IO(new BlockTestIO(btioParams))
     btio.cio <> cioNode.out.head._1
@@ -140,5 +142,17 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
     private val rxDatFlit = Wire(Decoupled(new DataFlit))
     connectByName(l2cache.module.io_chi.rx.dat, rxDatFlit)
     connectChiChn(rxDatFlit, pdc.io.icn.tx.data.get)
+
+    private val assertionNode = HardwareAssertion.placePipe(Int.MaxValue, moduleTop = true)
+    HardwareAssertion.release(assertionNode, "hwa", "core")
+    assertionNode.assertion.ready := true.B
+    if(p(HardwareAssertionKey).enable) {
+      dontTouch(assertionNode.assertion)
+      val dbgBd = WireInit(0.U.asTypeOf(new RingFlit(debugFlitBits)))
+      dbgBd.Payload := assertionNode.assertion.bits.id
+      pdc.io.icn.rx.debug.get.valid := assertionNode.assertion.valid
+      pdc.io.icn.rx.debug.get.bits := dbgBd.asTypeOf(pdc.io.icn.rx.debug.get.bits)
+      assertionNode.assertion.ready := pdc.io.icn.rx.debug.get.ready
+    }
   }
 }

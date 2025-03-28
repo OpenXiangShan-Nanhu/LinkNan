@@ -14,7 +14,10 @@ import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import xs.utils.IntBuffer
 import xiangshan.{NonmaskableInterruptIO, PMParameKey, PMParameters, XSCore, XSCoreParamsKey}
 import xijiang.Node
+import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
+import zhujiang.HasZJParams
 import zhujiang.chi._
+import zhujiang.device.misc.ZJDebugBundle
 
 class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper {
   //Core connections
@@ -65,7 +68,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
 
   lazy val module = new NanhuCoreWrapperImpl
   @instantiable
-  class NanhuCoreWrapperImpl extends BaseCoreWrapperImpl(this, node) {
+  class NanhuCoreWrapperImpl extends BaseCoreWrapperImpl(this, node) with HasZJParams {
     private val _l2 = l2cache.module
     private val _core = core.module
     _core.io.hartId := io.mhartid
@@ -159,5 +162,17 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     private val rxDatFlit = Wire(Decoupled(new DataFlit))
     connectByName(_l2.io_chi.rx.dat, rxDatFlit)
     connectChiChn(rxDatFlit, pdc.io.icn.tx.data.get)
+
+    private val assertionNode = HardwareAssertion.placePipe(Int.MaxValue, moduleTop = true)
+    HardwareAssertion.release(assertionNode, "hwa", "core")
+    assertionNode.assertion.ready := true.B
+    if(p(HardwareAssertionKey).enable) {
+      dontTouch(assertionNode.assertion)
+      val dbgBd = WireInit(0.U.asTypeOf(new RingFlit(debugFlitBits)))
+      dbgBd.Payload := assertionNode.assertion.bits.id
+      pdc.io.icn.rx.debug.get.valid := assertionNode.assertion.valid
+      pdc.io.icn.rx.debug.get.bits := dbgBd.asTypeOf(pdc.io.icn.rx.debug.get.bits)
+      assertionNode.assertion.ready := pdc.io.icn.rx.debug.get.ready
+    }
   }
 }
