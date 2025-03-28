@@ -123,7 +123,7 @@ class ClusterPeriBlock(tlParams: Seq[TilelinkParams], coreNum:Int)(implicit p:Pa
 
   cpuDevConn(cpuBootCtlSeq.map(e => (e._1, e._2.tls)), "cpu_boot_ctl_")
   cpuDevConn(cpuPwrCtlSeq.map(e => (e._1, e._2.io.tls)), "cpu_pwr_ctl_")
-  cpuDevConn(cpuDaclintSeq.map(e => (e._1, e._2.io.tls)), "cpu_daclint_")
+  cpuDevConn(cpuDaclintSeq.map(e => (e._1, e._2.tls)), "cpu_daclint_")
 
   pllCtl.tls <> downstreams.filter(_._1.name == s"pll").map(_._2).head
 

@@ -91,7 +91,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     ext.misc.clusterId := Cat(io.ci, clusterId.U((clusterIdBits - ciIdBits).W))
     ext.misc.defaultBootAddr := io.default_reset_vector
     ext.misc.nodeNid := noc.node.nodeId.U.asTypeOf(new NodeIdBundle).nid
-    ext.misc.rtcTick := RegNext(rtcClockGated)
+    ext.misc.rtc := RegNext(rtcClockGated)
     for(i <- 0 until node.cpuNum) {
       val cid = clusterId + i
       ext.misc.msip(i) := devWrp.io.cpu.msip(cid)
