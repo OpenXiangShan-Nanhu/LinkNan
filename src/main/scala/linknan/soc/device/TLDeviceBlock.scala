@@ -34,7 +34,7 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
   val rationalSourceNode = TLRationalCrossingSource()
 
   private val xbar = LazyModule(new TLXbar)
-  private val plic = LazyModule(new TLPLIC(PLICParams(baseAddress = 0x3c000000L), 8))
+  private val plic = LazyModule(new TLPLIC(PLICParams(baseAddress = p(LinkNanParamsKey).plicBase), 8))
   private val clint = LazyModule(new CLINT(CLINTParams(0x38000000L), 8))
   private val debug = LazyModule(new DebugModule(coreNum))
   private val sbaXBar = LazyModule(new TLXbar)
