@@ -105,11 +105,12 @@ class MinimalNocConfig(core: String, socket: String) extends Config((site, here,
   )
 })
 
-class LLCConfig(sizeInMiB: Int = 8, ways: Int = 16, sfWays: Int = 16) extends Config((site, here, up) => {
+class LLCConfig(sizeInB: Int = 8 * 1024 * 1024, ways: Int = 16, sfWays: Int = 16, outstanding: Int = 64 * 4) extends Config((site, here, up) => {
   case ZJParametersKey => up(ZJParametersKey).copy(
-    cacheSizeInB = sizeInMiB * 1024 * 1024,
+    cacheSizeInB = sizeInB,
     cacheWays = ways,
-    snoopFilterWays = sfWays
+    snoopFilterWays = sfWays,
+    hnxOutstanding = outstanding,
   )
 })
 
@@ -161,11 +162,16 @@ class FullConfig(core: String, socket: String) extends Config(
 )
 
 class ReducedConfig(core: String, socket: String) extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(4, 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
+  new L1IConfig ++ new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(4 * 1024 * 1024 , 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
+)
+
+class ExtremeConfig(core: String, socket: String) extends Config(
+  // LLCConfig: sizeInB = Cacheline * ways * sets * bank (sets must more than 2)
+  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(64 * 2 * 2 * 2, 2, 2, 16) ++ new MinimalNocConfig(core, socket) ++ new BaseConfig(core)
 )
 
 class MinimalConfig(core: String, socket: String) extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(2, 8) ++ new MinimalNocConfig(core, socket) ++ new BaseConfig(core)
+  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(2 * 1024 * 1024, 8) ++ new MinimalNocConfig(core, socket) ++ new BaseConfig(core)
 )
 
 class SpecConfig(core: String, socket: String) extends Config(
@@ -173,9 +179,9 @@ class SpecConfig(core: String, socket: String) extends Config(
 )
 
 class FpgaConfig(core: String, socket: String) extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(8, 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
+  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(8 * 1024 * 1024, 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
 )
 
 class BtestConfig(core: String, socket: String) extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(1, 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
+  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(1 * 1024 * 1024, 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
 )

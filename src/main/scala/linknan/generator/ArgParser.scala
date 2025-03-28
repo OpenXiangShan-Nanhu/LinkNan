@@ -40,6 +40,7 @@ object ArgParser {
     configParse(args.toList)
     val configuration = cfg match {
       case "reduced" => new ReducedConfig(core, socket)
+      case "extreme" => new ExtremeConfig(core, socket)
       case "minimal" => new MinimalConfig(core, socket)
       case "spec" => new SpecConfig(core, socket)
       case "fpga" => new FpgaConfig(core, socket)
