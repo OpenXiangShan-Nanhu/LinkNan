@@ -168,6 +168,7 @@ class ClusterBridge(node:Node)(implicit p: Parameters) extends ZJModule with Clu
 
   chi2tl.icn.tx.req.get.ready := false.B
   io.tlm <> chi2tl.tl
+  chi2tl.nodeId := getPeriNodeId(io.nodeNid)
 
   private def connChn(rx:DecoupledIO[Data], tx:DecoupledIO[Data], nodeId:Option[UInt]):Unit = {
     require(tx.bits.getWidth == rx.bits.getWidth)
