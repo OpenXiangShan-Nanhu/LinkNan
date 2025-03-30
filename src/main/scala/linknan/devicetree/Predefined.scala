@@ -130,6 +130,23 @@ final case class PlicNode(
   },
 )
 
+final case class RefMtimerNode(
+  base:Long
+)(implicit p:Parameters) extends DeviceNode(
+  name = s"ref_mtimer",
+  label = s"REF_MTIMER",
+  children = Nil,
+  properties = {
+    List(
+      Property("#address-cells", IntegerValue(2)),
+      Property("#size-cells", IntegerValue(1)),
+      Property("compatible", StringValue("riscv,aclint-mtimer")),
+      Property("reg", RegValue(base, 8)),
+      Property("reg-names", StringValue("mtime")),
+    )
+  },
+)
+
 final case class CoreNode(
   id:Int,
 )(implicit p:Parameters) extends DeviceNode(
@@ -207,5 +224,5 @@ final case class SocNode(
     mtimeBase = (id << p(ZJParametersKey).cpuSpaceBits) + 0x2000L,
     mtimecmpBase = Some((id << p(ZJParametersKey).cpuSpaceBits) + 0x2008L),
     harts = 1
-  )) ++ List(MswiNode(cpuCount), PlicNode(cpuCount))
+  )) ++ List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(0x2008L))
 )
