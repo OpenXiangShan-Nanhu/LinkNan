@@ -38,6 +38,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr.contains("_main")).map(AxiUtils.getIntnl)
   val dmaDrv = Seq(dmaXBar.io.upstream.last) ++ noc.dmaIO.filterNot(_.params.attr.contains("_main")).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
+  val hwaDrv = noc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
 
   private val clusterNum = noc.ccnIO.size
@@ -52,7 +53,6 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = devWrp.io.debug.systemjtag.map(t => chiselTypeOf(t))
     val dft = Input(new DftWires)
-    val hwa = Option.when(p(HardwareAssertionKey).enable)(Decoupled(new ZJDebugBundle))
   })
   val cluster = noc.ccnIO.map(ccn => IO(new ClusterIcnBundle(ccn.node)))
   cluster.foreach(c => dontTouch(c))
@@ -75,7 +75,6 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   io.ndreset := devWrp.io.debug.ndreset
   noc.io.ci := io.ci
   noc.io.dft := io.dft
-  io.hwa.foreach(_ <> noc.io.debug.get)
 
   private var rstIdx = 0
   for(((ext, noc), idx) <- cluster.zip(noc.ccnIO).zipWithIndex) {

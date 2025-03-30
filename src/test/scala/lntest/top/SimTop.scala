@@ -67,14 +67,8 @@ class SimTop(implicit p: Parameters) extends Module {
     val simFinal = Input(Bool())
     val dma = if(doBlockTest) Some(MixedVec(soc.dmaIO.map(drv => Flipped(new AxiBundle(drv.params))))) else None
     val cfg = if(doBlockTest) Some(new AxiBundle(cfgPort.params)) else None
-    val hwa = if(doBlockTest && p(HardwareAssertionKey).enable) Some(Decoupled(new ZJDebugBundle)) else None
   })
-  if(doBlockTest && p(HardwareAssertionKey).enable) {
-    io.hwa.get <> soc.io.hwa.get
-  } else if(p(HardwareAssertionKey).enable) {
-    soc.io.hwa.get.ready := true.B
-  }
-
+  soc.hwaIO.foreach(_ := DontCare)
 
   private def connByName(sink:ReadyValidIO[Bundle], src:ReadyValidIO[Bundle]):Unit = {
     sink.valid := src.valid

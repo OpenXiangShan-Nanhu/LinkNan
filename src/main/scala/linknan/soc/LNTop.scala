@@ -69,14 +69,13 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = uncore.io.jtag.map(t => chiselTypeOf(t))
     val dft = Input(new DftWires)
-    val hwa = Option.when(p(HardwareAssertionKey).enable)(Decoupled(new ZJDebugBundle))
   })
-  io.hwa.foreach(_ <> uncore.io.hwa.get)
 
   val ddrDrv = uncore.ddrIO.map(AxiUtils.getIntnl)
   val cfgDrv = uncore.cfgIO.map(AxiUtils.getIntnl)
   val dmaDrv = uncore.dmaIO.map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
+  val hwaDrv = uncore.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
 
   uncore.io.reset := io.reset
