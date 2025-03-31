@@ -106,7 +106,7 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
 
 class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int, sbaDataBits: Int)(implicit p: Parameters) extends LazyModule with BindingScope {
   private val innerP = p.alterPartial({
-    case DebugModuleKey => Some(ZJDebugModuleParams.debugParams)
+    case DebugModuleKey => Some(p(LinkNanParamsKey).debugParams)
     case MaxHartIdBits => log2Ceil(coreNum)
     case ExportDebug => DebugAttachParams(protocols = Set(JTAG))
     case JtagDTMKey => JtagDTMKey

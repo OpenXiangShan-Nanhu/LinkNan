@@ -2,6 +2,7 @@ package linknan.soc
 
 import aia.{APLICParams, IMSICParams}
 import chisel3.util.log2Ceil
+import freechips.rocketchip.devices.debug.DebugModuleParams
 import org.chipsalliance.cde.config.Field
 
 case object LinkNanParamsKey extends Field[LinkNanParams]
@@ -16,6 +17,7 @@ case class LinkNanParams(
   remapMask: Long = 0xE0_1FFF_FFFFL,
   imiscSgBase: Int = 0x0000_0000,
   imsicMBase: Int = 0x0080_0000,
+  debugBase: Long = 0x3802_0000,
   plicBase: Long = 0x3C00_0000,
   mswiBase: Int = 0x0100_0000,
   sswiBase: Int = 0x0100_4000,
@@ -39,5 +41,13 @@ case class LinkNanParams(
     mAddr = 0x8000L,
     sgAddr = 0x0000L,
     geilen = aplicParams.geilen
+  )
+  lazy val debugParams = DebugModuleParams(
+    nAbstractDataWords = 2,
+    maxSupportedSBAccess = 64,
+    hasBusMaster = true,
+    baseAddress = BigInt(debugBase),
+    nScratch = 2,
+    crossingHasSafeReset = false
   )
 }

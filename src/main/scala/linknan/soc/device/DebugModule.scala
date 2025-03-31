@@ -53,14 +53,3 @@ class DebugModuleImp(outer: DebugModule, numCores: Int) extends LazyRawModuleImp
   debug.io.dmi.get.dmiClock := io.debugIO.systemjtag.get.jtag.TCK
   debug.io.dmi.get.dmiReset := io.debugIO.systemjtag.get.reset
 }
-
-object ZJDebugModuleParams {
-  val debugParams = DebugModuleParams(
-    nAbstractDataWords = 2,
-    maxSupportedSBAccess = 64,
-    hasBusMaster = true,
-    baseAddress = BigInt(0x38020000),
-    nScratch = 2,
-    crossingHasSafeReset = false
-  )
-}
