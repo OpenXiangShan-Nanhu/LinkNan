@@ -54,7 +54,7 @@ case class FlagValue() extends DeviceTreeValue {
 }
 
 case class ReferenceValue(ref: String) extends DeviceTreeValue {
-  override def toString: String = s"&$ref"
+  override def toString: String = s"<&$ref>"
 }
 
 case class PropertyValues(values: List[DeviceTreeValue]) extends DeviceTreeValue {

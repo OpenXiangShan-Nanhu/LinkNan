@@ -125,5 +125,5 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
       if(p(LinkNanParamsKey).removeCore) core.get(cid) <> cc.btio.get
     }
   }
-  linknan.devicetree.DeviceTreeGenerator.generate(clusterP)
+  linknan.devicetree.DeviceTreeGenerator.lnGenerate(clusterP)
 }

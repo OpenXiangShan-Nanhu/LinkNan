@@ -29,7 +29,7 @@ object DeviceTreeGenerator {
     sb.toString
   }
 
-  def generate(implicit p:Parameters): Unit = {
+  def lnGenerate(implicit p:Parameters): Unit = {
     val cpuNum = p(ZJParametersKey).island.filter(_.nodeType == NodeType.CC).map(_.cpuNum).sum
     val root = RootNode()
       .withChild(CpuNode(cpuNum))

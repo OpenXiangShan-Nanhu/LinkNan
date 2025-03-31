@@ -57,28 +57,16 @@ final case class InterruptControllerNode(
 final case class MtimerNode(
   id:Int,
   mtimeBase:Long,
-  mtimecmpBase: Option[Long],
+  mtimecmpBase: Long,
   harts: Int
 )(implicit p:Parameters) extends DeviceNode(
   name = s"mtimer@$id",
   label = s"MTIMER_$id",
   children = Nil,
   properties = {
-    val regList = if(mtimecmpBase.isDefined) {
-      List(RegValue(mtimeBase, 8), RegValue(mtimecmpBase.get, 8))
-    } else {
-      List(RegValue(mtimeBase, 8))
-    }
-    val regNameList = if(mtimecmpBase.isDefined) {
-      List(StringValue("mtime"), StringValue("mtimecmp"))
-    } else {
-      List(StringValue("mtime"))
-    }
-    val intrSeq = if(mtimecmpBase.isDefined) {
-      Seq.tabulate(harts)(i => (s"cpu${id + i}_intc", 7))
-    } else {
-      Nil
-    }
+    val regList = List(RegValue(mtimeBase, 8), RegValue(mtimecmpBase, 8))
+    val regNameList = List(StringValue("mtime"), StringValue("mtimecmp"))
+    val intrSeq = Seq.tabulate(harts)(i => (s"cpu${id + i}_intc", 7))
     List(
       Property("#address-cells", IntegerValue(2)),
       Property("#size-cells", IntegerValue(1)),
@@ -103,6 +91,7 @@ final case class MswiNode(
       Property("#size-cells", IntegerValue(1)),
       Property("compatible", StringValue("riscv,aclint-mswi")),
       Property("reg", RegValue(p(LinkNanParamsKey).mswiBase, harts)),
+      Property("reg-names", StringValue("msip")),
       Property("interrupts-extended", IntrValue(intrSeq))
     )
   },
@@ -121,6 +110,7 @@ final case class PlicNode(
       Property("#size-cells", IntegerValue(1)),
       Property("compatible", StringValue("riscv,plic0")),
       Property("reg", RegValue(p(LinkNanParamsKey).plicBase, 0x400_0000)),
+      Property("reg-names", StringValue("control")),
       Property("interrupt-controller", FlagValue()),
       Property("#interrupt-cells", IntegerValue(1)),
       Property("riscv,ndev", IntegerValue(p(LinkNanParamsKey).nrExtIntr)),
@@ -147,6 +137,23 @@ final case class RefMtimerNode(
   },
 )
 
+final case class DebugModuleNode(
+  harts:Int
+)(implicit p:Parameters) extends DeviceNode(
+  name = "debug_module",
+  label = "DEBUG",
+  children = Nil,
+  properties = {
+    val intrSeq = Seq.tabulate(harts)(i => (s"cpu${i}_intc", 65535))
+    List(
+      Property("compatible", PropertyValues(List(StringValue("sifive,debug-013"), StringValue("riscv,debug-013")))),
+      Property("interrupts-extended", IntrValue(intrSeq)),
+      Property("reg", RegValue(0x0, 0x1000)),
+      Property("reg-names", StringValue("control")),
+    )
+  }
+)
+
 final case class CoreNode(
   id:Int,
 )(implicit p:Parameters) extends DeviceNode(
@@ -163,7 +170,6 @@ final case class CoreNode(
       Property("device-type", StringValue("cpu")),
       Property("reg", IntegerValue(id)),
       Property("status", StringValue(if(id == 0) "ok" else "disabled")),
-      Property("enable-method", StringValue("bosc,linknan")),
       Property("compatible", StringValue("bosc,nanhu-v5")),
       Property("riscv,isa", StringValue("rv64imafdc")),
       Property("cache-op-block-size", IntegerValue(icacheP.blockBytes)),
@@ -222,7 +228,7 @@ final case class SocNode(
   children = List.tabulate(cpuCount)(id => MtimerNode(
     id = id,
     mtimeBase = (id << p(ZJParametersKey).cpuSpaceBits) + 0x2000L,
-    mtimecmpBase = Some((id << p(ZJParametersKey).cpuSpaceBits) + 0x2008L),
+    mtimecmpBase = (id << p(ZJParametersKey).cpuSpaceBits) + 0x2008L,
     harts = 1
-  )) ++ List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(0x2008L))
+  )) ++ List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(0x2008L), DebugModuleNode(cpuCount))
 )
