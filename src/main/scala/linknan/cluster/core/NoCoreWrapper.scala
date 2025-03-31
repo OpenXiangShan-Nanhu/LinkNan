@@ -18,6 +18,7 @@ import xs.utils.common.{AliasField, IsKeywordField, PrefetchField, PrefetchRecv,
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import xs.utils.tl.ReqSourceField
 import zhujiang.HasZJParams
+import zhujiang.chi.FlitHelper.connIcn
 import zhujiang.chi.{DataFlit, RReqFlit, RespFlit, RingFlit, SnoopFlit}
 
 class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper with HasXSParameter {
@@ -75,7 +76,7 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
   l2cache.tpmeta_sink_node.foreach(_ := tpMetaSourceNode.get)
 
   l2cache.pf_recv_node.foreach(_ := preftchNode.get)
-  l2cache.mmioNode.get :*= TLBuffer() :*= cioNode
+  l2cache.mmioNode :*= TLBuffer() :*= cioNode
   l2cache.managerNode :=*
     TLBuffer.chainNode(1, Some(s"l2_bank_buffer")) :=*
     TLXbar() :=*
@@ -143,16 +144,18 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
     connectByName(l2cache.module.io_chi.rx.dat, rxDatFlit)
     connectChiChn(rxDatFlit, pdc.io.icn.tx.data.get)
 
-    private val assertionNode = HardwareAssertion.placePipe(Int.MaxValue, moduleTop = true)
+    private val assertionNode = HardwareAssertion.placePipe(Int.MaxValue, moduleTop = true).map(_.head)
     HardwareAssertion.release(assertionNode, "hwa", "core")
-    assertionNode.assertion.ready := true.B
+    assertionNode.foreach(_.hassert.bus.get.ready := true.B)
     if(p(HardwareAssertionKey).enable) {
-      dontTouch(assertionNode.assertion)
-      val dbgBd = WireInit(0.U.asTypeOf(new RingFlit(debugFlitBits)))
-      dbgBd.Payload := assertionNode.assertion.bits.id
-      pdc.io.icn.rx.debug.get.valid := assertionNode.assertion.valid
-      pdc.io.icn.rx.debug.get.bits := dbgBd.asTypeOf(pdc.io.icn.rx.debug.get.bits)
-      assertionNode.assertion.ready := pdc.io.icn.rx.debug.get.ready
+      val dbgBd = WireInit(0.U.asTypeOf(Decoupled(new RingFlit(debugFlitBits))))
+      if(assertionNode.isDefined) {
+        dontTouch(assertionNode.get.hassert)
+        dbgBd.bits.Payload := assertionNode.get.hassert.bus.get.bits
+        dbgBd.valid := assertionNode.get.hassert.bus.get.valid
+        assertionNode.get.hassert.bus.get.ready := dbgBd.ready
+      }
+      connIcn(pdc.io.icn.rx.debug.get, dbgBd)
     }
   }
 }

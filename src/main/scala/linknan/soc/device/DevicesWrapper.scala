@@ -9,7 +9,6 @@ import linknan.utils.connectByName
 import org.chipsalliance.cde.config.Parameters
 import xijiang.NodeType
 import xs.utils.ResetGen
-import xs.utils.debug.HwAsrtNode
 import zhujiang.chi.ReqAddrBundle
 import zhujiang.{DftWires, HasZJParams, ZJRawModule}
 

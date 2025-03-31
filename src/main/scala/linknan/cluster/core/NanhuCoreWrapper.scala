@@ -16,6 +16,7 @@ import xiangshan.{NonmaskableInterruptIO, PMParameKey, PMParameters, XSCore, XSC
 import xijiang.Node
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import zhujiang.HasZJParams
+import zhujiang.chi.FlitHelper.connIcn
 import zhujiang.chi._
 import zhujiang.device.misc.ZJDebugBundle
 
@@ -57,7 +58,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
   l2cache.tpmeta_sink_node.foreach(_ := tpMetaSourceNode.get)
 
   l2cache.pf_recv_node.foreach(_ := memBlock.l2_pf_sender_opt.get)
-  l2cache.mmioNode.get :*= TLBuffer() :*= mmioXBar.node
+  l2cache.mmioNode :*= TLBuffer() :*= mmioXBar.node
   l2cache.managerNode :=*
     TLBuffer.chainNode(1, Some(s"l2_bank_buffer")) :=*
     TLXbar() :=*
@@ -163,16 +164,18 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     connectByName(_l2.io_chi.rx.dat, rxDatFlit)
     connectChiChn(rxDatFlit, pdc.io.icn.tx.data.get)
 
-    private val assertionNode = HardwareAssertion.placePipe(Int.MaxValue, moduleTop = true)
+    private val assertionNode = HardwareAssertion.placePipe(Int.MaxValue, moduleTop = true).map(_.head)
     HardwareAssertion.release(assertionNode, "hwa", "core")
-    assertionNode.assertion.ready := true.B
+    assertionNode.foreach(_.hassert.bus.get.ready := true.B)
     if(p(HardwareAssertionKey).enable) {
-      dontTouch(assertionNode.assertion)
-      val dbgBd = WireInit(0.U.asTypeOf(new RingFlit(debugFlitBits)))
-      dbgBd.Payload := assertionNode.assertion.bits.id
-      pdc.io.icn.rx.debug.get.valid := assertionNode.assertion.valid
-      pdc.io.icn.rx.debug.get.bits := dbgBd.asTypeOf(pdc.io.icn.rx.debug.get.bits)
-      assertionNode.assertion.ready := pdc.io.icn.rx.debug.get.ready
+      val dbgBd = WireInit(0.U.asTypeOf(Decoupled(new RingFlit(debugFlitBits))))
+      if(assertionNode.isDefined) {
+        dontTouch(assertionNode.get.hassert)
+        dbgBd.bits.Payload := assertionNode.get.hassert.bus.get.bits
+        dbgBd.valid := assertionNode.get.hassert.bus.get.valid
+        assertionNode.get.hassert.bus.get.ready := dbgBd.ready
+      }
+      connIcn(pdc.io.icn.rx.debug.get, dbgBd)
     }
   }
 }
