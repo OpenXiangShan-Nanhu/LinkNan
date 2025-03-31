@@ -1,10 +1,11 @@
 package linknan.generator
 
 import chisel3.stage.ChiselGeneratorAnnotation
-import circt.stage.{ChiselStage, FirtoolOption}
+import circt.stage.FirtoolOption
 import linknan.soc.{LNTop, LinkNanParamsKey}
 import xijiang.tfb.TrafficBoardFileManager
 import xs.utils.FileRegisters
+import xs.utils.stage.XsStage
 import zhujiang.ZJParametersKey
 
 object Generator {
@@ -29,7 +30,7 @@ object SocGenerator extends App {
   val (config, firrtlOpts) = ArgParser(args)
   xs.utils.GlobalData.prefix = config(LinkNanParamsKey).prefix
   difftest.GlobalData.prefix = config(LinkNanParamsKey).prefix
-  (new ChiselStage).execute(firrtlOpts, Generator.firtoolOpts(config(LinkNanParamsKey).random) ++ Seq(
+  (new XsStage).execute(firrtlOpts, Generator.firtoolOpts(config(LinkNanParamsKey).random) ++ Seq(
     ChiselGeneratorAnnotation(() => new LNTop()(config))
   ))
 

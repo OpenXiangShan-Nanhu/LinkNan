@@ -19,12 +19,11 @@ package lntest.top
 import org.chipsalliance.cde.config.Parameters
 import chisel3.stage.ChiselGeneratorAnnotation
 import chisel3._
-import chisel3.util.{MixedVec, ReadyValidIO, Decoupled}
+import chisel3.util.{MixedVec, ReadyValidIO}
 import lntest.peripheral.SimJTAG
 import org.chipsalliance.diplomacy.lazymodule._
 import xs.utils.FileRegisters
 import difftest._
-import circt.stage.ChiselStage
 import linknan.cluster.BlockTestIO
 import linknan.generator.Generator
 import linknan.soc.{LNTop, LinkNanParamsKey}
@@ -32,11 +31,10 @@ import org.chipsalliance.diplomacy.DisableMonitors
 import xiangshan.XSCoreParamsKey
 import xijiang.NodeType
 import xijiang.tfb.TrafficBoardFileManager
-import xs.utils.debug.HardwareAssertionKey
 import xs.utils.perf.DebugOptionsKey
+import xs.utils.stage.XsStage
 import zhujiang.ZJParametersKey
 import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
-import zhujiang.device.misc.ZJDebugBundle
 
 class MasterBridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
   val slvMatchersSeq = Seq(_ => true.B)
@@ -177,7 +175,7 @@ object SimGenerator extends App {
   val (config, firrtlOpts) = SimArgParser(args)
   xs.utils.GlobalData.prefix = config(LinkNanParamsKey).prefix
   difftest.GlobalData.prefix = config(LinkNanParamsKey).prefix
-  (new ChiselStage).execute(firrtlOpts, Generator.firtoolOpts(config(LinkNanParamsKey).random) ++ Seq(
+  (new XsStage).execute(firrtlOpts, Generator.firtoolOpts(config(LinkNanParamsKey).random) ++ Seq(
     ChiselGeneratorAnnotation(() => {
       DisableMonitors(p => new SimTop()(p))(config)
     })
