@@ -166,7 +166,7 @@ class ReducedConfig(core: String, socket: String) extends Config(
 
 class ExtremeConfig(core: String, socket: String) extends Config(
   // LLCConfig: sizeInB = Cacheline * ways * sets * bank (sets must more than 2)
-  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(64 * 2 * 2 * 2, 2, 2, 16) ++ new MinimalNocConfig(core, socket) ++ new BaseConfig(core)
+  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(64 * 2 * 2 * 2, 2, 2, 16) ++ new FullNocConfig(core, socket) ++ new BaseConfig(core)
 )
 
 class MinimalConfig(core: String, socket: String) extends Config(
