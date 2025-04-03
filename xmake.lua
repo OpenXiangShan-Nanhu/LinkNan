@@ -14,6 +14,7 @@ task("soc" , function()
       {'g', "vcs", "k", nil, "alter assertions info to be vcs style"},
       {'r', "release", "k", nil, "export release pack"},
       {'s', "sim", "k", nil, "generate simulation top"},
+      {'m', "mbist", "k", nil, "generate simulation top"},
       {'p', "pldm_verilog", "k", nil, "enable only basic difftest function"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
       {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"},
@@ -32,6 +33,7 @@ task("soc" , function()
     if option.get("sim") then table.join2(chisel_opts, {"lntest.top.SimGenerator"}) else table.join2(chisel_opts, {"linknan.generator.SocGenerator"}) end
     if not option.get("all_in_one") or option.get("release") then table.join2(chisel_opts, {"--split-verilog"}) end
     if option.get("block_test_l2l3") then table.join2(chisel_opts, {"--no-cores"}) end
+    if option.get("mbist") then table.join2(chisel_opts, {"--enable-mbist"}) end
     if not option.get("clean_difftest") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--basic-difftest"}) end
     if not option.get("clean_difftest") and not option.get("pldm_verilog") then table.join2(chisel_opts, {"--enable-difftest"}) end
     if not option.get("enable_perf") then table.join2(chisel_opts, {"--fpga-platform"}) end

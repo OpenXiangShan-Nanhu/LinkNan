@@ -19,7 +19,7 @@ class BaseConfig(core: String) extends Config((site, here, up) => {
   case HardwareAssertionKey => HwaParams()
   case DebugOptionsKey => DebugOptions()
   case L2ParamKey => L2Param()
-  case XSCoreParamsKey => XSCoreParameters(hasMbist = true)
+  case XSCoreParamsKey => XSCoreParameters()
   case LogUtilsOptionsKey => LogUtilsOptions(false, true, false)
   case PerfCounterOptionsKey => PerfCounterOptions(true, false, XSPerfLevel.VERBOSE, 0)
   case LinkNanParamsKey => LinkNanParams(random = core == "boom")
@@ -118,7 +118,6 @@ class L2Config(sizeInKiB: Int = 512, ways: Int = 8, slices: Int = 2) extends Con
   case L2ParamKey =>
     val core = up(XSCoreParamsKey)
     up(L2ParamKey).copy(
-      hasMbist = true,
       tagECC = Some("secded"),
       dataECC = Some("secded"),
       enableTagECC = true,
