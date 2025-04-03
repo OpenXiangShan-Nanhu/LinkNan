@@ -48,8 +48,8 @@ class FullNocConfig(core: String, socket: String) extends Config((site, here, up
       NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.S,  addrSegment = (0x0L << 6, 0x1L << 6)),
-      NodeParam(nodeType = NodeType.S,  addrSegment = (0x1L << 6, 0x1L << 6)),
+      NodeParam(nodeType = NodeType.S,  addrSegment = (0x0L << 6, 0x1L << 6), outstanding = 32),
+      NodeParam(nodeType = NodeType.S,  addrSegment = (0x1L << 6, 0x1L << 6), outstanding = 32),
       NodeParam(nodeType = NodeType.P)
     )
   )
@@ -78,8 +78,8 @@ class ReducedNocConfig(core: String, socket: String) extends Config((site, here,
       NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.S,  addrSegment = (0x0L << 6, 0x1L << 6)),
-      NodeParam(nodeType = NodeType.S,  addrSegment = (0x1L << 6, 0x1L << 6)),
+      NodeParam(nodeType = NodeType.S,  addrSegment = (0x0L << 6, 0x1L << 6), outstanding = 32),
+      NodeParam(nodeType = NodeType.S,  addrSegment = (0x1L << 6, 0x1L << 6), outstanding = 32),
       NodeParam(nodeType = NodeType.P)
     )
   )
@@ -96,7 +96,7 @@ class MinimalNocConfig(core: String, socket: String) extends Config((site, here,
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
 
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
-      NodeParam(nodeType = NodeType.S,  bankId = 0),
+      NodeParam(nodeType = NodeType.S,  bankId = 0, outstanding = 32),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
 
       NodeParam(nodeType = NodeType.M),
