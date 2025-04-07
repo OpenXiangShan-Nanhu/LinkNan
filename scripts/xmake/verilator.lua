@@ -17,7 +17,7 @@ function emu_comp(num_cores)
   local dpi_export_dir = path.join(comp_dir, "dpi_export")
   local difftest = path.join(abs_base, "dependencies", "difftest")
   local comp_target = path.join(comp_dir, "emu")
-  local design_csrc = path.join(abs_base, "build", "generated-src")
+  local design_gen_dir = path.join(abs_base, "build", "generated-src")
   local design_vsrc = path.join(abs_base, "build", "rtl")
   local difftest_vsrc = path.join(difftest, "src", "test", "vsrc", "common")
   local difftest_csrc = path.join(difftest, "src", "test", "csrc")
@@ -64,7 +64,7 @@ function emu_comp(num_cores)
     vsrc = os.files(path.join(dpi_export_dir, "*v"))
   end
 
-  local csrc = os.files(path.join(design_csrc, "*.cpp"))
+  local csrc = os.files(path.join(design_gen_dir, "*.cpp"))
   table.join2(csrc, os.files(path.join(difftest_csrc_common, "*.cpp")))
   table.join2(csrc, os.files(path.join(difftest_csrc_spikedasm, "*.cpp")))
   table.join2(csrc, os.files(path.join(difftest_csrc_verilator, "*.cpp")))
@@ -72,7 +72,7 @@ function emu_comp(num_cores)
     table.join2(csrc, path.join(dpi_export_dir, "dpi_func.cpp"))
   end
 
-  local headers = os.files(path.join(design_csrc, "*.h"))
+  local headers = os.files(path.join(design_gen_dir, "*.h"))
   table.join2(headers, os.files(path.join(difftest_csrc_common, "*.h")))
   table.join2(headers, os.files(path.join(difftest_csrc_spikedasm, "*.h")))
   table.join2(headers, os.files(path.join(difftest_csrc_verilator, "*.h")))
@@ -99,7 +99,7 @@ function emu_comp(num_cores)
   local cxx_flags = "-std=c++17 -DVERILATOR -DNUM_CORES=" .. num_cores
   local cxx_ldflags = "-ldl -lrt -lpthread -lsqlite3 -lz -lzstd"
   cxx_flags = cxx_flags .. " -I" .. difftest_config
-  cxx_flags = cxx_flags .. " -I" .. design_csrc
+  cxx_flags = cxx_flags .. " -I" .. design_gen_dir
   cxx_flags = cxx_flags .. " -I" .. difftest_csrc_common
   cxx_flags = cxx_flags .. " -I" .. difftest_csrc_difftest
   cxx_flags = cxx_flags .. " -I" .. difftest_csrc_spikedasm
@@ -152,7 +152,7 @@ function emu_comp(num_cores)
   verilator_flags = verilator_flags .. " -CFLAGS \"" .. cxx_flags .. "\""
   verilator_flags = verilator_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""
   verilator_flags = verilator_flags .. " -Mdir " .. comp_dir
-  verilator_flags = verilator_flags .. " -I" .. design_csrc
+  verilator_flags = verilator_flags .. " -I" .. design_gen_dir
   verilator_flags = verilator_flags .. " -f " .. vsrc_filelist_path
   verilator_flags = verilator_flags .. " -f " .. csrc_filelist_path
   verilator_flags = verilator_flags .. " -o " .. comp_target

@@ -32,7 +32,7 @@ function simv_comp(num_cores)
   local comp_dir = path.join(abs_base, "sim", "simv", "comp")
   if not os.exists(comp_dir) then os.mkdir(comp_dir) end
   local design_vsrc = path.join(abs_base, "build", "rtl")
-  local design_csrc = path.join(abs_base, "build", "generated-src")
+  local design_gen_dir = path.join(abs_base, "build", "generated-src")
   local difftest = path.join(abs_base, "dependencies", "difftest")
   local difftest_vsrc = path.join(difftest, "src", "test", "vsrc")
   local difftest_vsrc_common = path.join(difftest_vsrc, "common")
@@ -48,12 +48,12 @@ function simv_comp(num_cores)
   table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
   table.join2(vsrc, os.files(path.join(difftest_vsrc_top, "*v")))
 
-  local csrc = os.files(path.join(design_csrc, "*.cpp"))
+  local csrc = os.files(path.join(design_gen_dir, "*.cpp"))
   table.join2(csrc, os.files(path.join(difftest_csrc_common, "*.cpp")))
   table.join2(csrc, os.files(path.join(difftest_csrc_spikedasm, "*.cpp")))
   table.join2(csrc, os.files(path.join(difftest_csrc_vcs, "*.cpp")))
 
-  local headers = os.files(path.join(design_csrc, "*.h"))
+  local headers = os.files(path.join(design_gen_dir, "*.h"))
   table.join2(headers, os.files(path.join(difftest_csrc_common, "*.h")))
   table.join2(headers, os.files(path.join(difftest_csrc_spikedasm, "*.h")))
   table.join2(headers, os.files(path.join(difftest_csrc_vcs, "*.h")))
@@ -78,7 +78,7 @@ function simv_comp(num_cores)
   io.writefile(csrc_filelist_path, csrc_filelist_contents)
 
   local cxx_flags = "-std=c++17 -static -Wall -DNUM_CORES=" .. num_cores
-  cxx_flags = cxx_flags .. " -I" .. design_csrc
+  cxx_flags = cxx_flags .. " -I" .. design_gen_dir
   cxx_flags = cxx_flags .. " -I" .. difftest_csrc_common
   cxx_flags = cxx_flags .. " -I" .. difftest_csrc_difftest
   cxx_flags = cxx_flags .. " -I" .. difftest_csrc_spikedasm
@@ -116,9 +116,7 @@ function simv_comp(num_cores)
   vcs_flags = vcs_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""
   vcs_flags = vcs_flags .. " -f " .. vsrc_filelist_path
   vcs_flags = vcs_flags .. " -f " .. csrc_filelist_path
-  vcs_flags = vcs_flags .. " +incdir+" .. design_csrc
-  vcs_flags = vcs_flags .. " +incdir+" .. design_csrc
-  vcs_flags = vcs_flags .. " +incdir+" .. design_csrc
+  vcs_flags = vcs_flags .. " +incdir+" .. design_gen_dir
   if option.get("lua_scoreboard") then
     vcs_flags = "vl-vcs " .. vcs_flags
   else
