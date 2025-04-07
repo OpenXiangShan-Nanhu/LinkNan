@@ -102,7 +102,7 @@ class SimTop(implicit p: Parameters) extends Module {
     connByName(periDma.b, dmaMain.b)
   }
 
-  private val l_simAXIMem = LazyModule(new DummyDramMoudle(soc.ddrIO.head.params))
+  private val l_simAXIMem = LazyModule(new DummyDramMoudle(memPort.params))
   private val simAXIMem = Module(l_simAXIMem.module)
   private val memAxi = simAXIMem.axi.head
   connByName(memAxi.aw, memPort.aw)
