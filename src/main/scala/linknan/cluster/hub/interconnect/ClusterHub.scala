@@ -20,8 +20,6 @@ class ClusterAddrBundle(implicit p:Parameters) extends ZJBundle {
 }
 
 class ClusterMiscWires(node: Node)(implicit p: Parameters) extends ZJBundle {
-  val msip = Input(Vec(node.cpuNum, Bool()))
-  val mtip = Input(Vec(node.cpuNum, Bool()))
   val meip = Input(Vec(node.cpuNum, Bool()))
   val seip = Input(Vec(node.cpuNum, Bool()))
   val dbip = Input(Vec(node.cpuNum, Bool()))

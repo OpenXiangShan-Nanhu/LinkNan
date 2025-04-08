@@ -52,7 +52,7 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   }
 
   clusterHub.io.blockSnp := cpuCtl.blockReq
-  private val intrPending = Cat(io.icn.misc.dbip ++ io.icn.misc.meip ++ io.icn.misc.msip ++ io.icn.misc.mtip ++ io.icn.misc.seip).orR
+  private val intrPending = Cat(io.icn.misc.dbip ++ io.icn.misc.meip ++ io.icn.misc.seip ++ Seq(cpuCtl.msip, cpuCtl.mtip)).orR
   private val reqToOn = RegNext(intrPending) || RegNext(clusterHub.io.snpPending)
 
   cpuDev.clock := coreCg.io.Q
@@ -64,8 +64,8 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   cpuDev.isoEn := cpuCtl.pcsm.isoEn
   cpuDev.mhartid := clusterHub.io.cpu.clusterId
   cpuDev.reset_vector := cpuCtl.bootAddr
-  cpuDev.msip := clusterHub.io.cpu.msip(0)
-  cpuDev.mtip := clusterHub.io.cpu.mtip(0)
+  cpuDev.msip := cpuCtl.msip
+  cpuDev.mtip := cpuCtl.mtip
   cpuDev.meip := clusterHub.io.cpu.meip(0)
   cpuDev.seip := clusterHub.io.cpu.seip(0)
   cpuDev.dbip := clusterHub.io.cpu.dbip(0)
