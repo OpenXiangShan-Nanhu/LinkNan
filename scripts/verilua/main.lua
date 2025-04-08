@@ -162,6 +162,7 @@ local function init_components()
             | bits_opcode => opcode
             | bits_txnID => txnID
             | bits_resp => resp
+            | bits_fwdState => fwdState
         ]]):abdl({ hier = l2_hier, prefix = "io_chi_tx_rsp_", name = "L2 CHI TXRSP" })
 
         local txdat = ([[
