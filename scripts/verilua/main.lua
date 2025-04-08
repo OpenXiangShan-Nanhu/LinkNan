@@ -1,19 +1,22 @@
+---@diagnostic disable: undefined-field, undefined-global
+
 local LuaDataBase = require "LuaDataBase"
-local L2TLMonitor = require "L2TLMonitor"
-local L2CHIMonitor = require "L2CHIMonitor"
-local PCUMonitor = require "PCUMonitor"
-local DCUMonitor = require "DCUMonitor"
-local DDRMonitor = require "DDRMonitor"
-local dj_addrmap = require "DJAddrMap"
+local L2TLMonitor do
+    os.setenv("KMH", 1)
+    L2TLMonitor = require "L2TLMonitorV2"
+end
+local L2CHIMonitor do
+    os.setenv("L2CHIMonitorLCrd", 0)
+    L2CHIMonitor = require "L2CHIMonitorV2"
+end
+local AXI4Monitor = require "AXI4Monitor"
 
 local f = string.format
 local tonumber = tonumber
 
 local l2_mon_in_vec = {}
 local l2_mon_out_vec = {}
-local dj_pcu_mon_vec = {}
-local dj_dcu_mon_vec = {}
-local dj_ddr_mon = nil
+local sn_mon_vec = {}
 
 local function init_components()
     local tl_db = LuaDataBase({
@@ -27,6 +30,7 @@ local function init_components()
             "source => INTEGER",
             "sink => INTEGER",
             "data => TEXT",
+            "others => TEXT",
         },
         path = ".",
         file_name = "tl_db.db",
@@ -47,6 +51,7 @@ local function init_components()
             "db_id => INTEGER",
             "resp => TEXT",
             "data => TEXT",
+            "others => TEXT",
         },
         path = ".",
         file_name = "chi_db.db",
@@ -62,13 +67,13 @@ local function init_components()
         local l2_prefix = ""
         local l2_hier = ""
 
-        l2_hier = tostring(dut.soc["cc_" .. l2_id].csu.l2cache)
+        l2_hier = tostring(dut.soc["cc_" .. l2_id].tile.l2cache)
 
         local gen_l2_prefix = function (chnl, idx)
             if nr_slice == 1 then
-                return "auto_sink_nodes_in_" .. chnl .. "_"
+                return "auto_in_" .. chnl .. "_"
             else
-                return f("auto_sink_nodes_in_%d_%s_", idx, chnl)
+                return f("auto_in_%d_%s_", idx, chnl)
             end
         end
 
@@ -88,9 +93,9 @@ local function init_components()
                 | bits_address => address
                 | bits_opcode => opcode
                 | bits_param => param
-                | bits_source => source
                 | bits_data => data
             ]]):abdl({ hier = l2_hier, prefix = gen_l2_prefix("b", j), name = "L2 TL B" })
+            tl_b.source = { __type = "CallableHDL", get = function () return 0 end }
 
             local tl_c = ([[
                 | valid
@@ -145,7 +150,8 @@ local function init_components()
             | bits_addr => addr
             | bits_opcode => opcode
             | bits_txnID => txnID
-        ]]):abdl({ hier = l2_hier, prefix = "io_chi_txreq_", name = "L2 CHI TXREQ" })
+            | bits_size => size
+        ]]):abdl({ hier = l2_hier, prefix = "io_chi_tx_req_", name = "L2 CHI TXREQ" })
 
         local txrsp = ([[
             | valid
@@ -156,7 +162,7 @@ local function init_components()
             | bits_opcode => opcode
             | bits_txnID => txnID
             | bits_resp => resp
-        ]]):abdl({ hier = l2_hier, prefix = "io_chi_txrsp_", name = "L2 CHI TXRSP" })
+        ]]):abdl({ hier = l2_hier, prefix = "io_chi_tx_rsp_", name = "L2 CHI TXRSP" })
 
         local txdat = ([[
             | valid
@@ -168,9 +174,10 @@ local function init_components()
             | bits_txnID => txnID
             | bits_resp => resp
             | bits_data => data
+            | bits_be => be
             | bits_dataID => dataID
             | bits_homeNID => homeNID
-        ]]):abdl({ hier = l2_hier, prefix = "io_chi_txdat_", name = "L2 CHI TXDAT" })
+        ]]):abdl({ hier = l2_hier, prefix = "io_chi_tx_dat_", name = "L2 CHI TXDAT" })
 
         local rxrsp = ([[
             | valid
@@ -181,7 +188,7 @@ local function init_components()
             | bits_opcode => opcode
             | bits_txnID => txnID
             | bits_resp => resp
-        ]]):abdl({ hier = l2_hier, prefix = "io_chi_rxrsp_", name = "L2 CHI RXRSP" })
+        ]]):abdl({ hier = l2_hier, prefix = "io_chi_rx_rsp_", name = "L2 CHI RXRSP" })
 
         local rxdat = ([[
             | valid
@@ -193,9 +200,10 @@ local function init_components()
             | bits_txnID => txnID
             | bits_resp => resp
             | bits_data => data
+            | bits_be => be
             | bits_dataID => dataID
             | bits_homeNID => homeNID
-        ]]):abdl({ hier = l2_hier, prefix = "io_chi_rxdat_", name = "L2 CHI RXDAT" })
+        ]]):abdl({ hier = l2_hier, prefix = "io_chi_rx_dat_", name = "L2 CHI RXDAT" })
 
         local rxsnp = ([[
             | valid
@@ -207,11 +215,11 @@ local function init_components()
             | bits_retToSrc => retToSrc
             | bits_fwdTxnID => fwdTxnID
             | bits_fwdNID => fwdNID
-        ]]):abdl({ hier = l2_hier, prefix = "io_chi_rxsnp_", name = "L2 CHI RXSNP" })
+        ]]):abdl({ hier = l2_hier, prefix = "io_chi_rx_snp_", name = "L2 CHI RXSNP" })
 
         local l2_mon_out = L2CHIMonitor(
             f("l2_mon_out_cluster_%d", l2_id), -- name
-            l2_id, -- index
+            -- l2_id, -- index
             --
             -- CHI Channels
             --
@@ -229,274 +237,80 @@ local function init_components()
         table.insert(l2_mon_out_vec, l2_mon_out)
     end
 
-    for i = 0, cfg.nr_dj_pcu - 1 do
-        local dj_hier = tostring(dut.soc.uncore.noc["pcu_" .. i])
-
-        local rxreq = ([[
-            | valid
-            | ready
-            | bits_Addr => addr
-            | bits_Opcode => opcode
-            | bits_TxnID => txnID
-            | bits_SrcID => srcID
-            | bits_TgtID => tgtID
-        ]]):abdl({ hier = dj_hier, prefix = "io_toLocal_rx_req_", name = "PCU RXREQ" })
-
-        local rxdat = ([[
-            | valid
-            | ready
-            | bits_Opcode => opcode
-            | bits_TxnID => txnID
-            | bits_SrcID => srcID
-            | bits_TgtID => tgtID
-            | bits_DBID => dbID
-            | bits_Data => data
-            | bits_Resp => resp
-            | bits_DataID => dataID
-        ]]):abdl({ hier = dj_hier, prefix = "io_toLocal_rx_data_", name = "PCU RXDAT" })
-
-        local rxrsp = ([[
-            | valid
-            | ready
-            | bits_Opcode => opcode
-            | bits_SrcID => srcID
-            | bits_TxnID => txnID
-            | bits_TgtID => tgtID
-            | bits_Resp => resp
-            | bits_DBID => dbID
-        ]]):abdl({ hier = dj_hier, prefix = "io_toLocal_rx_resp_", name = "PCU RXRSP" })
-
-        local txreq = ([[
-            | valid
-            | ready
-            | bits_Addr => addr
-            | bits_DbgAddr => dbgaddr
-            | bits_Opcode => opcode
-            | bits_TxnID => txnID
-            | bits_SrcID => srcID
-            | bits_TgtID => tgtID
-            | bits_ReturnTxnID => returnTxnID
-            | bits_ReturnNID => returnNID
-        ]]):abdl({ hier = dj_hier, prefix = "io_toLocal_tx_req_", name = "PCU TXRTEQ" })
-
-        local txdat = ([[
-            | valid
-            | ready
-            | bits_Opcode => opcode
-            | bits_TxnID => txnID
-            | bits_SrcID => srcID
-            | bits_TgtID => tgtID
-            | bits_DBID => dbID
-            | bits_Data => data
-            | bits_Resp => resp 
-            | bits_DataID => dataID
-            | bits_HomeNID => homeNID
-        ]]):abdl({ hier = dj_hier, prefix = "io_toLocal_tx_data_", name = "PCU TXDAT" })
-
-        local txsnp = ([[
-            | valid
-            | ready
-            | bits_Opcode => opcode
-            | bits_Addr => addr
-            | bits_SrcID => srcID
-            | bits_TgtID => tgtID
-            | bits_TxnID => txnID
-            | bits_RetToSrc => retToSrc
-            | bits_FwdTxnID => fwdTxnID
-        ]]):abdl({ hier = dj_hier, prefix = "io_toLocal_tx_snoop_", name = "PCU TXSNP" })
-
-        local txrsp = ([[
-            | valid
-            | ready
-            | bits_Opcode => opcode
-            | bits_SrcID => srcID
-            | bits_TxnID => txnID
-            | bits_TgtID => tgtID
-            | bits_Resp => resp
-            | bits_DBID => dbID
-        ]]):abdl({ hier = dj_hier, prefix = "io_toLocal_tx_resp_", name = "PCU TXRSP" })
-
-        local dj_pcu_mon = PCUMonitor(
-            "dj_pcu_mon_" .. i,
-            i,
-
-            --
-            -- CHI channels
-            --
-            rxreq,
-            rxrsp,
-            rxdat,
-            txreq,
-            txrsp,
-            txdat,
-            txsnp,
-
-            chi_db,
-            cfg:get_or_else(f("verbose_dj_pcu_mon_%d", i), false),
-            cfg:get_or_else(f("enable_dj_pcu_mon_%d", i), true)
-        )
-
-        table.insert(dj_pcu_mon_vec, dj_pcu_mon)
-    end
-
-    for i = 0, cfg.nr_dj_dcu - 1 do
-        local dj_hier = tostring(dut.soc.uncore.noc["dcu_" .. i])
-
-        local rxreqs = {}
-        local rxdats = {}
-        local txdats = {}
-        local txrsps = {}
-        for j = 0, cfg.nr_dcu_port - 1 do
-            local rxreq = ([[
-                | valid
-                | ready
-                | bits_Addr => addr
-                | bits_Opcode => opcode
-                | bits_TxnID => txnID
-                | bits_SrcID => srcID
-                | bits_TgtID => tgtID
-                | bits_ReturnNID => returnNID
-                | bits_ReturnTxnID => returnTxnID
-            ]]):abdl({ hier = dj_hier, prefix = "io_icns_" .. j .. "_rx_req_", name = "DCU PORT" .. j .. " RXREQ" })
-
-            local rxdat = ([[
-                | valid
-                | ready
-                | bits_Opcode => opcode
-                | bits_TxnID => txnID
-                | bits_SrcID => srcID
-                | bits_TgtID => tgtID
-                | bits_DBID => dbID
-                | bits_Data => data
-                | bits_Resp => resp
-                | bits_DataID => dataID
-            ]]):abdl({ hier = dj_hier, prefix = "io_icns_" .. j .. "_rx_data_", name = "DCU PORT" .. j .. " RXDAT" })
-
-            local txdat = ([[
-                | valid
-                | ready
-                | bits_Opcode => opcode
-                | bits_TxnID => txnID
-                | bits_SrcID => srcID
-                | bits_TgtID => tgtID
-                | bits_DBID => dbID
-                | bits_Data => data
-                | bits_Resp => resp 
-                | bits_DataID => dataID 
-            ]]):abdl({ hier = dj_hier, prefix = "io_icns_" .. j .. "_tx_data_", name = "DCU PORT" .. j .. " TXDAT" })
-
-            local txrsp = ([[
-                | valid
-                | ready
-                | bits_Opcode => opcode
-                | bits_SrcID => srcID
-                | bits_TxnID => txnID
-                | bits_TgtID => tgtID
-                | bits_Resp => resp
-                | bits_DBID => dbID
-            ]]):abdl({ hier = dj_hier, prefix = "io_icns_" .. j .. "_tx_resp_", name = "DCU PORT" .. j .. " TXRSP" })
-
-            table.insert(rxreqs, rxreq)
-            table.insert(rxdats, rxdat)
-            table.insert(txdats, txdat)
-            table.insert(txrsps, txrsp)
-        end
-
-        local dj_dcu_mon = DCUMonitor(
-            "dj_dcu_mon_" .. i,
-            i,
-
-            --
-            -- CHI channels
-            --
-            rxreqs,
-            rxdats,
-            txrsps,
-            txdats,
-
-            chi_db,
-            cfg:get_or_else(f("verbose_dj_dcu_mon_%d", i), false),
-            cfg:get_or_else(f("enable_dj_dcu_mon_%d", i), true),
-            cfg.nr_dcu_port
-        )
-
-        table.insert(dj_dcu_mon_vec, dj_dcu_mon)
-    end
-
-
     do
-        local dj_ddr_hier = tostring(dut.soc.uncore.noc.memSubSys)
+        assert(cfg.nr_sn == 1, "TODO: nr_sn != 1")
 
-        local rxreq = ([[
-            | valid
-            | ready
-            | bits_Addr => addr
-            | bits_Opcode => opcode
-            | bits_TxnID => txnID
-            | bits_SrcID => srcID
-            | bits_TgtID => tgtID
-            | bits_ReturnNID => returnNID
-            | bits_ReturnTxnID => returnTxnID
-        ]]):abdl({ hier = dj_ddr_hier, prefix = "io_icn_mem_rx_req_", name = "DDR RXREQ" })
-        
-        local rxdat = ([[
-            | valid
-            | bits_Opcode => opcode
-            | bits_TxnID => txnID
-            | bits_SrcID => srcID
-            | bits_TgtID => tgtID
-            | bits_DBID => dbID
-            | bits_Data => data
-            | bits_Resp => resp
-            | bits_DataID => dataID
-        ]]):abdl({ hier = dj_ddr_hier, prefix = "io_icn_mem_rx_data_", name = "DDR RXDAT" })
-        
-        local txrsp = ([[
-            | valid
-            | ready
-            | bits_Opcode => opcode
-            | bits_SrcID => srcID
-            | bits_TxnID => txnID
-            | bits_TgtID => tgtID
-            | bits_Resp => resp
-            | bits_DBID => dbID
-        ]]):abdl({ hier = dj_ddr_hier, prefix = "io_icn_mem_tx_resp_", name = "DDR TXRSP" })
-        
-        local txdat = ([[
-            | valid
-            | ready
-            | bits_Opcode => opcode
-            | bits_TxnID => txnID
-            | bits_SrcID => srcID
-            | bits_TgtID => tgtID
-            | bits_DBID => dbID
-            | bits_Data => data
-            | bits_Resp => resp
-            | bits_DataID => dataID
-        ]]):abdl({ hier = dj_ddr_hier, prefix = "io_icn_mem_tx_data_", name = "DDR TXDAT" })
-        
+        local sn_hier = tostring(dut.soc.uncore.noc.chi_to_axi_0x30)
 
-        dj_ddr_mon = DDRMonitor(
-            "dj_ddr_mon",
-        
-            --
-            -- CHI channels
-            --
-            rxreq,
-            rxdat,
-            txrsp,
-            txdat,
-        
-            chi_db,
-            cfg:get_or_else("verbose_dj_ddr_mon", false),
-            cfg:get_or_else("enable_dj_ddr_mon", true)
+        local axi_aw = ([[
+            | valid
+            | ready
+            | bits_id => id
+            | bits_addr => addr
+            | bits_size => size
+            | bits_len => len
+            | bits_burst => burst
+            | bits_cache => cache
+        ]]):abdl {hier = sn_hier, prefix = "axi_aw_", name = "SN AXI AW"}
+
+        local axi_ar = ([[
+            | valid
+            | ready
+            | bits_id => id
+            | bits_addr => addr
+            | bits_size => size
+            | bits_len => len
+            | bits_burst => burst
+            | bits_cache => cache
+        ]]):abdl {hier = sn_hier, prefix = "axi_ar_", name = "SN AXI AR"}
+
+        local axi_w = ([[
+            | valid
+            | ready
+            | bits_data => data
+            | bits_strb => strb
+            | bits_last => last
+        ]]):abdl {hier = sn_hier, prefix = "axi_w_", name = "SN AXI W"}
+        axi_w.id = {
+            __type = "CallableHDL",
+            get = function ()
+                return 0
+            end
+        }
+
+        local axi_b = ([[
+            | valid
+            | ready
+            | bits_id => id
+            | bits_resp => resp
+        ]]):abdl {hier = sn_hier, prefix = "axi_b_", name = "SN AXI B"}
+
+        local axi_r = ([[
+            | valid
+            | ready
+            | bits_id => id
+            | bits_data => data
+            | bits_resp => resp
+            | bits_last => last
+        ]]):abdl {hier = sn_hier, prefix = "axi_r_", name = "SN AXI R"}
+
+        local sn_mon = AXI4Monitor(
+            "sn_mon_out",
+                
+            -- 
+            -- AXI Channels
+            -- 
+            axi_aw,
+            axi_ar,
+            axi_w,
+            axi_b,
+            axi_r,
+
+            cfg:get_or_else("verbose_sn_mon", true),
+            cfg:get_or_else("enable_sn_mon", true)
         )
-    end
 
-    for dcu_idx, node_ids in pairs(cfg.dcu_node_cfg) do
-        for dcu_port_idx, node_id in ipairs(node_ids) do
-            dj_addrmap:update_dcu_nodeid(dcu_idx, dcu_port_idx - 1, node_id)
-        end
+        table.insert(sn_mon_vec, sn_mon)
     end
 end
 
@@ -504,9 +318,9 @@ local print = function(...) print("[main.lua]", ...) end
 
 fork {
     function ()
-        local l2 = dut.soc.cc_0.csu.l2cache
+        local l2 = dut.soc.cc_0.tile.l2cache
         local clock = l2.clock:chdl()
-        local timer = dut.timer:chdl()
+        local timer = dut.difftest_timer:chdl()
 
         clock:posedge() do
             cfg.load_config_from_env()
@@ -515,8 +329,7 @@ fork {
         
         local nr_l2_mon_in = #l2_mon_in_vec
         local nr_l2_mon_out = #l2_mon_out_vec
-        local nr_dj_pcu_mon = #dj_pcu_mon_vec
-        local nr_dj_dcu_mon = #dj_dcu_mon_vec
+        local nr_sn_mon = #sn_mon_vec
 
         print("hello from main.lua")
 
@@ -530,15 +343,9 @@ fork {
                 l2_mon_out_vec[i]:sample_all(cycles)
             end
 
-            for i = 1, nr_dj_pcu_mon do
-                dj_pcu_mon_vec[i]:sample_all(cycles)
+            for i = 1, nr_sn_mon do
+                sn_mon_vec[i]:sample_all(cycles)
             end
-
-            for i = 1, nr_dj_dcu_mon do
-                dj_dcu_mon_vec[i]:sample_all(cycles)
-            end
-
-            dj_ddr_mon:sample_all(cycles)
 
             cycles = tonumber(timer:get())
             clock:posedge()

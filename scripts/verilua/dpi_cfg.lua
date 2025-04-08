@@ -1,37 +1,28 @@
 dpi_exporter_config = {
     {
         module = "SimTop",
-        signal = { "timer" },
+        signals = { "difftest_timer" },
         is_top_module = true
     },
 
     {
-        module = "SimpleL2CacheDecoupled",
-        signal = {
+        module = "TL2CHICoupledL2",
+        signals = {
             "clock",
-            "auto_sink_nodes_in_.*_(valid|ready|bits_address|bits_opcode|bits_param|bits_source|bits_data|bits_sink)",
-            "io_chi.*_(valid|ready|bits_addr|bits_opcode|bits_txnID|bits_srcID|bits_tgtID|bits_dataID|bits_dbID|bits_resp|bits_data|bits_homeNID|bits_retToSrc|bits_fwdTxnID|bits_fwdNID)",
+            -- TODO: consider MMIOBridge
+            "auto_in_.*(valid|ready|bits_address|bits_opcode|bits_param|bits_source|bits_data|bits_sink)",
+            "io_chi.*_(valid|ready|bits_addr|bits_opcode|bits_size|bits_txnID|bits_srcID|bits_tgtID|bits_dataID|bits_dbID|bits_resp|bits_data|bits_be|bits_homeNID|bits_retToSrc|bits_fwdState|bits_fwdTxnID|bits_fwdNID)"
         }
     },
 
     {
-        module = "ProtocolCtrlUnit",
-        signal = {
-            "io_toLocal_.*_(valid|ready|bits_Addr|bits_Opcode|bits_TxnID|bits_SrcID|bits_TgtID|bits_DBID|bits_DataID|bits_HomeNID|bits_ReturnTxnID|bits_ReturnNID|bits_FwdTxnID|bits_FwdNID|bits_Resp|bits_Data|bits_RetToSrc|bits_DbgAddr)",
-        }
-    },
-
-    {
-        module = "DataCtrlUnit",
-        signal = {
-            "io_icns_.*_(valid|ready|bits_Addr|bits_Opcode|bits_TxnID|bits_SrcID|bits_TgtID|bits_DBID|bits_DataID|bits_HomeNID|bits_ReturnTxnID|bits_ReturnNID|bits_Resp|bits_Data|bits_RetToSrc)",
-        }
-    },
-
-    {
-        module = "MemoryComplex",
-        signal = {
-            "io_icn_mem_.*_(valid|ready|bits_Addr|bits_Opcode|bits_TxnID|bits_SrcID|bits_TgtID|bits_DBID|bits_DataID|bits_HomeNID|bits_ReturnTxnID|bits_ReturnNID|bits_Resp|bits_Data|bits_RetToSrc)",
+        module = "AxiBridge",
+        signals = {
+            "axi_aw_.*(valid|ready|bits_id|bits_addr|bits_len|bits_size|bits_burst|bits_cache)",
+            "axi_ar_.*(valid|ready|bits_id|bits_addr|bits_len|bits_size|bits_burst|bits_cache)",
+            "axi_w_.*(valid|ready|bits_data|bits_strb|bits_last)",
+            "axi_b_.*(valid|ready|bits_id|bits_resp)",
+            "axi_r_.*(valid|ready|bits_id|bits_data|bits_resp|bits_last)"
         }
     }
 }
