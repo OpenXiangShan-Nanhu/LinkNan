@@ -90,7 +90,7 @@ final case class MswiNode(
       Property("#address-cells", IntegerValue(2)),
       Property("#size-cells", IntegerValue(1)),
       Property("compatible", StringValue("riscv,aclint-mswi")),
-      Property("reg", RegValue(p(LinkNanParamsKey).mswiBase, harts)),
+      Property("reg", RegValue(p(LinkNanParamsKey).mswiBase, harts * 0x4)),
       Property("reg-names", StringValue("msip")),
       Property("interrupts-extended", IntrValue(intrSeq))
     )
