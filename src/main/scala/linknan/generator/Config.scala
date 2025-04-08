@@ -131,7 +131,7 @@ class L2Config(sizeInKiB: Int = 512, ways: Int = 8, slices: Int = 2) extends Con
   case ZJParametersKey => up(ZJParametersKey).copy(clusterCacheSizeInB = sizeInKiB * 1024)
 })
 
-class L1DConfig(sizeInKiB: Int = 64, ways: Int = 4) extends Config((site, here, up) => {
+class L1DConfig(sizeInKiB: Int = 64, ways: Int = 8) extends Config((site, here, up) => {
   case XSCoreParamsKey =>
     up(XSCoreParamsKey).copy(dcacheParametersOpt = Some(DCacheParameters(
       nSets = sizeInKiB * 1024 / ways / 64,
@@ -140,19 +140,20 @@ class L1DConfig(sizeInKiB: Int = 64, ways: Int = 4) extends Config((site, here, 
       dataECC = Some("secded"),
       replacer = Some("setplru"),
       nMissEntries = 16,
-      nProbeEntries = 8,
-      nReleaseEntries = 18,
+      nProbeEntries = 4,
+      nReleaseEntries = 4,
       nMaxPrefetchEntry = 6,
-      enableTagEcc = false,
-      enableDataEcc = false,
     )))
 })
 
-class L1IConfig(sizeInKiB: Int = 64, ways: Int = 4) extends Config((site, here, up) => {
+class L1IConfig(sizeInKiB: Int = 64, ways: Int = 8) extends Config((site, here, up) => {
   case XSCoreParamsKey =>
     up(XSCoreParamsKey).copy(icacheParameters = ICacheParameters(
       nSets = sizeInKiB * 1024 / ways / 64,
       nWays = ways,
+      tagECC = Some("parity"),
+      dataECC = Some("parity"),
+      replacer = Some("setplru")
     ))
 })
 
