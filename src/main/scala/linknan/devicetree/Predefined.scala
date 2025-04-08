@@ -230,5 +230,5 @@ final case class SocNode(
     mtimeBase = (id << p(ZJParametersKey).cpuSpaceBits) + 0x2000L,
     mtimecmpBase = (id << p(ZJParametersKey).cpuSpaceBits) + 0x2008L,
     harts = 1
-  )) ++ List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(0x2008L), DebugModuleNode(cpuCount))
+  )) ++ List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(0x2000L), DebugModuleNode(cpuCount))
 )
