@@ -145,10 +145,10 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
     val dev = IO(new TLDeviceBlockIO(coreNum, extIntrNum)(innerP))
 
     private val cg = Module(new ClockGate)
-    private val ff = Reg(Bool()) //Do not initialize this
+    private val ff = Module(new ClkDiv2Reg)
     private val rstSync = Module(new ResetGen(2))
-    ff := !ff
-    cg.io.E := ff
+    ff.io.clock := clock
+    cg.io.E := ff.io.out
     cg.io.CK := clock
     cg.io.TE := false.B
     rstSync.dft := dfx.reset
@@ -159,4 +159,24 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
     inner.module.dfx := dfx
     inner.module.io <> dev
   }
+}
+
+class ClkDiv2Reg extends BlackBox with HasBlackBoxInline {
+  override val desiredName = xs.utils.GlobalData.prefix + "ClkDiv2Reg"
+  val io = IO(new Bundle {
+    val clock = Input(Clock())
+    val out = Bool()
+  })
+  setInline(s"$desiredName.sv",
+    s"""
+       |module ClkDiv2Reg (
+       |  input wire clock,
+       |  output reg out
+       |);
+       |`ifndef SYNTHESIS
+       |  initial out = 1'b1;
+       |`endif
+       |
+       |always @ (posedge clock) out <= ~out;
+       |endmodule""".stripMargin)
 }
