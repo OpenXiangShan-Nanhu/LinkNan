@@ -55,16 +55,15 @@ final case class InterruptControllerNode(
 )
 
 final case class MtimerNode(
-  id:Int,
-  mtimeBase:Long,
-  mtimecmpBase: Long,
+  id:Long,
   harts: Int
 )(implicit p:Parameters) extends DeviceNode(
   name = s"mtimer@$id",
   label = s"MTIMER_$id",
   children = Nil,
   properties = {
-    val regList = List(RegValue(mtimeBase, 8), RegValue(mtimecmpBase, 8))
+    val base = id << p(ZJParametersKey).cpuSpaceBits
+    val regList = List(RegValue(base + 0x2000L, 8), RegValue(base + 0x2008L, 8))
     val regNameList = List(StringValue("mtime"), StringValue("mtimecmp"))
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${id + i}_intc", 7))
     List(
@@ -74,6 +73,38 @@ final case class MtimerNode(
       Property("reg", PropertyValues(regList)),
       Property("reg-names", PropertyValues(regNameList)),
       Property("interrupts-extended", IntrValue(intrSeq))
+    )
+  },
+)
+
+final case class PpuNode(
+  id:Int
+)(implicit p:Parameters) extends DeviceNode(
+  name = s"ppu@$id",
+  label = s"PPU_$id",
+  children = Nil,
+  properties = {
+    val base = (id << p(ZJParametersKey).cpuSpaceBits)
+    val regList = List(
+      RegValue(base + 0x0000L, 8),
+      RegValue(base + 0x1000L, 4),
+      RegValue(base + 0x1004L, 4),
+      RegValue(base + 0x1008L, 4),
+      RegValue(base + 0x100CL, 4),
+    )
+    val regNameList = List(
+      StringValue("CBAR"),
+      StringValue("PWPR"),
+      StringValue("PWSR"),
+      StringValue("IMR"),
+      StringValue("IPR")
+    )
+    List(
+      Property("#address-cells", IntegerValue(2)),
+      Property("#size-cells", IntegerValue(1)),
+      Property("compatible", StringValue("bosc,linknan-ppu")),
+      Property("reg", PropertyValues(regList)),
+      Property("reg-names", PropertyValues(regNameList))
     )
   },
 )
@@ -227,8 +258,8 @@ final case class SocNode(
   ),
   children = List.tabulate(cpuCount)(id => MtimerNode(
     id = id,
-    mtimeBase = (id << p(ZJParametersKey).cpuSpaceBits) + 0x2000L,
-    mtimecmpBase = (id << p(ZJParametersKey).cpuSpaceBits) + 0x2008L,
     harts = 1
-  )) ++ List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(0x2000L), DebugModuleNode(cpuCount))
+  )) ++
+    List.tabulate(cpuCount)(id => PpuNode(id = id)) ++
+    List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(0x2000L), DebugModuleNode(cpuCount))
 )
