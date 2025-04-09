@@ -59,7 +59,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
 
   private val coreNum = zjParams.island.filter(_.nodeType == NodeType.CC).map(_.cpuNum).sum
   private val extIntrNum = p(LinkNanParamsKey).nrExtIntr
-  private val extDmaParams = dmaParams.copy(idBits = dmaParams.idBits - 1)
+  private val extDmaParams = dmaParams
 
   private val cfgXBar = Module(new AxiCfgXBar(cfgParams))
   private val cfgBuf = Module(new AxiBuffer(cfgXBar.io.downstream.last.params))

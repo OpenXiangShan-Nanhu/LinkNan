@@ -23,23 +23,41 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
 
   private val noc = Module(new Zhujiang)
 
-  require(noc.cfgIO.count(_.params.attr.contains("_main")) == 1)
-  require(noc.dmaIO.count(_.params.attr.contains("_main")) == 1)
-  private val cfgPort = noc.cfgIO.filter(_.params.attr.contains("_main")).head
-  private val dmaPort = noc.dmaIO.filter(_.params.attr.contains("_main")).head
-  private val devWrp = Module(new DevicesWrapper(cfgPort.params, dmaPort.params))
-  private val dmaXBar = Module(new AxiDmaXBar(Seq.fill(2)(devWrp.io.mst.params)))
+  require(noc.cfgIO.count(_.params.attr.contains("main")) == 1)
+  require(noc.dmaIO.count(_.params.attr.contains("main")) == 1)
+  private val cfgPort = noc.cfgIO.filter(_.params.attr.contains("main")).head
+  private val dmaPort = noc.dmaIO.filter(_.params.attr.contains("main")).head
+
+  private val dmaXBarP = dmaPort.params
+  private val devWrpSlvP = dmaXBarP.copy(attr = "debug", idBits = dmaXBarP.idBits - 2)
+  private val extCfgSlvP = dmaXBarP.copy(attr = "cfg", idBits = dmaXBarP.idBits - 2)
+  private val extDmaSlvP = dmaXBarP.copy(attr = "main", idBits = dmaXBarP.idBits - 2)
+  private val dmaXBarParams = Seq(devWrpSlvP, extCfgSlvP, extDmaSlvP)
+
+  private val devWrp = Module(new DevicesWrapper(cfgPort.params, devWrpSlvP))
+  private val dmaXBar = Module(new AxiDmaXBar(dmaXBarParams))
 
   dmaXBar.io.upstream.head <> devWrp.io.mst
   devWrp.io.slv <> cfgPort
   dmaPort <> dmaXBar.io.downstream.head
 
   val ddrDrv = noc.ddrIO.map(AxiUtils.getIntnl)
-  val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr.contains("_main")).map(AxiUtils.getIntnl)
-  val dmaDrv = Seq(dmaXBar.io.upstream.last) ++ noc.dmaIO.filterNot(_.params.attr.contains("_main")).map(AxiUtils.getIntnl)
+  val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
+  val dmaDrv = dmaXBar.io.upstream.tail ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   val hwaDrv = noc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
+
+  dmaXBar.io.upstream.tail.zip(dmaIO.take(dmaXBar.io.upstream.tail.size)).foreach({case(a, b) =>
+    dontTouch(a)
+    if(a.params.attr == "cfg") {
+      a.aw.bits.cache := "b0000".U
+      a.ar.bits.cache := "b0000".U
+    } else {
+      a.aw.bits.cache := "b0010".U | b.awcache
+      a.ar.bits.cache := "b0010".U | b.arcache
+    }
+  })
 
   private val clusterNum = noc.ccnIO.size
   val io = IO(new Bundle {
