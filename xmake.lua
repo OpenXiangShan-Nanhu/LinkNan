@@ -132,7 +132,7 @@ task("simv", function()
       {'b', "rebuild", "k", nil, "forcely rebuild"},
       {'n', "no_diff", "k", nil, "disable difftest"},
       {'d', "no_fsdb", "k", nil, "do not dump wave"},
-      {'x', "no_xprop", "k", nil, "do not dump wave"},
+      {'x', "no_xprop", "k", nil, "do not set xprop"},
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
       {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"},
