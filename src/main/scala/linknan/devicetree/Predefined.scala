@@ -48,6 +48,8 @@ final case class InterruptControllerNode(
   label = s"cpu${id}_intc",
   children = Nil,
   properties = List(
+    Property("#address-cells", IntegerValue(1)),
+    Property("#size-cells", IntegerValue(0)),
     Property("#interrupt-cells", IntegerValue(1)),
     Property("interrupt-controller", FlagValue()),
     Property("compatible", StringValue("riscv,cpu-intc")),
@@ -58,17 +60,15 @@ final case class MtimerNode(
   id:Long,
   harts: Int
 )(implicit p:Parameters) extends DeviceNode(
-  name = s"mtimer@$id",
-  label = s"MTIMER_$id",
+  name = s"mtimer@${((id << p(ZJParametersKey).cpuSpaceBits) + 0x2000L).toHexString}",
+  label = s"mtimer_$id",
   children = Nil,
   properties = {
     val base = id << p(ZJParametersKey).cpuSpaceBits
     val regList = List(RegValue(base + 0x2000L, 8), RegValue(base + 0x2008L, 8))
-    val regNameList = List(StringValue("mtime"), StringValue("mtimecmp"))
+    val regNameList = List(StringValue("mtimecmp"), StringValue("mtime"))
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${id + i}_intc", 7))
     List(
-      Property("#address-cells", IntegerValue(2)),
-      Property("#size-cells", IntegerValue(1)),
       Property("compatible", StringValue("riscv,aclint-mtimer")),
       Property("reg", PropertyValues(regList)),
       Property("reg-names", PropertyValues(regNameList)),
@@ -80,8 +80,8 @@ final case class MtimerNode(
 final case class PpuNode(
   id:Int
 )(implicit p:Parameters) extends DeviceNode(
-  name = s"ppu@$id",
-  label = s"PPU_$id",
+  name = s"ppu@${(id << p(ZJParametersKey).cpuSpaceBits).toHexString}",
+  label = s"ppu_$id",
   children = Nil,
   properties = {
     val base = (id << p(ZJParametersKey).cpuSpaceBits)
@@ -100,8 +100,6 @@ final case class PpuNode(
       StringValue("IPR")
     )
     List(
-      Property("#address-cells", IntegerValue(2)),
-      Property("#size-cells", IntegerValue(1)),
       Property("compatible", StringValue("bosc,linknan-ppu")),
       Property("reg", PropertyValues(regList)),
       Property("reg-names", PropertyValues(regNameList))
@@ -112,14 +110,12 @@ final case class PpuNode(
 final case class MswiNode(
   harts:Int
 )(implicit p:Parameters) extends DeviceNode(
-  name = s"mswi",
-  label = s"MSWI",
+  name = s"mswi@${p(LinkNanParamsKey).mswiBase.toHexString}",
+  label = s"mswi",
   children = Nil,
   properties = {
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${i}_intc", 3))
     List(
-      Property("#address-cells", IntegerValue(2)),
-      Property("#size-cells", IntegerValue(1)),
       Property("compatible", StringValue("riscv,aclint-mswi")),
       Property("reg", RegValue(p(LinkNanParamsKey).mswiBase, harts * 0x4)),
       Property("reg-names", StringValue("msip")),
@@ -131,8 +127,8 @@ final case class MswiNode(
 final case class PlicNode(
   harts:Int
 )(implicit p:Parameters) extends DeviceNode(
-  name = s"plic",
-  label = s"PLIC",
+  name = s"plic@${p(LinkNanParamsKey).plicBase.toHexString}",
+  label = s"plic",
   children = Nil,
   properties = {
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${i}_intc", 11)) ++ Seq.tabulate(harts)(i => (s"cpu${i}_intc", 9))
@@ -154,15 +150,13 @@ final case class PlicNode(
 final case class RefMtimerNode(
   base:Long
 )(implicit p:Parameters) extends DeviceNode(
-  name = s"ref_mtimer",
-  label = s"REF_MTIMER",
+  name = s"ref_mtimer@${(base + 0x8).toHexString}",
+  label = s"ref_mtimer",
   children = Nil,
   properties = {
     List(
-      Property("#address-cells", IntegerValue(2)),
-      Property("#size-cells", IntegerValue(1)),
       Property("compatible", StringValue("riscv,aclint-mtimer")),
-      Property("reg", RegValue(base, 8)),
+      Property("reg", RegValue(base + 0x8, 8)),
       Property("reg-names", StringValue("mtime")),
     )
   },
@@ -171,7 +165,7 @@ final case class RefMtimerNode(
 final case class DebugModuleNode(
   harts:Int
 )(implicit p:Parameters) extends DeviceNode(
-  name = "debug_module",
+  name = s"debug@${p(LinkNanParamsKey).debugBase.toHexString}",
   label = "DEBUG",
   children = Nil,
   properties = {
@@ -179,7 +173,7 @@ final case class DebugModuleNode(
     List(
       Property("compatible", PropertyValues(List(StringValue("sifive,debug-013"), StringValue("riscv,debug-013")))),
       Property("interrupts-extended", IntrValue(intrSeq)),
-      Property("reg", RegValue(0x0, 0x1000)),
+      Property("reg", RegValue(p(LinkNanParamsKey).debugBase, 0x1000)),
       Property("reg-names", StringValue("control")),
     )
   }
@@ -240,11 +234,6 @@ final case class CpuNode(
   children = List.tabulate(cpuCount)(id => CoreNode(id)) :+ L3CacheNode()
 )
 
-final case class RootNode(
-)(implicit p:Parameters) extends DeviceNode(
-  name = "/"
-)
-
 final case class SocNode(
   cpuCount: Int,
 )(implicit p:Parameters) extends DeviceNode(
@@ -262,4 +251,37 @@ final case class SocNode(
   )) ++
     List.tabulate(cpuCount)(id => PpuNode(id = id)) ++
     List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(0x2000L), DebugModuleNode(cpuCount))
+)
+
+final case class MemNode(
+)(implicit p:Parameters) extends DeviceNode(
+  name = s"memory@${p(LinkNanParamsKey).memBase.toHexString}",
+  label = "",
+  properties = List(
+    Property("device_type", StringValue("memory")),
+    Property("reg", RegValue(p(LinkNanParamsKey).memBase, p(LinkNanParamsKey).memSizeInB, 2, 2)),
+  ),
+)
+
+final case class ChosenNode(
+)extends DeviceNode(
+  name = s"chosen",
+  label = "",
+  properties = List(
+    Property("device_type", StringValue("console=hvc0 earlycon=sbi "))
+  ),
+)
+
+final case class SerialNode(
+)extends DeviceNode (
+  name = s"serial@40600000",
+  label = "",
+  properties = List(
+    Property("compatible", StringValue("xlnx,xps-uartlite-1.00.a")),
+    Property("interrupt-parent", ReferenceValue("plic")),
+    Property("interrupts", IntegerValue(3)),
+    Property("current-speed", IntegerValue(115200)),
+    Property("reg", RegValue(0x40600000, 0x1000)),
+    Property("reg-names", StringValue("control"))
+  ),
 )

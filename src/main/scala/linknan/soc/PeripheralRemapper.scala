@@ -39,7 +39,7 @@ class PeripheralRemapper(implicit p:Parameters) extends ZJModule {
   private val remap = false.B //TODO: Change this for new SoC
   io.pa := Mux(remap, nla, io.la)
 
-  private def AddrMapper(base:Int, hartOff:Int, clusterBase:Int)(devAddr:UInt): (Bool, UInt) = {
+  private def AddrMapper(base:Long, hartOff:Int, clusterBase:Int)(devAddr:UInt): (Bool, UInt) = {
     val hartMaskBits = hartOff + clusterIdBits
     val hartMask = (1 << hartMaskBits) - 1
     require((base & hartMask) == 0, s"align check failed! base: ${base.toHexString} mask: ${hartMask.toHexString}")

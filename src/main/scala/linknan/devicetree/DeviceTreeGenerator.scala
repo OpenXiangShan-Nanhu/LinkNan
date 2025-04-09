@@ -31,10 +31,23 @@ object DeviceTreeGenerator {
 
   def lnGenerate(implicit p:Parameters): Unit = {
     val cpuNum = p(ZJParametersKey).island.filter(_.nodeType == NodeType.CC).map(_.cpuNum).sum
-    val root = RootNode()
+    val root = new DeviceNode(name = "/")
+      .withProperties(List(
+        Property("#address-cells", IntegerValue(2)),
+        Property("#size-cells", IntegerValue(2))
+      ))
       .withChild(CpuNode(cpuNum))
       .withChild(SocNode(cpuNum))
 
     FileRegisters.add("software", s"dtsi", s"/dts-v1/;\n\n${formatNode(root)}")
+  }
+
+  def simGenerate(implicit p:Parameters):Unit = {
+    val dts = new DeviceNode(name = "/")
+      .withChild(new DeviceNode(name = "soc", children = List(SerialNode())))
+      .withChild(ChosenNode())
+      .withChild(MemNode())
+
+    FileRegisters.add("software", s"LNSim.dts", s"/dts-v1/;\n/include/ \"LNTop.dtsi\"\n${formatNode(dts)}", dontCarePrefix = true)
   }
 }

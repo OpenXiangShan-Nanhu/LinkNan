@@ -32,8 +32,8 @@ class DistributedAclint(tlParams: TilelinkParams)(implicit p: Parameters) extend
   io.timerUpdate := Pipe(timerUpdate)
 
   val regSeq = Seq(
-    ("mtime", mtime, mtime, 0x0, None, None),
-    ("mtimecmp", mtimecmp, mtimecmp, 0x8, None, None),
+    ("mtimecmp", mtimecmp, mtimecmp, 0x0, None, None),
+    ("mtime", mtime, mtime, 0x8, None, None),
     ("msip", msip, msip, 0x10, Some(0x1.U), Some(0x1.U)),
     ("ssip", ssip, ssip, 0x14, Some(0x1.U), Some(0x1.U)),
   )
@@ -75,4 +75,12 @@ class AclintAddrRemapper(implicit p:Parameters) extends ZJModule {
     out := io.in.asTypeOf(out)
   }
   io.out := out.asUInt
+}
+
+object AclintAddrRemapper {
+  def apply(addr: UInt)(implicit p:Parameters): UInt = {
+    val remapper = Module(new AclintAddrRemapper)
+    remapper.io.in := addr
+    remapper.io.out
+  }
 }

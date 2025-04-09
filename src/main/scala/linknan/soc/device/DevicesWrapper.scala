@@ -1,6 +1,7 @@
 package linknan.soc.device
 
 import chisel3._
+import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import zhujiang.axi._
 import org.chipsalliance.diplomacy.lazymodule._
@@ -38,7 +39,7 @@ class AxiCfgXBar(icnAxiParams: AxiParams)(implicit val p: Parameters) extends Ba
   })
   private def slvMatcher(internal: Boolean)(addr: UInt): Bool = {
     val reqAddr = addr.asTypeOf(new ReqAddrBundle)
-    val matchRes = WireInit(reqAddr.ci === misc.ci && 0x3800_0000.U <= reqAddr.devAddr && reqAddr.devAddr < 0x4000_0000.U)
+    val matchRes = WireInit(reqAddr.ci === misc.ci && 0x0000_0000.U <= reqAddr.devAddr && reqAddr.devAddr < 0x1000_0000.U)
     if(internal) {
       matchRes
     } else {
@@ -113,8 +114,8 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
 
   private val mstAxi = AxiBuffer(tl2axi.io.axi, name = Some("mst_port_buf"))
   io.mst <> mstAxi
-  io.mst.aw.bits.addr := PeripheralRemapper(mstAxi.aw.bits.addr, p)
-  io.mst.ar.bits.addr := PeripheralRemapper(mstAxi.ar.bits.addr, p)
+  io.mst.aw.bits.addr := AclintAddrRemapper(mstAxi.aw.bits.addr)
+  io.mst.ar.bits.addr := AclintAddrRemapper(mstAxi.ar.bits.addr)
 
   pb.tlm.foreach(tlm => {
     connectByName(tlm.a, axi2tl.io.tl.a)

@@ -2,6 +2,7 @@ package linknan.cluster.hub.interconnect
 
 import chisel3._
 import chisel3.util._
+import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import org.chipsalliance.cde.config.Parameters
 import xijiang.router.base.{DeviceIcnBundle, IcnBundle}
 import xijiang.{Node, NodeType}
@@ -88,7 +89,10 @@ class ReqXBar(implicit p: Parameters) extends ZJModule with ClusterInterconnectH
     (io.tx.icn, icnMatch, Seq(0, 1)),
     (io.tx.peri, periMatch, Seq(0, 1))
   )
-  private val msts = Seq(io.rx.icn, io.rx.core)
+  private val rxcore = Wire(Decoupled(new RReqFlit))
+  rxcore <> io.rx.core
+  rxcore.bits.Addr := AclintAddrRemapper(io.rx.core.bits.Addr)
+  private val msts = Seq(io.rx.icn, rxcore)
   conn(slvs, msts, "req")
 }
 

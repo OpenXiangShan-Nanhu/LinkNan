@@ -25,6 +25,7 @@ import org.chipsalliance.diplomacy.lazymodule._
 import xs.utils.FileRegisters
 import difftest._
 import linknan.cluster.BlockTestIO
+import linknan.devicetree.DeviceTreeGenerator
 import linknan.generator.Generator
 import linknan.soc.{LNTop, LinkNanParamsKey}
 import org.chipsalliance.diplomacy.DisableMonitors
@@ -169,6 +170,8 @@ class SimTop(implicit p: Parameters) extends Module {
     val difftest = DifftestModule.finish("XiangShan")
     difftest.uart <> simMMIO.get.io.uart  // workaround for kmh difftest wrapper
   }
+
+  DeviceTreeGenerator.simGenerate
 }
 
 object SimGenerator extends App {

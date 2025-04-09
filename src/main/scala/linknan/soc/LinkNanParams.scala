@@ -15,12 +15,14 @@ case class LinkNanParams(
   nrExtIntr: Int = 64,
   remapBase:Long = 0xE0_0000_0000L,
   remapMask: Long = 0xE0_1FFF_FFFFL,
-  imiscSgBase: Int = 0x0000_0000,
-  imsicMBase: Int = 0x0080_0000,
-  debugBase: Long = 0x3802_0000,
-  plicBase: Long = 0x3C00_0000,
-  mswiBase: Int = 0x0100_0000,
-  sswiBase: Int = 0x0100_4000,
+  memBase:Long = 0x8000_0000L,
+  memSizeInMiB: Long = 128,
+  imiscSgBase: Long = 0x0000_0000L,
+  imsicMBase: Long = 0x0080_0000L,
+  debugBase: Long = 0x0800_0000L,
+  plicBase: Long = 0x0200_0000L,
+  mswiBase: Long = 0x0100_0000L,
+  sswiBase: Long = 0x0100_4000L,
   rtcFreq: Long = 1_000_000
 ) {
   lazy val remapBaseMaskBits = Seq.tabulate(64)(i => (remapMask >> i) & 0x1L).sum.toInt
@@ -50,4 +52,5 @@ case class LinkNanParams(
     nScratch = 2,
     crossingHasSafeReset = false
   )
+  lazy val memSizeInB = memSizeInMiB * 1024 * 1024
 }
