@@ -268,7 +268,7 @@ final case class ChosenNode(
   name = s"chosen",
   label = "",
   properties = List(
-    Property("device_type", StringValue("console=hvc0 earlycon=sbi "))
+    Property("bootargs", StringValue("console=hvc0 earlycon=sbi"))
   ),
 )
 
