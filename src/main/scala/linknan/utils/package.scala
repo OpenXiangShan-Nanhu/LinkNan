@@ -36,12 +36,4 @@ package object utils {
       io.mst.e <> Queue(io.slv.e, entries = depth, pipe = pipe)
     }
   }
-  object BareTlBuffer {
-    def apply(mst: TLBundle, depth:Int = 2, pipe:Boolean = false, name:Option[String] = None): TLBundle = {
-      val buf = Module(new BareTLBuffer(mst.params, depth = depth, pipe = pipe))
-      name.foreach(n => buf.suggestName(n))
-      buf.io.slv <> mst
-      buf.io.mst
-    }
-  }
 }

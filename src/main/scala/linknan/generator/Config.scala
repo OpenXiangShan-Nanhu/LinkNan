@@ -9,10 +9,8 @@ import xiangshan.{XSCoreParameters, XSCoreParamsKey}
 import xiangshan.cache.DCacheParameters
 import xiangshan.frontend.icache.ICacheParameters
 import xijiang.{NodeParam, NodeType}
-import xs.utils.common.DirtyField
 import xs.utils.debug.{HardwareAssertionKey, HwaParams}
 import xs.utils.perf.{DebugOptions, DebugOptionsKey, LogUtilsOptions, LogUtilsOptionsKey, PerfCounterOptions, PerfCounterOptionsKey, XSPerfLevel}
-import xs.utils.tl.ReqSourceField
 import zhujiang.{ZJParameters, ZJParametersKey}
 
 class BaseConfig(core: String) extends Config((site, here, up) => {
@@ -24,6 +22,34 @@ class BaseConfig(core: String) extends Config((site, here, up) => {
   case PerfCounterOptionsKey => PerfCounterOptions(true, false, XSPerfLevel.VERBOSE, 0)
   case LinkNanParamsKey => LinkNanParams(random = core == "boom")
 })
+
+object AddrConfig {
+  // interleaving granularity: 1KiB
+  val mem0 = Seq(
+    (0x0000_8000_0000L, 0x000F_8000_0400L),
+    (0x0001_0000_0000L, 0x000F_0000_0400L),
+    (0x0002_0000_0000L, 0x000F_0000_0400L),
+    (0x0003_0000_0000L, 0x000F_0000_0400L),
+    (0x0004_0000_0000L, 0x000F_0000_0400L),
+  )
+  val mem1 = Seq(
+    (0x0000_8000_0400L, 0x000F_8000_0400L),
+    (0x0001_0000_0400L, 0x000F_0000_0400L),
+    (0x0002_0000_0400L, 0x000F_0000_0400L),
+    (0x0003_0000_0400L, 0x000F_0000_0400L),
+    (0x0004_0000_0400L, 0x000F_0000_0400L),
+  )
+  val mem2 = Seq(
+    (0x0005_0000_0000L, 0x000F_0000_0000L),
+    (0x0006_0000_0000L, 0x000F_0000_0000L),
+    (0x0007_0000_0000L, 0x000F_0000_0000L),
+    (0x0008_0000_0000L, 0x000F_0000_0000L),
+    (0x0009_0000_0000L, 0x000F_0000_0000L),
+    (0x000A_0000_0000L, 0x000F_0000_0000L),
+    (0x000B_0000_0000L, 0x000F_0000_0000L),
+    (0x000C_0000_0000L, 0x000F_0000_0000L),
+  )
+}
 
 class FullNocConfig(core: String, socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
@@ -39,6 +65,7 @@ class FullNocConfig(core: String, socket: String) extends Config((site, here, up
       NodeParam(nodeType = NodeType.RI, attr = "main"),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
       NodeParam(nodeType = NodeType.M),
+      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem2, outstanding = 32, attr = "2"),
 
       NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
       NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
@@ -48,8 +75,8 @@ class FullNocConfig(core: String, socket: String) extends Config((site, here, up
       NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.S,  addrSegment = (0x0L << 6, 0x1L << 6), outstanding = 32),
-      NodeParam(nodeType = NodeType.S,  addrSegment = (0x1L << 6, 0x1L << 6), outstanding = 32),
+      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem1, outstanding = 32, attr = "1"),
+      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem0, outstanding = 32, attr = "0"),
       NodeParam(nodeType = NodeType.P)
     )
   )
@@ -78,8 +105,8 @@ class ReducedNocConfig(core: String, socket: String) extends Config((site, here,
       NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.S,  addrSegment = (0x0L << 6, 0x1L << 6), outstanding = 32),
-      NodeParam(nodeType = NodeType.S,  addrSegment = (0x1L << 6, 0x1L << 6), outstanding = 32),
+      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem1, outstanding = 32),
+      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem0, outstanding = 32),
       NodeParam(nodeType = NodeType.P)
     )
   )
