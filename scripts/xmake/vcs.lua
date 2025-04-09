@@ -15,22 +15,11 @@ function simv_comp(num_cores)
   table.join2(chisel_dep_srcs, {path.join(abs_base, "build.sc")})
   table.join2(chisel_dep_srcs, {path.join(abs_base, "xmake.lua")})
 
-  depend.on_changed(function ()
-    local build_dir = path.join(abs_base, "build")
-    if os.exists(build_dir) then os.rmdir(build_dir) end
-    task.run("soc", {
-      vcs = true, sim = true, config = option.get("config"),
-      socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
-      core = option.get("core")
-    })
-  end,{
-    files = chisel_dep_srcs,
-    dependfile = path.join("out", "chisel.simv.dep"),
-    dryrun = option.get("rebuild")
-  })
-
+  local vtop = "SimTop"
+  local build_dir = path.join(abs_base, "build")
   local comp_dir = path.join(abs_base, "sim", "simv", "comp")
   if not os.exists(comp_dir) then os.mkdir(comp_dir) end
+  local dpi_export_dir = path.join(comp_dir, "dpi_export")
   local design_vsrc = path.join(abs_base, "build", "rtl")
   local design_gen_dir = path.join(abs_base, "build", "generated-src")
   local difftest = path.join(abs_base, "dependencies", "difftest")
@@ -44,14 +33,52 @@ function simv_comp(num_cores)
   local difftest_csrc_vcs = path.join(difftest_csrc, "vcs")
   local difftest_config = path.join(difftest, "config")
 
+  depend.on_changed(function ()
+    if os.exists(build_dir) then os.rmdir(build_dir) end
+    task.run("soc", {
+      vcs = true, sim = true, config = option.get("config"),
+      socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
+      core = option.get("core")
+    })
+    local vsrc = os.files(path.join(design_vsrc, "*v"))
+    table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
+    table.join2(vsrc, os.files(path.join(difftest_vsrc_top, "*v")))
+
+    if option.get("lua_scoreboard") then
+      local dpi_cfg_lua = path.join(abs_base, "scripts", "verilua", "dpi_cfg.lua")
+      if os.exists(dpi_export_dir) then os.rmdir(dpi_export_dir) end
+      os.mkdir(dpi_export_dir)
+      local dpi_exp_opts =  {"dpi_exporter"}
+      table.join2(dpi_exp_opts, {"--config", dpi_cfg_lua})
+      table.join2(dpi_exp_opts, {"--out-dir", dpi_export_dir})
+      table.join2(dpi_exp_opts, {"--work-dir", dpi_export_dir})
+      table.join2(dpi_exp_opts, {"--quiet"})
+      table.join2(dpi_exp_opts, {"--top", vtop})
+      table.join2(dpi_exp_opts, vsrc)
+      local cmd_file = path.join(comp_dir, "dpi_exp_cmd.sh")
+      io.writefile(cmd_file, table.concat(dpi_exp_opts, " "))
+      os.execv(os.shell(), { cmd_file })
+    end
+  end,{
+    files = chisel_dep_srcs,
+    dependfile = path.join("out", "chisel.simv.dep"),
+    dryrun = option.get("rebuild")
+  })
+
   local vsrc = os.files(path.join(design_vsrc, "*v"))
   table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
   table.join2(vsrc, os.files(path.join(difftest_vsrc_top, "*v")))
+  if option.get("lua_scoreboard") then
+    vsrc = os.files(path.join(dpi_export_dir, "*v"))
+  end
 
   local csrc = os.files(path.join(design_gen_dir, "*.cpp"))
   table.join2(csrc, os.files(path.join(difftest_csrc_common, "*.cpp")))
   table.join2(csrc, os.files(path.join(difftest_csrc_spikedasm, "*.cpp")))
   table.join2(csrc, os.files(path.join(difftest_csrc_vcs, "*.cpp")))
+  if option.get("lua_scoreboard") then
+    table.join2(csrc, path.join(dpi_export_dir, "dpi_func.cpp"))
+  end
 
   local headers = os.files(path.join(design_gen_dir, "*.h"))
   table.join2(headers, os.files(path.join(difftest_csrc_common, "*.h")))
@@ -117,7 +144,7 @@ function simv_comp(num_cores)
   vcs_flags = vcs_flags .. " -f " .. csrc_filelist_path
   vcs_flags = vcs_flags .. " +incdir+" .. design_gen_dir
   if option.get("lua_scoreboard") then
-    vcs_flags = "vl-vcs " .. vcs_flags
+    vcs_flags = "vl-vcs-dpi " .. vcs_flags
   else
     vcs_flags = "vcs " .. vcs_flags
   end
