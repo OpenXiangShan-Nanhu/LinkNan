@@ -5,8 +5,7 @@ import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
 import xiangshan.XSCoreParamsKey
 import xs.utils.debug.HardwareAssertionKey
-import xs.utils.perf.{DebugOptionsKey, PerfCounterOptionsKey}
-import zhujiang.ZJParametersKey
+import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
 
 import scala.annotation.tailrec
 
@@ -60,6 +59,7 @@ object ArgParser {
           parse(config.alter((site, here, up) => {
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnablePerfDebug = false, FPGAPlatform = true)
             case PerfCounterOptionsKey =>up(PerfCounterOptionsKey).copy(enablePerfPrint = false)
+            case LogUtilsOptionsKey => up(LogUtilsOptionsKey).copy(fpgaPlatform = true)
           }), tail)
 
         case "--enable-difftest" :: tail =>
