@@ -35,8 +35,14 @@ class AXI4UART
     val stat = RegInit(1.U(32.W))
     val ctrl = RegInit(0.U(32.W))
 
+    private val dataBytes = in.w.bits.data.getWidth / 8
+    require(dataBytes <= 8)
     io.extra.get.out.valid := (waddr(3,0) === 4.U && in.w.fire)
-    io.extra.get.out.ch := in.w.bits.data(7,0)
+    if(dataBytes <= 4) {
+      io.extra.get.out.ch := in.w.bits.data(7, 0)
+    } else {
+      io.extra.get.out.ch := in.w.bits.data(39, 32)
+    }
     io.extra.get.in.valid := (raddr(3,0) === 0.U && in.r.fire)
 
     val mapping = Map(
