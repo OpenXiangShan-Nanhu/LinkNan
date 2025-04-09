@@ -132,6 +132,7 @@ task("simv", function()
       {'b', "rebuild", "k", nil, "forcely rebuild"},
       {'n', "no_diff", "k", nil, "disable difftest"},
       {'d', "no_fsdb", "k", nil, "do not dump wave"},
+      {'x', "no_xprop", "k", nil, "do not dump wave"},
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
       {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"},
@@ -156,6 +157,7 @@ task("simv-run", function ()
     description = "Run simv",
     options = {
       {nil, "no_dump", "k", nil, "do not dump waveform"},
+      {'I', "init_reg", "kv", nil, "init reg by 0/1/random"},
       {'i', "image", "kv", nil, "bin image bin name"},
       {'z', "imagez", "kv", nil, "gz image name"},
       {'c', "cycles", "kv", "0", "gz image name"},

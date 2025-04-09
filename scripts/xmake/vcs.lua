@@ -103,7 +103,6 @@ function simv_comp(num_cores)
   vcs_flags = vcs_flags .. " -fgp -lca -kdb +nospecify +notimingcheck -no_save"
   vcs_flags = vcs_flags .. " +define+PRINTF_COND=1 +define+VCS"
   vcs_flags = vcs_flags .. " +define+CONSIDER_FSDB +define+SIM_TOP_MODULE_NAME=tb_top.sim"
-  vcs_flags = vcs_flags .. string.format(" +vcs+initreg+config+%s", path.join(abs_base, "scripts", "linknan", "vcs.cfg"))
   if not option.get("no_fsdb") then
     novas = path.join(os.getenv("VERDI_HOME"), "share", "PLI", "VCS", "LINUX64")
     vcs_flags = vcs_flags .. " -P " .. path.join(novas, "novas.tab")
@@ -127,7 +126,11 @@ function simv_comp(num_cores)
     vcs_flags = vcs_flags .. " +define+RANDOMIZE_GARBAGE_ASSIGN +define+RANDOMIZE_DELAY=0"
     vcs_flags = vcs_flags .. " +define+RANDOMIZE_REG_INIT +define+RANDOMIZE_MEM_INIT"
   else
-    vcs_flags = vcs_flags .. " -xprop"
+    if option.get("no_xprop") then
+      vcs_flags = vcs_flags .. " +vcs+initreg+random"
+    else
+      vcs_flags = vcs_flags .. " -xprop"
+    end
   end
 
   local cmd_file = path.join(comp_dir, "vcs_cmd.sh")
@@ -187,6 +190,9 @@ function simv_run()
   local sh_str = "chmod +x simv" .. " && ( ./simv"
   if not option.get("no_dump") then
     sh_str = sh_str .. " +dump-wave=fsdb"
+  end
+  if option.get("init_reg") ~= nil then
+    sh_str = sh_str .. " +vcs+initreg+" .. option.get("init_reg")
   end
   sh_str = sh_str .. " +diff=" .. ref_so
   sh_str = sh_str .. " +max-cycles=" .. option.get("cycles")
