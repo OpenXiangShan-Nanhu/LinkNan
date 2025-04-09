@@ -20,7 +20,7 @@ case class LinkNanParams(
   imiscSgBase: Long = 0x0000_0000L,
   imsicMBase: Long = 0x0080_0000L,
   debugBase: Long = 0x0800_0000L,
-  plicBase: Long = 0x0200_0000L,
+  plicBase: Long = 0x0400_0000L,
   mswiBase: Long = 0x0100_0000L,
   sswiBase: Long = 0x0100_4000L,
   rtcFreq: Long = 1_000_000
