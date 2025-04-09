@@ -5,8 +5,10 @@ import chisel3.util._
 import chisel3.experimental.hierarchy.instantiable
 import coupledL2.L2ParamKey
 import coupledL2.tl2chi.TL2CHICoupledL2
+import freechips.rocketchip.devices.debug.DebugModuleKey
 import freechips.rocketchip.interrupts.{IntSourceNode, IntSourcePortSimple}
 import freechips.rocketchip.tilelink.{BankBinder, TLBuffer, TLXbar}
+import linknan.soc.LinkNanParamsKey
 import linknan.utils.{connectByName, connectChiChn}
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.bundlebridge.BundleBridgeSource
@@ -18,12 +20,12 @@ import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import zhujiang.HasZJParams
 import zhujiang.chi.FlitHelper.connIcn
 import zhujiang.chi._
-import zhujiang.device.misc.ZJDebugBundle
 
 class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper {
   //Core connections
   private val core = LazyModule(new XSCore()(p.alterPartial({
     case PMParameKey => PMParameters()
+    case DebugModuleKey => Some(p(LinkNanParamsKey).debugParams)
   })))
   private val memBlock = core.memBlock.inner
   private val cacheXBar = LazyModule(new TLXbar)
@@ -51,7 +53,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
   mmioXBar.node :*= TLBuffer.chainNode(1, Some(s"mem_uc_buffer")) :*= memBlock.uncache.clientNode
   mmioXBar.node :*= TLBuffer.chainNode(1, Some(s"frd_uc_buffer")) :*= memBlock.frontendBridge.instr_uncache_node
 
-  //_l2 Connections
+  //l2 Connections
   private val l2cache = LazyModule(new TL2CHICoupledL2)
   private val tpMetaSinkNode = l2cache.tpmeta_source_node.map(_.makeSink())
   private val tpMetaSourceNode = l2cache.tpmeta_sink_node.map(n => BundleBridgeSource(n.genOpt.get))
