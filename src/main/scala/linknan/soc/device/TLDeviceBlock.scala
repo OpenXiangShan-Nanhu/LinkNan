@@ -19,12 +19,9 @@ import zhujiang.{DftWires, ZJParametersKey}
 
 class TLDeviceBlockIO(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) extends Bundle {
   val extIntr = Input(UInt(extIntrNum.W))
-  val msip = Output(UInt(coreNum.W))
-  val mtip = Output(UInt(coreNum.W))
   val meip = Output(UInt(coreNum.W))
   val seip = Output(UInt(coreNum.W))
   val dbip = Output(UInt(coreNum.W))
-  val timerTick = Input(Bool())
   val resetCtrl = new ResetCtrlIO(coreNum)(p)
   val debug = new DebugIO()(p)
 }
@@ -35,22 +32,18 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
 
   private val xbar = LazyModule(new TLXbar)
   private val plic = LazyModule(new TLPLIC(PLICParams(baseAddress = p(LinkNanParamsKey).plicBase), 8))
-  private val clint = LazyModule(new CLINT(CLINTParams(0x38000000L), 8))
   private val debug = LazyModule(new DebugModule(coreNum))
   private val sbaXBar = LazyModule(new TLXbar)
 
   private val intSourceNode = IntSourceNode(IntSourcePortSimple(extIntrNum, ports = 1, sources = 1))
-  private val clintIntSink = IntSinkNode(IntSinkPortSimple(coreNum, 2))
   private val debugIntSink = IntSinkNode(IntSinkPortSimple(coreNum, 1))
   private val plicIntSink = IntSinkNode(IntSinkPortSimple(2 * coreNum, 1))
 
   xbar.node :=* TLBuffer() :=* rationalSinkNode
   plic.node :*= xbar.node
-  clint.node :*= xbar.node
   debug.debug.node :*= xbar.node
   plic.intnode := IntBuffer(3, cdc = true) := intSourceNode
 
-  clintIntSink :*= IntBuffer(3, cdc = true) :*= clint.intnode
   debugIntSink :*= IntBuffer(3, cdc = true) :*= debug.debug.dmOuter.dmOuter.intnode
   plicIntSink :*= IntBuffer(3, cdc = true) :*= plic.intnode
 
@@ -77,22 +70,15 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
     for(idx <- 0 until extIntrNum) {
       intSourceNode.out.head._1(idx) := io.extIntr(idx)
     }
-    clint.module.io.rtcTick := io.timerTick
     private val meip = Wire(Vec(coreNum, Bool()))
     private val seip = Wire(Vec(coreNum, Bool()))
-    private val msip = Wire(Vec(coreNum, Bool()))
-    private val mtip = Wire(Vec(coreNum, Bool()))
     private val dbip = Wire(Vec(coreNum, Bool()))
     io.meip := meip.asUInt
     io.seip := seip.asUInt
-    io.msip := msip.asUInt
-    io.mtip := mtip.asUInt
     io.dbip := dbip.asUInt
     for(idx <- 0 until coreNum) {
       meip(idx) := plicIntSink.in.map(_._1)(2 * idx).head
       seip(idx) := plicIntSink.in.map(_._1)(2 * idx + 1).head
-      msip(idx) := clintIntSink.in.map(_._1)(idx)(0)
-      mtip(idx) := clintIntSink.in.map(_._1)(idx)(1)
       dbip(idx) := debugIntSink.in.map(_._1)(idx).head
     }
     debug.module.io.clock := clock.asBool

@@ -84,12 +84,9 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
     val ext = new Bundle {
       val cfg = new AxiBundle(cfgXBar.io.downstream.last.params.copy(attr = cfgParams.attr))
       val intr = Input(UInt(extIntrNum.W))
-      val timerTick = Input(Bool())
     }
 
     val cpu = new Bundle {
-      val msip = Output(UInt(coreNum.W))
-      val mtip = Output(UInt(coreNum.W))
       val meip = Output(UInt(coreNum.W))
       val seip = Output(UInt(coreNum.W))
       val dbip = Output(UInt(coreNum.W))
@@ -127,13 +124,10 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
     connectByName(sba.d, tl2axi.io.tl.d)
   })
   pb.dfx := io.dft
-  io.cpu.msip := ShiftSync(pb.dev.msip)
-  io.cpu.mtip := ShiftSync(pb.dev.mtip)
   io.cpu.meip := ShiftSync(pb.dev.meip)
   io.cpu.seip := ShiftSync(pb.dev.seip)
   io.cpu.dbip := ShiftSync(pb.dev.dbip)
   pb.dev.extIntr := io.ext.intr
-  pb.dev.timerTick := io.ext.timerTick
   pb.dev.debug <> io.debug
   io.resetCtrl.hartResetReq.foreach(_ := ShiftSync(pb.dev.resetCtrl.hartResetReq.get))
   pb.dev.resetCtrl.hartIsInReset := ShiftSync(io.resetCtrl.hartIsInReset)

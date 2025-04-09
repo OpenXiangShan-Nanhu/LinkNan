@@ -61,7 +61,6 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
 
   private val rtcEn = RegNext(!noc.io.onReset)
   private val rtcClockGated = io.rtc_clock & rtcEn
-  devWrp.io.ext.timerTick := RegNext(rtcClockGated)
   devWrp.io.ext.intr := io.ext_intr
   devWrp.io.ci := io.ci
   devWrp.io.debug.systemjtag.foreach(_ <> io.jtag.get)
