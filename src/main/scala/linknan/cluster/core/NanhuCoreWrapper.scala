@@ -17,6 +17,7 @@ import xs.utils.IntBuffer
 import xiangshan.{NonmaskableInterruptIO, PMParameKey, PMParameters, XSCore, XSCoreParamsKey}
 import xijiang.Node
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
+import xs.utils.perf.LogUtilsOptionsKey
 import zhujiang.HasZJParams
 import zhujiang.chi.FlitHelper.connIcn
 import zhujiang.chi._
@@ -178,6 +179,11 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
         assertionNode.get.hassert.bus.get.ready := dbgBd.ready
       }
       connIcn(pdc.io.icn.rx.debug.get, dbgBd)
+    }
+    if(!p(LogUtilsOptionsKey).fpgaPlatform) {
+      when(txReqFlit.fire && txReqFlit.bits.MemAttr(1)) {
+        p(LinkNanParamsKey).checkPeriAddr(txReqFlit.bits.Addr)
+      }
     }
   }
 }
