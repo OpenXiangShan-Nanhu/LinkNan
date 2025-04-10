@@ -84,7 +84,7 @@ task("emu", function()
       {'h', "dramsim3_home", "kv", path.join(os.curdir(), "dependencies", "dramsim"), "dramsim3 home dir"},
       {'t', "threads", "kv", "16", "simulation threads"},
       {'j', "jobs", "kv", "16", "compilation jobs"},
-      {'r', "ref", "kv", "Spike", "reference model"},
+      {'r', "ref", "kv", "Nemu", "reference model"},
       {'c', "config", "kv", "minimal", "soc config"}
     }
   }
@@ -113,7 +113,7 @@ task("emu-run", function ()
       {'W', "warmup", "kv", "0", "gz image name"},
       {'I', "instr", "kv", "0", "gz image name"},
       {nil, "case_dir", "kv", "ready-to-run", "image base dir"},
-      {nil, "ref", "kv", "riscv64-spike-so", "reference model"},
+      {nil, "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
       {'s', "seed", "kv", "1234", "random seed"},
     }
@@ -137,7 +137,7 @@ task("simv", function()
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
       {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"},
       {'C', "core", "kv", "nanhu", "cpu core in soc"},
-      {'r', "ref", "kv", "Spike", "reference model"},
+      {'r', "ref", "kv", "Nemu", "reference model"},
       {'c', "config", "kv", "minimal", "rtl config"}
     }
   }
@@ -162,7 +162,7 @@ task("simv-run", function ()
       {'z', "imagez", "kv", nil, "gz image name"},
       {'c', "cycles", "kv", "0", "gz image name"},
       {nil, "case_dir", "kv", "ready-to-run", "image base dir"},
-      {nil, "ref", "kv", "riscv64-spike-so", "reference model"},
+      {nil, "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"}
     }
   }

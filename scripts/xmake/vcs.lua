@@ -112,9 +112,9 @@ function simv_comp(num_cores)
   cxx_flags = cxx_flags .. " -I" .. difftest_csrc_spikedasm
   cxx_flags = cxx_flags .. " -I" .. difftest_config
   if option.get("ref") == "Spike" then
-    cxx_flags = cxx_flags .. " -DREF_PROXY=SpikeProxy -DSELECTEDSpike"
+    cxx_flags = cxx_flags .. " -DREF_PROXY=SpikeProxy"
   else
-    cxx_flags = cxx_flags .. " -DREF_PROXY=NemuProxy -DSELECTEDNemu"
+    cxx_flags = cxx_flags .. " -DREF_PROXY=NemuProxy"
   end
   if option.get("sparse_mem") then
     cxx_flags = cxx_flags .. " -DCONFIG_USE_SPARSEMM"
