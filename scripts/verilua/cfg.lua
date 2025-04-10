@@ -46,8 +46,8 @@ cfg.enable_l2_mon_out = true
 cfg.enable_l2_mon_in = true
 cfg.enable_sn_mon = true
 
-cfg.verbose_l2_mon_out = true
-cfg.verbose_l2_mon_in = true
-cfg.verbose_sn_mon = true
+cfg.verbose_l2_mon_out = false
+cfg.verbose_l2_mon_in = false
+cfg.verbose_sn_mon = false
 
 return cfg
