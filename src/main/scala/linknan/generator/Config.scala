@@ -163,13 +163,15 @@ class L1DConfig(sizeInKiB: Int = 64, ways: Int = 4) extends Config((site, here, 
     up(XSCoreParamsKey).copy(dcacheParametersOpt = Some(DCacheParameters(
       nSets = sizeInKiB * 1024 / ways / 64,
       nWays = ways,
-      tagECC = Some("secded"),
-      dataECC = Some("secded"),
+      tagECC = Some("none"),
+      dataECC = Some("parity"),
       replacer = Some("setplru"),
       nMissEntries = 16,
       nProbeEntries = 4,
       nReleaseEntries = 4,
       nMaxPrefetchEntry = 6,
+      enableDataEcc = true,
+      enableTagEcc = false
     )))
 })
 
@@ -178,7 +180,7 @@ class L1IConfig(sizeInKiB: Int = 64, ways: Int = 4) extends Config((site, here, 
     up(XSCoreParamsKey).copy(icacheParameters = ICacheParameters(
       nSets = sizeInKiB * 1024 / ways / 64,
       nWays = ways,
-      tagECC = Some("parity"),
+      tagECC = Some("none"),
       dataECC = Some("parity"),
       replacer = Some("setplru")
     ))
