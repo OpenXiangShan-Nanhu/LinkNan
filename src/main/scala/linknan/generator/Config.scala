@@ -170,6 +170,8 @@ class L1DConfig(sizeInKiB: Int = 64, ways: Int = 4) extends Config((site, here, 
       nProbeEntries = 4,
       nReleaseEntries = 4,
       nMaxPrefetchEntry = 6,
+      enableDataEcc = true,
+      enableTagEcc = true
     )))
 })
 
