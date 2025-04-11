@@ -3,11 +3,13 @@ package linknan.cluster.hub.interconnect
 import chisel3._
 import chisel3.util._
 import linknan.cluster.hub.peripheral.AclintAddrRemapper
+import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
 import xijiang.router.base.{DeviceIcnBundle, IcnBundle}
 import xijiang.{Node, NodeType}
 import xs.utils.ResetRRArbiter
 import xs.utils.debug.HardwareAssertionKey
+import xs.utils.perf.LogUtilsOptionsKey
 import zhujiang.ZJModule
 import zhujiang.chi.{DeviceReqAddrBundle, NodeIdBundle, RReqFlit, ReqAddrBundle, RingFlit}
 import zhujiang.device.bridge.tlul.TLULBridge
@@ -94,6 +96,12 @@ class ReqXBar(implicit p: Parameters) extends ZJModule with ClusterInterconnectH
   rxcore.bits.Addr := AclintAddrRemapper(io.rx.core.bits.Addr)
   private val msts = Seq(io.rx.icn, rxcore)
   conn(slvs, msts, "req")
+
+  if(!p(LogUtilsOptionsKey).fpgaPlatform) {
+    when(rxcore.fire && rxcore.bits.MemAttr(1)) {
+      p(LinkNanParamsKey).checkPeriAddr(rxcore.bits.Addr)
+    }
+  }
 }
 
 class RspXBar(implicit p: Parameters) extends ZJModule with ClusterInterconnectHelper {

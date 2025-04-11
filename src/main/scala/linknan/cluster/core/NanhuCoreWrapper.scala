@@ -1,8 +1,8 @@
 package linknan.cluster.core
 
 import chisel3._
-import chisel3.util._
 import chisel3.experimental.hierarchy.instantiable
+import chisel3.util._
 import coupledL2.L2ParamKey
 import coupledL2.tl2chi.TL2CHICoupledL2
 import freechips.rocketchip.devices.debug.DebugModuleKey
@@ -13,11 +13,10 @@ import linknan.utils.{connectByName, connectChiChn}
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.bundlebridge.BundleBridgeSource
 import org.chipsalliance.diplomacy.lazymodule.LazyModule
-import xs.utils.IntBuffer
-import xiangshan.{NonmaskableInterruptIO, PMParameKey, PMParameters, XSCore, XSCoreParamsKey}
+import xiangshan._
 import xijiang.Node
+import xs.utils.IntBuffer
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
-import xs.utils.perf.LogUtilsOptionsKey
 import zhujiang.HasZJParams
 import zhujiang.chi.FlitHelper.connIcn
 import zhujiang.chi._
@@ -179,11 +178,6 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
         assertionNode.get.hassert.bus.get.ready := dbgBd.ready
       }
       connIcn(pdc.io.icn.rx.debug.get, dbgBd)
-    }
-    if(!p(LogUtilsOptionsKey).fpgaPlatform) {
-      when(txReqFlit.fire && txReqFlit.bits.MemAttr(1)) {
-        p(LinkNanParamsKey).checkPeriAddr(txReqFlit.bits.Addr)
-      }
     }
   }
 }
