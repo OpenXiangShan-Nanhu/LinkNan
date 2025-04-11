@@ -24,7 +24,7 @@ final case class L3CacheNode(
 final case class L2CacheNode(
   id:Int
 )(implicit p:Parameters) extends DeviceNode(
-  name = s"l2c@$id",
+  name = s"l2c",
   label = s"cpu${id}_l2c",
   children = Nil,
   properties = {
@@ -45,7 +45,7 @@ final case class L2CacheNode(
 final case class InterruptControllerNode(
   id:Int,
 ) extends DeviceNode(
-  name = s"intc@$id",
+  name = s"intc",
   label = s"cpu${id}_intc",
   children = Nil,
   properties = List(
