@@ -42,9 +42,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     FPGAPlatform = p(DebugOptionsKey).FPGAPlatform
   )
   private val mod = this.toNamed
-  annotate(new ChiselAnnotation {
-    def toFirrtl = NestedPrefixModulesAnnotation(mod, p(LinkNanParamsKey).prefix, inclusive = true)
-  })
+  chisel3.experimental.annotate(this)(Seq(NestedPrefixModulesAnnotation(mod, p(LinkNanParamsKey).prefix, inclusive = true)))
   private val uncore = Module(new UncoreTop()(
     new Config((_,_,_) => {
       case HardwareAssertionKey => p(HardwareAssertionKey)

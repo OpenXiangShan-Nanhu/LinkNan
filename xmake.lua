@@ -17,6 +17,7 @@ task("soc" , function()
       {'m', "mbist", "k", nil, "generate simulation top"},
       {'p', "pldm_verilog", "k", nil, "enable only basic difftest function"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
+      {'x', "prefix", "kv", "", "assign a prefix for rtl modules"},
       {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"},
       {'C', "core", "kv", "nanhu", "cpu core in soc"},
       {'f', "config", "kv", nil, "soc config selection"},
@@ -41,6 +42,7 @@ task("soc" , function()
     if option.get("hardware_assertion") then table.join2(chisel_opts, {"--enable-hardware-assertion"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
     if option.get("config") then table.join2(chisel_opts, {"--config", option.get("config")}) end
+    if option.get("prefix") then table.join2(chisel_opts, {"--prefix", option.get("prefix")}) end
     local build_dir = path.join("build", "rtl")
     if not option.get("sim") and not option.get("release") then build_dir = option.get("out_dir") end
     if option.get("sim") then os.setenv("NOOP_HOME", os.curdir()) end

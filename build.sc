@@ -4,10 +4,10 @@ import scalafmt._
 import $file.dependencies.`rocket-chip`.common
 
 val defaultVersions = Map(
-  "chisel" -> "6.5.0",
-  "chisel-plugin" -> "6.5.0",
+  "chisel" -> "6.7.0",
+  "chisel-plugin" -> "6.7.0",
   "chiseltest" -> "6.0.0",
-  "scala" -> "2.13.14",
+  "scala" -> "2.13.16",
   "scalatest" -> "3.2.7"
 )
 
@@ -106,6 +106,7 @@ object boom extends CommonModule {
 object linknan extends SbtModule with CommonModule {
   override def millSourcePath = os.pwd
   override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, cpl2, zhujiang, nanhu, aia, boom)
+  override def scalacOptions = super.scalacOptions() ++ Agg("-deprecation")
 
   object test extends SbtModuleTests with TestModule.ScalaTest {
     override def ivyDeps = super.ivyDeps() ++ Agg(

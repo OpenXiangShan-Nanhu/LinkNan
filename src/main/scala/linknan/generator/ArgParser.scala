@@ -6,6 +6,7 @@ import org.chipsalliance.cde.config.Parameters
 import xiangshan.XSCoreParamsKey
 import xs.utils.debug.HardwareAssertionKey
 import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
+import zhujiang.ZJParametersKey
 
 import scala.annotation.tailrec
 
@@ -90,6 +91,7 @@ object ArgParser {
 
         case "--prefix" :: confString :: tail =>
           parse(config.alter((site, here, up) => {
+            case ZJParametersKey => up(ZJParametersKey).copy(modulePrefix = confString)
             case LinkNanParamsKey => up(LinkNanParamsKey).copy(prefix = confString)
           }), tail)
 
