@@ -5,8 +5,7 @@ import shutil
 from datetime import date
 import argparse
 
-module_instance_re = r"\s+(\w+)\s+\w+\s+\([\x00-\x7f]*?;"
-module_definition_re = r"\s*module\s*\w+"
+module_instance_re = r"(?!\bmodule\b)\b([a-zA-Z_]\w*)\b\s*(?:\#\s*\([^;]*?\))?\s*\w+\s*\("
 macros_re_list = [r"\w*ClockGate$", r"\w*sram_array_[12]p\d+x\w*", r"\w*ClockManagerWrapper$"]
 
 def is_macros(line:str):
