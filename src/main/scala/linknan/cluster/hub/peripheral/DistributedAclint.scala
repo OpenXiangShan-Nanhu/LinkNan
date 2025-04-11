@@ -54,6 +54,7 @@ class AclintAddrRemapper(implicit p:Parameters) extends ZJModule {
     val out = Output(UInt(raw.W))
   })
   private val spaceBits = 14
+  private val accessRefTimer = io.in(raw - 1, 4) === lnP.refTimerBase.U(raw.W)(raw - 1, 4)
   private val accessMswi = io.in(raw - 1, spaceBits) === mswiBase(raw - 1, spaceBits)
   private val accessSswi = io.in(raw - 1, spaceBits) === sswiBase(raw - 1, spaceBits)
   private val accessHart = io.in(clusterIdBits + 1, 2) // 32 bits each hart
@@ -61,7 +62,12 @@ class AclintAddrRemapper(implicit p:Parameters) extends ZJModule {
   private val accessCore = accessHart.tail(ciIdBits)
   private val out = Wire(new DeviceReqAddrBundle)
 
-  when(accessMswi) {
+  when(accessRefTimer) {
+    out.ci := 0.U
+    out.tag := 0.U
+    out.core := 0.U
+    out.dev := 0x2000.U
+  }.elsewhen(accessMswi) {
     out.ci := accessCi
     out.tag := 0.U
     out.core := accessCore

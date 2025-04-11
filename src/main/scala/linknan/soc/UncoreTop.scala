@@ -3,6 +3,7 @@ package linknan.soc
 import chisel3._
 import chisel3.util.{Cat, Decoupled}
 import linknan.cluster.hub.interconnect.ClusterIcnBundle
+import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import linknan.soc.device.DevicesWrapper
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.debug.HardwareAssertionKey
@@ -51,7 +52,9 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   dmaXBar.io.upstream.tail.zip(dmaIO.take(dmaXBar.io.upstream.tail.size)).foreach({case(a, b) =>
     dontTouch(a)
     if(a.params.attr == "cfg") {
+      a.aw.bits.addr := AclintAddrRemapper(b.awaddr)
       a.aw.bits.cache := "b0000".U
+      a.ar.bits.addr := AclintAddrRemapper(b.araddr)
       a.ar.bits.cache := "b0000".U
     } else {
       a.aw.bits.cache := "b0010".U | b.awcache

@@ -27,6 +27,7 @@ case class LinkNanParams(
   plicBase: Long = 0x0400_0000L,
   mswiBase: Long = 0x0100_0000L,
   sswiBase: Long = 0x0100_4000L,
+  refTimerBase: Long = 0x0100_8000L,
   rtcFreq: Long = 1_000_000
 ) {
   lazy val remapBaseMaskBits = Seq.tabulate(64)(i => (remapMask >> i) & 0x1L).sum.toInt

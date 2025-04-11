@@ -189,16 +189,18 @@ final case class PlicNode(
 )
 
 final case class RefMtimerNode(
-  base:Long
 )(implicit p:Parameters) extends DeviceNode(
-  name = s"ref_mtimer@${(base + 0x8).toHexString}",
+  name = s"ref_mtimer@${p(LinkNanParamsKey).refTimerBase.toHexString}",
   label = s"ref_mtimer",
   children = Nil,
   properties = {
+    val base = p(LinkNanParamsKey).refTimerBase
+    val regList = List(RegValue(base, 8), RegValue(base + 8, 8))
+    val regNameList = List(StringValue("mtimecmp"), StringValue("mtime"))
     List(
       Property("compatible", StringValue("riscv,aclint-mtimer")),
-      Property("reg", RegValue(base + 0x8, 8)),
-      Property("reg-names", StringValue("mtime")),
+      Property("reg", PropertyValues(regList)),
+      Property("reg-names", PropertyValues(regNameList)),
     )
   },
 )
@@ -249,7 +251,7 @@ final case class SocNode(
     harts = 1
   )) ++
     List.tabulate(cpuCount)(id => PpuNode(id = id)) ++
-    List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(0x2000L), DebugModuleNode(cpuCount))
+    List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(), DebugModuleNode(cpuCount))
 )
 
 final case class MemNode(
