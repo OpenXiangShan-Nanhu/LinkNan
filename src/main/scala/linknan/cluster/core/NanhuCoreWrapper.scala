@@ -24,7 +24,6 @@ import zhujiang.chi._
 class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper {
   //Core connections
   private val core = LazyModule(new XSCore()(p.alterPartial({
-    case PMParameKey => PMParameters()
     case DebugModuleKey => Some(p(LinkNanParamsKey).debugParams)
   })))
   private val memBlock = core.memBlock.inner

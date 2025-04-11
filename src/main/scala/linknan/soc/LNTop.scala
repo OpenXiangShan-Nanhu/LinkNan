@@ -2,8 +2,7 @@ package linknan.soc
 
 import chisel3._
 import chisel3.experimental.hierarchy.{Definition, Instance}
-import chisel3.experimental.{ChiselAnnotation, annotate}
-import chisel3.util.{Decoupled, log2Ceil, log2Up}
+import chisel3.util.{log2Ceil, log2Up}
 import coupledL2.tl2chi.{CHIIssue, Issue}
 import coupledL2.{BankBitsKey, L1Param, L2Param, L2ParamKey}
 import freechips.rocketchip.tile.MaxHartIdBits
@@ -12,11 +11,10 @@ import org.chipsalliance.cde.config.{Config, Parameters}
 import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
-import xiangshan.{XLen, XSCoreParameters, XSCoreParamsKey}
+import xiangshan.{PMParameKey, XLen, XSCoreParameters, XSCoreParamsKey}
 import xs.utils.debug.HardwareAssertionKey
 import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
 import zhujiang.axi.AxiUtils
-import zhujiang.device.misc.ZJDebugBundle
 import zhujiang.{DftWires, NocIOHelper, ZJParametersKey, ZJRawModule}
 
 object GlobalStaticParameters {
@@ -96,6 +94,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     case PerfCounterOptionsKey => p(PerfCounterOptionsKey)
     case DebugOptionsKey => p(DebugOptionsKey)
     case ZJParametersKey => p(ZJParametersKey)
+    case PMParameKey => p(PMParameKey)
     case MonitorsEnabled => false
     case MaxHartIdBits => clusterIdBits
     case XLen => 64

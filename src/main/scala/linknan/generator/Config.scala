@@ -1,11 +1,10 @@
 package linknan.generator
 
-import chisel3.util.log2Up
 import coupledL2.prefetch.{BOPParameters, PrefetchReceiverParams}
-import coupledL2.{L1Param, L2Param, L2ParamKey}
+import coupledL2.{L2Param, L2ParamKey}
 import linknan.soc.{LinkNanParams, LinkNanParamsKey}
 import org.chipsalliance.cde.config.{Config, _}
-import xiangshan.{XSCoreParameters, XSCoreParamsKey}
+import xiangshan.{PMParameKey, PMParameters, XSCoreParameters, XSCoreParamsKey}
 import xiangshan.cache.DCacheParameters
 import xiangshan.frontend.icache.ICacheParameters
 import xijiang.{NodeParam, NodeType}
@@ -18,6 +17,7 @@ class BaseConfig(core: String) extends Config((site, here, up) => {
   case DebugOptionsKey => DebugOptions()
   case L2ParamKey => L2Param()
   case XSCoreParamsKey => XSCoreParameters()
+  case PMParameKey => PMParameters()
   case LogUtilsOptionsKey => LogUtilsOptions(false, true, false)
   case PerfCounterOptionsKey => PerfCounterOptions(true, false, XSPerfLevel.VERBOSE, 0)
   case LinkNanParamsKey => LinkNanParams(random = core == "boom")

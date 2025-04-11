@@ -2,13 +2,13 @@ package linknan.devicetree
 import coupledL2.L2ParamKey
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
-import xiangshan.XSCoreParamsKey
+import xiangshan.{PMParameKey, XSCoreParamsKey}
 import zhujiang.ZJParametersKey
 
 final case class L3CacheNode(
 )(implicit p:Parameters) extends DeviceNode(
   name = "l3cache",
-  label = "L3",
+  label = "llc",
   children = Nil,
   properties = List(
     Property("compatible", StringValue("cache")),
@@ -16,15 +16,16 @@ final case class L3CacheNode(
     Property("cache-size", IntegerValue(p(ZJParametersKey).cacheSizeInB)),
     Property("cache-sets", IntegerValue(p(ZJParametersKey).cacheSizeInB / 64 / p(ZJParametersKey).cacheWays)),
     Property("cache-block-size", IntegerValue(64)),
-    Property("cache-level", IntegerValue(3))
+    Property("cache-level", IntegerValue(3)),
+    Property("next-level-cache", ReferenceValue("main_memory")),
   )
 )
 
 final case class L2CacheNode(
   id:Int
 )(implicit p:Parameters) extends DeviceNode(
-  name = "l2cache",
-  label = s"l2_$id",
+  name = s"l2c@$id",
+  label = s"cpu${id}_l2c",
   children = Nil,
   properties = {
     val coreP = p(XSCoreParamsKey)
@@ -36,7 +37,7 @@ final case class L2CacheNode(
       Property("cache-sets", IntegerValue(l2P.sets * coreP.L2NBanks)),
       Property("cache-block-size", IntegerValue(l2P.blockBytes)),
       Property("cache-level", IntegerValue(2)),
-      Property("next-level-cache", ReferenceValue("L3")),
+      Property("next-level-cache", ReferenceValue("llc")),
     )
   }
 )
@@ -44,7 +45,7 @@ final case class L2CacheNode(
 final case class InterruptControllerNode(
   id:Int,
 ) extends DeviceNode(
-  name = s"intc",
+  name = s"intc@$id",
   label = s"cpu${id}_intc",
   children = Nil,
   properties = List(
@@ -54,6 +55,52 @@ final case class InterruptControllerNode(
     Property("interrupt-controller", FlagValue()),
     Property("compatible", StringValue("riscv,cpu-intc")),
   ),
+)
+
+final case class CoreNode(
+  id:Int,
+)(implicit p:Parameters) extends DeviceNode(
+  name = s"cpu@$id",
+  label = s"cpu$id",
+  children = List(L2CacheNode(id), InterruptControllerNode(id)),
+  properties = {
+    val coreP = p(XSCoreParamsKey)
+    val dtlbP = coreP.dtlbParameters
+    val itlbP = coreP.itlbParameters
+    val icacheP = coreP.icacheParameters
+    val dcacheP = coreP.dcacheParametersOpt
+    val pmpP = p(PMParameKey)
+    val res = List(
+      Property("device_type", StringValue("cpu")),
+      Property("reg", IntegerValue(id)),
+      Property("status", StringValue(if(id == 0) "okay" else "disabled")),
+      Property("compatible", StringValue("bosc,nanhu-v5")),
+      Property("riscv,isa", StringValue("rv64imafdc")),
+      Property("riscv,pmpregions", IntegerValue(pmpP.NumPMP)),
+      Property("riscv,pmpgranularity", IntegerValue(1 << pmpP.PlatformGrain)),
+      Property("cache-op-block-size", IntegerValue(icacheP.blockBytes)),
+      Property("reservation-granule-size", IntegerValue(icacheP.blockBytes)),
+      Property("next-level-cache", ReferenceValue(s"cpu${id}_l2c")),
+      Property("mmu-type", StringValue(s"riscv,sv48")),
+      Property("tlb-split", FlagValue()),
+      Property("d-tlb-size", IntegerValue(dtlbP.NSets * dtlbP.NWays)),
+      Property("d-tlb-sets", IntegerValue(1)),
+      Property("i-tlb-size", IntegerValue(itlbP.NSets * itlbP.NWays)),
+      Property("i-tlb-sets", IntegerValue(1)),
+      Property("i-cache-size", IntegerValue(icacheP.nWays * icacheP.nSets * icacheP.blockBytes)),
+      Property("i-cache-sets", IntegerValue(icacheP.nSets)),
+      Property("i-cache-block-size", IntegerValue(icacheP.blockBytes)),
+    )
+    if(dcacheP.isDefined) {
+      res ++ List(
+        Property("d-cache-size", IntegerValue(dcacheP.get.nWays * dcacheP.get.nSets * dcacheP.get.blockBytes)),
+        Property("d-cache-sets", IntegerValue(dcacheP.get.nSets)),
+        Property("d-cache-block-size", IntegerValue(dcacheP.get.blockBytes)),
+      )
+    } else {
+      res
+    }
+  }
 )
 
 final case class MtimerNode(
@@ -165,8 +212,8 @@ final case class RefMtimerNode(
 final case class DebugModuleNode(
   harts:Int
 )(implicit p:Parameters) extends DeviceNode(
-  name = s"debug@${p(LinkNanParamsKey).debugBase.toHexString}",
-  label = "DEBUG",
+  name = s"debug-controller@${p(LinkNanParamsKey).debugBase.toHexString}",
+  label = "debug",
   children = Nil,
   properties = {
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${i}_intc", 65535))
@@ -176,48 +223,6 @@ final case class DebugModuleNode(
       Property("reg", RegValue(p(LinkNanParamsKey).debugBase, 0x1000)),
       Property("reg-names", StringValue("control")),
     )
-  }
-)
-
-final case class CoreNode(
-  id:Int,
-)(implicit p:Parameters) extends DeviceNode(
-  name = s"cpu@$id",
-  label = s"cpu$id",
-  children = List(L2CacheNode(id), InterruptControllerNode(id)),
-  properties = {
-    val coreP = p(XSCoreParamsKey)
-    val dtlbP = coreP.dtlbParameters
-    val itlbP = coreP.itlbParameters
-    val icacheP = coreP.icacheParameters
-    val dcacheP = coreP.dcacheParametersOpt
-    val res = List(
-      Property("device-type", StringValue("cpu")),
-      Property("reg", IntegerValue(id)),
-      Property("status", StringValue(if(id == 0) "ok" else "disabled")),
-      Property("compatible", StringValue("bosc,nanhu-v5")),
-      Property("riscv,isa", StringValue("rv64imafdc")),
-      Property("cache-op-block-size", IntegerValue(icacheP.blockBytes)),
-      Property("reservation-granule-size", IntegerValue(icacheP.blockBytes)),
-      Property("mmu-type", StringValue(s"riscv,sv48")),
-      Property("tlb-split", FlagValue()),
-      Property("d-tlb-size", IntegerValue(dtlbP.NSets * dtlbP.NWays)),
-      Property("d-tlb-sets", IntegerValue(1)),
-      Property("i-tlb-size", IntegerValue(itlbP.NSets * itlbP.NWays)),
-      Property("i-tlb-sets", IntegerValue(1)),
-      Property("i-cache-size", IntegerValue(icacheP.nWays * icacheP.nSets * icacheP.blockBytes)),
-      Property("i-cache-sets", IntegerValue(icacheP.nSets)),
-      Property("i-cache-block-size", IntegerValue(icacheP.blockBytes)),
-    )
-    if(dcacheP.isDefined) {
-      res ++ List(
-        Property("d-cache-size", IntegerValue(dcacheP.get.nWays * dcacheP.get.nSets * dcacheP.get.blockBytes)),
-        Property("d-cache-sets", IntegerValue(dcacheP.get.nSets)),
-        Property("d-cache-block-size", IntegerValue(dcacheP.get.blockBytes)),
-      )
-    } else {
-      res
-    }
   }
 )
 
@@ -256,7 +261,7 @@ final case class SocNode(
 final case class MemNode(
 )(implicit p:Parameters) extends DeviceNode(
   name = s"memory@${p(LinkNanParamsKey).memBase.toHexString}",
-  label = "",
+  label = "main_memory",
   properties = List(
     Property("device_type", StringValue("memory")),
     Property("reg", RegValue(p(LinkNanParamsKey).memBase, p(LinkNanParamsKey).memSizeInB, 2, 2)),
