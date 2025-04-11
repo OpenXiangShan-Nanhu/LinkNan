@@ -42,14 +42,13 @@ task("soc" , function()
     if option.get("hardware_assertion") then table.join2(chisel_opts, {"--enable-hardware-assertion"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
     if option.get("config") then table.join2(chisel_opts, {"--config", option.get("config")}) end
-    if option.get("prefix") then table.join2(chisel_opts, {"--prefix", option.get("prefix")}) end
+    if option.get("prefix") ~= "" then table.join2(chisel_opts, {"--prefix", option.get("prefix")}) end
     local build_dir = path.join("build", "rtl")
     if not option.get("sim") and not option.get("release") then build_dir = option.get("out_dir") end
     if option.get("sim") then os.setenv("NOOP_HOME", os.curdir()) end
     table.join2(chisel_opts, {"--socket", option.get("socket")})
     table.join2(chisel_opts, {"--core", option.get("core")})
-    table.join2(chisel_opts, {"--target", "systemverilog", "--full-stacktrace"})
-    table.join2(chisel_opts, {"-td", build_dir})
+    table.join2(chisel_opts, {"--target", "systemverilog", "--full-stacktrace", "-td", build_dir})
     os.execv(os.shell(), chisel_opts)
 
     os.rm(path.join(build_dir, "firrtl_black_box_resource_files.f"))
