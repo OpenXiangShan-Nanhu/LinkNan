@@ -6,7 +6,7 @@ task("soc" , function()
     description = "Generate soc rtl",
     options = {
       {'a', "all_in_one", "k", nil, "do not split generated rtl"},
-      {'A', "hardware_assertion", "k", nil, "do not split generated rtl"},
+      {'A', "hardware_assertion", "k", nil, "enable hardware assertion"},
       {'b', "block_test_l2l3", "k", nil, "leave core interfaces to the top"},
       {'c', "clean_difftest", "k", nil, "generate verilog without any difftest components"},
       {'d', "dramsim3", "k", nil, "use dramsim3 as simulation main memory"},
