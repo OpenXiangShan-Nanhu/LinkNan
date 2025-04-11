@@ -133,18 +133,12 @@ final case class PpuNode(
   properties = {
     val base = (id << p(ZJParametersKey).cpuSpaceBits)
     val regList = List(
-      RegValue(base + 0x0000L, 8),
-      RegValue(base + 0x1000L, 4),
-      RegValue(base + 0x1004L, 4),
-      RegValue(base + 0x1008L, 4),
-      RegValue(base + 0x100CL, 4),
+      RegValue(base + 0x0000L, 0x08),
+      RegValue(base + 0x1000L, 0x10),
     )
     val regNameList = List(
       StringValue("CBAR"),
-      StringValue("PWPR"),
-      StringValue("PWSR"),
-      StringValue("IMR"),
-      StringValue("IPR")
+      StringValue("PPU"),
     )
     List(
       Property("compatible", StringValue("bosc,linknan-ppu")),
@@ -164,7 +158,7 @@ final case class MswiNode(
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${i}_intc", 3))
     List(
       Property("compatible", StringValue("riscv,aclint-mswi")),
-      Property("reg", RegValue(p(LinkNanParamsKey).mswiBase, harts * 0x4)),
+      Property("reg", RegValue(p(LinkNanParamsKey).mswiBase, 8.max(harts * 0x4))),
       Property("reg-names", StringValue("msip")),
       Property("interrupts-extended", IntrValue(intrSeq))
     )
