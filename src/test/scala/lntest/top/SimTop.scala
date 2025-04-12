@@ -170,7 +170,6 @@ class SimTop(implicit p: Parameters) extends Module {
     val difftest = DifftestModule.finish("XiangShan")
     difftest.uart <> simMMIO.get.io.uart  // workaround for kmh difftest wrapper
   }
-  LogPerfHelper.dummy()
 
   DeviceTreeGenerator.simGenerate
 }
