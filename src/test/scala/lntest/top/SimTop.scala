@@ -32,7 +32,7 @@ import org.chipsalliance.diplomacy.DisableMonitors
 import xiangshan.XSCoreParamsKey
 import xijiang.NodeType
 import xijiang.tfb.TrafficBoardFileManager
-import xs.utils.perf.DebugOptionsKey
+import xs.utils.perf.{DebugOptionsKey, LogPerfHelper}
 import xs.utils.stage.XsStage
 import zhujiang.ZJParametersKey
 import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
@@ -170,6 +170,7 @@ class SimTop(implicit p: Parameters) extends Module {
     val difftest = DifftestModule.finish("XiangShan")
     difftest.uart <> simMMIO.get.io.uart  // workaround for kmh difftest wrapper
   }
+  LogPerfHelper.dummy()
 
   DeviceTreeGenerator.simGenerate
 }
