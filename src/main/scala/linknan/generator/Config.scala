@@ -65,7 +65,7 @@ class FullNocConfig(core: String, socket: String) extends Config((site, here, up
       NodeParam(nodeType = NodeType.RI, attr = "main"),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
       NodeParam(nodeType = NodeType.M),
-      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem2, outstanding = 32, attr = "soc_mem"),
+      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem2, outstanding = 32, attr = "soc"),
 
       NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
       NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
@@ -75,8 +75,8 @@ class FullNocConfig(core: String, socket: String) extends Config((site, here, up
       NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
 
-      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem1, outstanding = 32, attr = "loc_mem_1"),
-      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem0, outstanding = 32, attr = "loc_mem_0"),
+      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem1, outstanding = 32, attr = "loc_1"),
+      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem0, outstanding = 32, attr = "loc_0"),
       NodeParam(nodeType = NodeType.P)
     )
   )
