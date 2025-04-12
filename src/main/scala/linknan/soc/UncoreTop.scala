@@ -6,10 +6,9 @@ import linknan.cluster.hub.interconnect.ClusterIcnBundle
 import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import linknan.soc.device.DevicesWrapper
 import org.chipsalliance.cde.config.Parameters
-import xs.utils.debug.HardwareAssertionKey
-import zhujiang.axi.{AxiParams, AxiUtils, BaseAxiXbar}
+import xs.utils.ResetGen
+import zhujiang.axi.{AxiBoundaryBuffer, AxiParams, AxiUtils, AxiWidthAdapter, BaseAxiXbar}
 import zhujiang.chi.NodeIdBundle
-import zhujiang.device.misc.ZJDebugBundle
 import zhujiang._
 
 class AxiDmaXBar(dmaAxiParams: Seq[AxiParams])(implicit val p: Parameters) extends BaseAxiXbar(dmaAxiParams) with HasZJParams {
@@ -32,19 +31,24 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   private val dmaXBarP = dmaPort.params
   private val devWrpSlvP = dmaXBarP.copy(attr = "debug", idBits = dmaXBarP.idBits - 2)
   private val extCfgSlvP = dmaXBarP.copy(attr = "cfg", idBits = dmaXBarP.idBits - 2)
-  private val extDmaSlvP = dmaXBarP.copy(attr = "main", idBits = dmaXBarP.idBits - 2)
+  private val extDmaSlvP = dmaXBarP.copy(attr = "mem", idBits = dmaXBarP.idBits - 2)
   private val dmaXBarParams = Seq(devWrpSlvP, extCfgSlvP, extDmaSlvP)
 
   private val devWrp = Module(new DevicesWrapper(cfgPort.params, devWrpSlvP))
   private val dmaXBar = Module(new AxiDmaXBar(dmaXBarParams))
+  private val extCfgSlvBuf = Module(new AxiBoundaryBuffer(extCfgSlvP.copy(dataBits = 64)))
+  private val extDmaSlvBuf = Module(new AxiBoundaryBuffer(extDmaSlvP))
 
-  dmaXBar.io.upstream.head <> devWrp.io.mst
   devWrp.io.slv <> cfgPort
   dmaPort <> dmaXBar.io.downstream.head
 
+  dmaXBar.io.upstream(0) <> devWrp.io.mst
+  AxiWidthAdapter(dmaXBar.io.upstream(1), extCfgSlvBuf.io.slv)
+  dmaXBar.io.upstream(2) <> extDmaSlvBuf.io.slv
+
   val ddrDrv = noc.ddrIO.map(AxiUtils.getIntnl)
   val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
-  val dmaDrv = dmaXBar.io.upstream.tail ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
+  val dmaDrv = Seq(extDmaSlvBuf.io.mst, extCfgSlvBuf.io.mst) ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   val hwaDrv = noc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
@@ -78,14 +82,13 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   val cluster = noc.ccnIO.map(ccn => IO(new ClusterIcnBundle(ccn.node)))
   cluster.foreach(c => dontTouch(c))
   implicitClock := io.noc_clock
-  implicitReset := io.reset
+  implicitReset := withReset(io.reset){ResetGen(dft = Some(io.dft.reset))}
 
   private val rtcEn = RegNext(!noc.io.onReset)
   private val rtcClockGated = io.rtc_clock & rtcEn
   devWrp.io.ext.intr := io.ext_intr
   devWrp.io.ci := io.ci
   devWrp.io.debug.systemjtag.foreach(_ <> io.jtag.get)
-  devWrp.clock := io.noc_clock
   devWrp.io.dft := io.dft
   devWrp.io.debug.dmactiveAck := devWrp.io.debug.dmactive
   devWrp.io.debug.clock := DontCare

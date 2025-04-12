@@ -62,7 +62,6 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
   private val extDmaParams = dmaParams
 
   private val cfgXBar = Module(new AxiCfgXBar(cfgParams))
-  private val cfgBuf = Module(new AxiBuffer(cfgXBar.io.downstream.last.params))
   private val axi2tl = Module(new AxiLite2TLUL(cfgXBar.io.downstream.head.params))
   private val tl2axi = Module(new TLUL2AxiLite(dmaParams))
 
@@ -106,8 +105,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
   cfgXBar.misc.ci := io.ci
   cfgXBar.io.upstream.head <> AxiBuffer(io.slv, name = Some("slv_port_buf"))
   axi2tl.io.axi <> cfgXBar.io.downstream.head
-  cfgBuf.io.in <> cfgXBar.io.downstream.last
-  io.ext.cfg <> cfgBuf.io.out
+  io.ext.cfg <> AxiBoundaryBuffer(cfgXBar.io.downstream.last)
 
   private val mstAxi = AxiBuffer(tl2axi.io.axi, name = Some("mst_port_buf"))
   io.mst <> mstAxi
