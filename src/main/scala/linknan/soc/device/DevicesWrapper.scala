@@ -5,7 +5,7 @@ import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import zhujiang.axi._
 import org.chipsalliance.diplomacy.lazymodule._
-import linknan.soc.{LinkNanParamsKey, PeripheralRemapper}
+import linknan.soc.LinkNanParamsKey
 import linknan.utils.connectByName
 import org.chipsalliance.cde.config.Parameters
 import xijiang.NodeType
@@ -105,7 +105,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
   cfgXBar.misc.ci := io.ci
   cfgXBar.io.upstream.head <> AxiBuffer(io.slv, name = Some("slv_port_buf"))
   axi2tl.io.axi <> cfgXBar.io.downstream.head
-  io.ext.cfg <> AxiBoundaryBuffer(cfgXBar.io.downstream.last)
+  io.ext.cfg <> AxiBuffer(cfgXBar.io.downstream.last)
 
   private val mstAxi = AxiBuffer(tl2axi.io.axi, name = Some("mst_port_buf"))
   io.mst <> mstAxi

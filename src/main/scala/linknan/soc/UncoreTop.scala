@@ -1,13 +1,13 @@
 package linknan.soc
 
 import chisel3._
-import chisel3.util.{Cat, Decoupled}
+import chisel3.util.Cat
 import linknan.cluster.hub.interconnect.ClusterIcnBundle
 import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import linknan.soc.device.DevicesWrapper
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.ResetGen
-import zhujiang.axi.{AxiBoundaryBuffer, AxiParams, AxiUtils, AxiWidthAdapter, BaseAxiXbar}
+import zhujiang.axi.{AxiBuffer, AxiParams, AxiUtils, AxiWidthAdapter, BaseAxiXbar}
 import zhujiang.chi.NodeIdBundle
 import zhujiang._
 
@@ -36,19 +36,19 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
 
   private val devWrp = Module(new DevicesWrapper(cfgPort.params, devWrpSlvP))
   private val dmaXBar = Module(new AxiDmaXBar(dmaXBarParams))
-  private val extCfgSlvBuf = Module(new AxiBoundaryBuffer(extCfgSlvP.copy(dataBits = 64)))
-  private val extDmaSlvBuf = Module(new AxiBoundaryBuffer(extDmaSlvP))
+  private val extCfgSlvBuf = Module(new AxiBuffer(extCfgSlvP.copy(dataBits = 64)))
+  private val extDmaSlvBuf = Module(new AxiBuffer(extDmaSlvP))
 
   devWrp.io.slv <> cfgPort
   dmaPort <> dmaXBar.io.downstream.head
 
   dmaXBar.io.upstream(0) <> devWrp.io.mst
-  AxiWidthAdapter(dmaXBar.io.upstream(1), extCfgSlvBuf.io.slv)
-  dmaXBar.io.upstream(2) <> extDmaSlvBuf.io.slv
+  AxiWidthAdapter(dmaXBar.io.upstream(1), extCfgSlvBuf.io.out)
+  dmaXBar.io.upstream(2) <> extDmaSlvBuf.io.out
 
   val ddrDrv = noc.ddrIO.map(AxiUtils.getIntnl)
   val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
-  val dmaDrv = Seq(extDmaSlvBuf.io.mst, extCfgSlvBuf.io.mst) ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
+  val dmaDrv = Seq(extDmaSlvBuf.io.in, extCfgSlvBuf.io.in) ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   val hwaDrv = noc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
