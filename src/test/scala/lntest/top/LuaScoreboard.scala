@@ -25,7 +25,6 @@ class LuaScoreboard(l2Str:String, nrHnf:Int) extends BlackBox(
        |  input  wire sim_final
        |);
        |`ifndef SYNTHESIS
-       |  import "DPI-C" function void verilua_init();
        |  import "DPI-C" function void verilua_final();
        |  import "DPI-C" function void verilua_main_step_safe();
        |`ifdef VERILATOR
@@ -36,8 +35,6 @@ class LuaScoreboard(l2Str:String, nrHnf:Int) extends BlackBox(
        |
        |    $$c("sprintf(value, \\"%d\\",", NR_HNF, ");");
        |    $$c("setenv(\\"NR_HNF\\", value, 1);");
-       |
-       |    verilua_init();
        |  end
        |`else
        |  import "DPI-C" function void setenv(string name, string value, integer replace);
@@ -45,8 +42,6 @@ class LuaScoreboard(l2Str:String, nrHnf:Int) extends BlackBox(
        |  initial begin 
        |    setenv("L2_CFG_STR", L2_CFG_STR, 1);
        |    setenv("NR_HNF", $$sformatf("%d", NR_HNF), 1);
-       |
-       |    #1 verilua_init();
        |  end
        |`endif
        |
