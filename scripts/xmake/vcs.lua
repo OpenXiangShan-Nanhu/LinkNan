@@ -15,7 +15,7 @@ function simv_comp(num_cores)
   table.join2(chisel_dep_srcs, {path.join(abs_base, "build.sc")})
   table.join2(chisel_dep_srcs, {path.join(abs_base, "xmake.lua")})
 
-  local vtop = "SimTop"
+  local vtop = "tb_top"
   local build_dir = path.join(abs_base, "build")
   local comp_dir = path.join(abs_base, "sim", "simv", "comp")
   if not os.exists(comp_dir) then os.mkdir(comp_dir) end

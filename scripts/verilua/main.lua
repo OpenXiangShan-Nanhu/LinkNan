@@ -14,6 +14,10 @@ local AXI4Monitor = require "AXI4Monitor"
 local f = string.format
 local tonumber = tonumber
 
+if cfg.simulator == "vcs" then
+    _G.dut = _G.dut.sim
+end
+
 local l2_mon_in_vec = {}
 local l2_mon_out_vec = {}
 local sn_mon_vec = {}

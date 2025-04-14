@@ -7,8 +7,8 @@ cfg.simulator = assert(os.getenv("SIM"))
 
 if cfg.simulator == "verilator" then
     cfg.top = "TOP.SimTop"
-else
-    cfg.top = "tb_top.sim"
+else -- vcs
+    cfg.top = "tb_top"
 end
 
 local test_zhujiang_dir = "/nfs/share/home/zhengchuyu/TestZhuJiang"
