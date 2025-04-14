@@ -48,7 +48,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
 
   val ddrDrv = noc.ddrIO.map(AxiUtils.getIntnl)
   val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
-  val dmaDrv = Seq(extDmaSlvBuf.io.in, extCfgSlvBuf.io.in) ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
+  val dmaDrv = Seq(extCfgSlvBuf.io.in, extDmaSlvBuf.io.in) ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   val hwaDrv = noc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
