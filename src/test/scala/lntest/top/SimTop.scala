@@ -169,7 +169,7 @@ class SimTop(implicit p: Parameters) extends Module {
   if(!doBlockTest) {
     val difftestMacros = Seq(
       s"DEBUG_MEM_BASE 0x${p(LinkNanParamsKey).debugBase.toHexString}",
-      s"DEFAULT_EMU_RAM_SIZE 0x${(8L * 1024 * 1024).toHexString}UL"
+      s"DEFAULT_EMU_RAM_SIZE 0x${(8L * 1024 * 1024 * 1024).toHexString}UL"
     )
     val difftest = DifftestModule.finish("XiangShan", difftestMacros)
     difftest.uart <> simMMIO.get.io.uart  // workaround for kmh difftest wrapper
