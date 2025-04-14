@@ -3,7 +3,6 @@ package linknan.cluster.core
 import chisel3._
 import chisel3.experimental.hierarchy.{instantiable, public}
 import chisel3.util._
-import coupledL2.L2ParamKey
 import coupledL2.tl2chi.TL2CHICoupledL2
 import freechips.rocketchip.diplomacy.{IdRange, TransferSizes}
 import freechips.rocketchip.tilelink.{BankBinder, TLBuffer, TLClientNode, TLMasterParameters, TLMasterPortParameters, TLXbar}
@@ -14,7 +13,7 @@ import org.chipsalliance.diplomacy.bundlebridge.BundleBridgeSource
 import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import xiangshan.{HasXSParameter, XSCoreParamsKey}
 import xijiang.Node
-import xs.utils.common.{AliasField, IsKeywordField, PrefetchField, PrefetchRecv, VaddrField}
+import xs.utils.cacheParam.common.{AliasField, IsKeywordField, L2ParamKey, PrefetchField, PrefetchRecv, VaddrField}
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import xs.utils.tl.ReqSourceField
 import zhujiang.HasZJParams

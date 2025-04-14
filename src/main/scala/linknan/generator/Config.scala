@@ -1,13 +1,15 @@
 package linknan.generator
 
-import coupledL2.prefetch.{BOPParameters, PrefetchReceiverParams}
-import coupledL2.{L2Param, L2ParamKey}
+import coupledL2.prefetch.{PrefetchReceiverParams}
 import linknan.soc.{LinkNanParams, LinkNanParamsKey}
 import org.chipsalliance.cde.config.{Config, _}
 import xiangshan.{PMParameKey, PMParameters, XSCoreParameters, XSCoreParamsKey}
 import xiangshan.cache.DCacheParameters
 import xiangshan.frontend.icache.ICacheParameters
 import xijiang.{NodeParam, NodeType}
+import xs.utils.cacheParam.L2Param
+import xs.utils.cacheParam.common.L2ParamKey
+import xs.utils.cacheParam.prefetch.BOPParameters
 import xs.utils.debug.{HardwareAssertionKey, HwaParams}
 import xs.utils.perf.{DebugOptions, DebugOptionsKey, LogUtilsOptions, LogUtilsOptionsKey, PerfCounterOptions, PerfCounterOptionsKey, XSPerfLevel}
 import zhujiang.{ZJParameters, ZJParametersKey}

@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.experimental.hierarchy.{Definition, Instance}
 import chisel3.util.{log2Ceil, log2Up}
 import coupledL2.tl2chi.{CHIIssue, Issue}
-import coupledL2.{BankBitsKey, L1Param, L2Param, L2ParamKey}
+import xs.utils.cacheParam.{EnableCHI, L1Param, L2Param}
 import freechips.rocketchip.tile.MaxHartIdBits
 import linknan.cluster.{BlockTestIO, CpuCluster}
 import org.chipsalliance.cde.config.{Config, Parameters}
@@ -12,6 +12,7 @@ import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
 import xiangshan.{PMParameKey, XLen, XSCoreParameters, XSCoreParamsKey}
+import xs.utils.cacheParam.common.{BankBitsKey, L2ParamKey}
 import xs.utils.debug.HardwareAssertionKey
 import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
 import zhujiang.axi.AxiUtils
@@ -101,7 +102,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     case BankBitsKey => log2Ceil(GlobalStaticParameters.xsParams.L2NBanks)
     case CHIIssue => Issue.Eb
     case xiangshan.EnableCHI => true
-    case coupledL2.EnableCHI => true
+    case EnableCHI => true
   })
   private val ccnNodes = uncore.cluster.map(_.socket)
   private val ccGen = LazyModule(new CpuCluster(ccnNodes.head.node)(clusterP))

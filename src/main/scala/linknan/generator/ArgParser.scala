@@ -1,6 +1,6 @@
 package linknan.generator
 
-import coupledL2.L2ParamKey
+import xs.utils.cacheParam.common.L2ParamKey
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
 import xiangshan.XSCoreParamsKey

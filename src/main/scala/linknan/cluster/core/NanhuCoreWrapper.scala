@@ -3,7 +3,6 @@ package linknan.cluster.core
 import chisel3._
 import chisel3.experimental.hierarchy.instantiable
 import chisel3.util._
-import coupledL2.L2ParamKey
 import coupledL2.tl2chi.TL2CHICoupledL2
 import freechips.rocketchip.devices.debug.DebugModuleKey
 import freechips.rocketchip.interrupts.{IntSourceNode, IntSourcePortSimple}
@@ -16,6 +15,7 @@ import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import xiangshan._
 import xijiang.Node
 import xs.utils.IntBuffer
+import xs.utils.cacheParam.common.L2ParamKey
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import zhujiang.HasZJParams
 import zhujiang.chi.FlitHelper.connIcn
