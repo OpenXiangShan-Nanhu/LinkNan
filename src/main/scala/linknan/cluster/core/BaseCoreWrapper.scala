@@ -4,14 +4,14 @@ import chisel3.experimental.hierarchy.{instantiable, public}
 import chisel3.util._
 import chisel3._
 import freechips.rocketchip.resources.BindingScope
-import linknan.cluster.hub.ImsicBundle
 import linknan.cluster.power.controller.{PowerMode, devActiveBits}
 import linknan.cluster.power.pchannel.{PChannel, PChannelSlv}
+import linknan.utils.connectChiChn
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.lazymodule.{LazyModule, LazyRawModuleImp}
-import xiangshan.BusErrorUnitInfo
-import xijiang.{Node, NodeType}
+import xijiang.Node
 import xs.utils.ResetGen
+import zhujiang.chi.{DataFlit, RReqFlit, RespFlit, SnoopFlit}
 import zhujiang.device.socket.{ChiPdcDevSide, DevPdcBundle}
 import zhujiang.{DftWires, ZJParametersKey}
 
@@ -65,6 +65,20 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   dontTouch(io.pwrEnAck)
   dontTouch(io.isoEn)
   dontTouch(pSlv.io)
+
+  val txreq = Wire(Decoupled(new RReqFlit))
+  val txrsp = Wire(Decoupled(new RespFlit))
+  val txdat = Wire(Decoupled(new DataFlit))
+  val rxsnp = Wire(Decoupled(new SnoopFlit))
+  val rxrsp = Wire(Decoupled(new RespFlit))
+  val rxdat = Wire(Decoupled(new DataFlit))
+
+  connectChiChn(pdc.io.icn.rx.req.get, txreq)
+  connectChiChn(pdc.io.icn.rx.resp.get, txrsp)
+  connectChiChn(pdc.io.icn.rx.data.get, txdat)
+  connectChiChn(rxsnp, pdc.io.icn.tx.snoop.get)
+  connectChiChn(rxrsp, pdc.io.icn.tx.resp.get)
+  connectChiChn(rxdat, pdc.io.icn.tx.data.get)
 
   val reset_state = Wire(AsyncReset())
   reset_state := io.reset

@@ -3,7 +3,7 @@ package linknan.soc
 import chisel3._
 import chisel3.experimental.hierarchy.{Definition, Instance}
 import chisel3.util.{log2Ceil, log2Up}
-import coupledL2.tl2chi.{CHIIssue, Issue}
+import coupledL2.tl2chi.{CHIIssue, DecoupledCHI, Issue}
 import xs.utils.cacheParam.{EnableCHI, L1Param, L2Param}
 import freechips.rocketchip.tile.MaxHartIdBits
 import linknan.cluster.{BlockTestIO, CpuCluster}
@@ -103,6 +103,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     case CHIIssue => Issue.Eb
     case xiangshan.EnableCHI => true
     case EnableCHI => true
+    case DecoupledCHI => true
   })
   private val ccnNodes = uncore.cluster.map(_.socket)
   private val ccGen = LazyModule(new CpuCluster(ccnNodes.head.node)(clusterP))

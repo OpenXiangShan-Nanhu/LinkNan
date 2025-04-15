@@ -140,30 +140,17 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     tpMetaSinkNode.foreach(_.in.head._1.ready := false.B)
     tpMetaSourceNode.foreach(_.out.head._1 := DontCare)
 
-    private val txReqFlit = Wire(Decoupled(new RReqFlit))
-    connectByName(txReqFlit, _l2.io_chi.tx.req)
-    txReqFlit.bits.SnoopMe := _l2.io_chi.tx.req.bits.snoopMe
-    connectChiChn(pdc.io.icn.rx.req.get, txReqFlit)
-
-    private val txRspFlit = Wire(Decoupled(new RespFlit))
-    connectByName(txRspFlit, _l2.io_chi.tx.rsp)
-    connectChiChn(pdc.io.icn.rx.resp.get, txRspFlit)
-
-    private val txDatFlit = Wire(Decoupled(new DataFlit))
-    connectByName(txDatFlit, _l2.io_chi.tx.dat)
-    connectChiChn(pdc.io.icn.rx.data.get, txDatFlit)
-
-    private val rxSnpFlit = Wire(Decoupled(new SnoopFlit))
-    connectByName(_l2.io_chi.rx.snp, rxSnpFlit)
-    connectChiChn(rxSnpFlit, pdc.io.icn.tx.snoop.get)
-
-    private val rxRspFlit = Wire(Decoupled(new RespFlit))
-    connectByName(_l2.io_chi.rx.rsp, rxRspFlit)
-    connectChiChn(rxRspFlit, pdc.io.icn.tx.resp.get)
-
-    private val rxDatFlit = Wire(Decoupled(new DataFlit))
-    connectByName(_l2.io_chi.rx.dat, rxDatFlit)
-    connectChiChn(rxDatFlit, pdc.io.icn.tx.data.get)
+    l2cache.module.io_chi match {
+      case l2_chi: coupledL2.tl2chi.DecoupledPortIO =>
+        connectByName(txreq, l2_chi.tx.req)
+        txreq.bits.SnoopMe := l2_chi.tx.req.bits.snoopMe
+        connectByName(txrsp, l2_chi.tx.rsp)
+        connectByName(txdat, l2_chi.tx.dat)
+        connectByName(l2_chi.rx.snp, rxsnp)
+        connectByName(l2_chi.rx.rsp, rxrsp)
+        connectByName(l2_chi.rx.dat, rxdat)
+      case _ => require(requirement = false, "Credit-Grant CHI is not supported!")
+    }
 
     private val assertionNode = HardwareAssertion.placePipe(Int.MaxValue, moduleTop = true).map(_.head)
     HardwareAssertion.release(assertionNode, "hwa", "core")
