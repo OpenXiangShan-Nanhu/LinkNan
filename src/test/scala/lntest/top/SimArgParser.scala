@@ -3,6 +3,8 @@ package lntest.top
 import linknan.generator._
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
+import xiangshan.XSCoreParamsKey
+import xs.utils.cache.common.L2ParamKey
 import xs.utils.debug.HardwareAssertionKey
 import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
 import zhujiang.ZJParametersKey
@@ -62,6 +64,13 @@ object SimArgParser {
         case "--enable-hardware-assertion" :: tail =>
           parse(config.alter((site, here, up) => {
             case HardwareAssertionKey => up(HardwareAssertionKey).copy(enable = true)
+          }), tail)
+
+        case "--enable-mbist" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case XSCoreParamsKey => up(XSCoreParamsKey).copy(hasMbist = true)
+            case L2ParamKey => up(L2ParamKey).copy(hasMbist = true)
+            case ZJParametersKey => up(ZJParametersKey).copy(hasMbist = true)
           }), tail)
 
         case "--prefix" :: confString :: tail =>

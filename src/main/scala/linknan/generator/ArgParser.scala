@@ -50,6 +50,7 @@ object ArgParser {
           parse(config.alter((site, here, up) => {
             case XSCoreParamsKey => up(XSCoreParamsKey).copy(hasMbist = true)
             case L2ParamKey => up(L2ParamKey).copy(hasMbist = true)
+            case ZJParametersKey => up(ZJParametersKey).copy(hasMbist = true)
           }), tail)
 
         case "--prefix" :: confString :: tail =>
