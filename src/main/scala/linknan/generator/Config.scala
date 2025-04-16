@@ -73,9 +73,9 @@ class FullNocConfig(socket: String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
       NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
 
+      NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem1, outstanding = 32, attr = "loc_1"),
       NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem0, outstanding = 32, attr = "loc_0"),
-      NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.P)
     )
   )
