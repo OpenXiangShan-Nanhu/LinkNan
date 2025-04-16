@@ -18,9 +18,10 @@ task("soc" , function()
       {'p', "pldm_verilog", "k", nil, "enable only basic difftest function"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
       {'x', "prefix", "kv", "", "assign a prefix for rtl modules"},
+      {'C', "core", "kv", "full", "define cpu core config in soc"},
+      {'L', "l3", "kv", "full", "define L3 config"},
+      {'N', "noc", "kv", "full", "define noc config"},
       {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"},
-      {'C', "core", "kv", "nanhu", "cpu core in soc"},
-      {'f', "config", "kv", nil, "soc config selection"},
       {'o', "out_dir", "kv", "build/rtl", "assign build dir"},
       {'j', "jobs", "kv", "16", "post-compile process jobs"}
     }
@@ -41,13 +42,14 @@ task("soc" , function()
     if option.get("lua_scoreboard") then table.join2(chisel_opts, {"--lua-scoreboard"}) end
     if option.get("hardware_assertion") then table.join2(chisel_opts, {"--enable-hardware-assertion"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
-    if option.get("config") then table.join2(chisel_opts, {"--config", option.get("config")}) end
     if option.get("prefix") ~= "" then table.join2(chisel_opts, {"--prefix", option.get("prefix")}) end
     local build_dir = path.join("build", "rtl")
     if not option.get("sim") and not option.get("release") then build_dir = option.get("out_dir") end
     if option.get("sim") then os.setenv("NOOP_HOME", os.curdir()) end
-    table.join2(chisel_opts, {"--socket", option.get("socket")})
     table.join2(chisel_opts, {"--core", option.get("core")})
+    table.join2(chisel_opts, {"--l3", option.get("l3")})
+    table.join2(chisel_opts, {"--noc", option.get("noc")})
+    table.join2(chisel_opts, {"--socket", option.get("socket")})
     table.join2(chisel_opts, {"--target", "systemverilog", "--full-stacktrace", "-td", build_dir})
     os.execv(os.shell(), chisel_opts)
 
@@ -80,13 +82,14 @@ task("emu", function()
       {'n', "no_diff", "k", nil, "disable difftest"},
       {'f', "fast", "k", nil, "disable trace to improve simulation speed"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
-      {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"},
-      {'C', "core", "kv", "nanhu", "cpu core in soc"},
       {'h', "dramsim3_home", "kv", path.join(os.curdir(), "dependencies", "dramsim"), "dramsim3 home dir"},
       {'t', "threads", "kv", "16", "simulation threads"},
       {'j', "jobs", "kv", "16", "compilation jobs"},
       {'r', "ref", "kv", "Nemu", "reference model"},
-      {'c', "config", "kv", "minimal", "soc config"}
+      {'C', "core", "kv", "minimal", "define cpu core config in soc"},
+      {'L', "l3", "kv", "small", "define L3 config"},
+      {'N', "noc", "kv", "small", "define noc config"},
+      {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"}
     }
   }
 
@@ -136,10 +139,11 @@ task("simv", function()
       {'x', "no_xprop", "k", nil, "do not set xprop"},
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
-      {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"},
-      {'C', "core", "kv", "nanhu", "cpu core in soc"},
       {'r', "ref", "kv", "Nemu", "reference model"},
-      {'c', "config", "kv", "minimal", "rtl config"}
+      {'C', "core", "kv", "minimal", "define cpu core config in soc"},
+      {'L', "l3", "kv", "small", "define L3 config"},
+      {'N', "noc", "kv", "small", "define noc config"},
+      {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"}
     }
   }
 

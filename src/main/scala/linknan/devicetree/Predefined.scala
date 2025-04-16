@@ -1,5 +1,5 @@
 package linknan.devicetree
-import xs.utils.cacheParam.common.L2ParamKey
+import xs.utils.cache.common.L2ParamKey
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
 import xiangshan.{PMParameKey, XSCoreParamsKey}

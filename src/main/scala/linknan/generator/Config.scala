@@ -1,28 +1,30 @@
 package linknan.generator
 
-import coupledL2.prefetch.{PrefetchReceiverParams}
+import coupledL2.prefetch.PrefetchReceiverParams
 import linknan.soc.{LinkNanParams, LinkNanParamsKey}
 import org.chipsalliance.cde.config.{Config, _}
 import xiangshan.{PMParameKey, PMParameters, XSCoreParameters, XSCoreParamsKey}
 import xiangshan.cache.DCacheParameters
 import xiangshan.frontend.icache.ICacheParameters
 import xijiang.{NodeParam, NodeType}
-import xs.utils.cacheParam.L2Param
-import xs.utils.cacheParam.common.L2ParamKey
-import xs.utils.cacheParam.prefetch.BOPParameters
+import xs.utils.cache.L2Param
+import xs.utils.cache.common.L2ParamKey
+import xs.utils.cache.prefetch.BOPParameters
 import xs.utils.debug.{HardwareAssertionKey, HwaParams}
 import xs.utils.perf.{DebugOptions, DebugOptionsKey, LogUtilsOptions, LogUtilsOptionsKey, PerfCounterOptions, PerfCounterOptionsKey, XSPerfLevel}
 import zhujiang.{ZJParameters, ZJParametersKey}
 
-class BaseConfig(core: String) extends Config((site, here, up) => {
+import scala.annotation.tailrec
+
+class BaseConfig extends Config((site, here, up) => {
   case HardwareAssertionKey => HwaParams()
   case DebugOptionsKey => DebugOptions()
   case L2ParamKey => L2Param()
   case XSCoreParamsKey => XSCoreParameters()
   case PMParameKey => PMParameters()
-  case LogUtilsOptionsKey => LogUtilsOptions(false, true, false)
-  case PerfCounterOptionsKey => PerfCounterOptions(true, false, XSPerfLevel.VERBOSE, 0)
-  case LinkNanParamsKey => LinkNanParams(random = core == "boom")
+  case LogUtilsOptionsKey => LogUtilsOptions(enableDebug = false, enablePerf = true, fpgaPlatform = false)
+  case PerfCounterOptionsKey => PerfCounterOptions(enablePerfPrint = true, enablePerfDB = false, XSPerfLevel.VERBOSE, 0)
+  case LinkNanParamsKey => LinkNanParams(random = false)
 })
 
 object AddrConfig {
@@ -53,72 +55,60 @@ object AddrConfig {
   )
 }
 
-class FullNocConfig(core: String, socket: String) extends Config((site, here, up) => {
+class FullNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     nodeParams = Seq(
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
 
       NodeParam(nodeType = NodeType.RI, attr = "main"),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
       NodeParam(nodeType = NodeType.M),
       NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem2, outstanding = 32, attr = "soc"),
 
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 1),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
 
       NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem1, outstanding = 32, attr = "loc_1"),
       NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem0, outstanding = 32, attr = "loc_0"),
+      NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.P)
     )
   )
 })
 
-class ReducedNocConfig(core: String, socket: String) extends Config((site, here, up) => {
+class ReducedNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     nodeParams = Seq(
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, attr = core, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
 
       NodeParam(nodeType = NodeType.RI, attr = "main"),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
+
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+
+      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem1, outstanding = 32, attr = "loc_1"),
+      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem0, outstanding = 32, attr = "loc_0"),
+
       NodeParam(nodeType = NodeType.M),
-
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
       NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 1),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
-
-      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem1, outstanding = 32),
-      NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem0, outstanding = 32),
-      NodeParam(nodeType = NodeType.P)
     )
   )
 })
 
-class MinimalNocConfig(core: String, socket: String) extends Config((site, here, up) => {
+class MinimalNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, cpuNum = 1, outstanding = 8, attr = core, socket = socket),
+      NodeParam(nodeType = NodeType.CC, cpuNum = 1, outstanding = 8, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
 
       NodeParam(nodeType = NodeType.RI, attr = "main"),
@@ -188,31 +178,101 @@ class L1IConfig(sizeInKiB: Int = 64, ways: Int = 4) extends Config((site, here, 
     ))
 })
 
-class FullConfig(core: String, socket: String) extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config ++ new LLCConfig ++ new FullNocConfig(core, socket) ++ new BaseConfig(core)
+class FullCoreConfig extends Config(
+  new L1IConfig ++ new L1DConfig ++ new L2Config
 )
 
-class ReducedConfig(core: String, socket: String) extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config(512, 8) ++ new LLCConfig(4 * 1024 * 1024 , 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
+class MinimalCoreConfig extends Config(
+  new L1IConfig ++ new L1DConfig ++ new L2Config(128, 8)
 )
 
-class ExtremeConfig(core: String, socket: String) extends Config(
-  // LLCConfig: sizeInB = Cacheline * ways * sets * bank (sets must more than 2)
-  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(64 * 2 * 2 * 2, 2, 2, 16) ++ new FullNocConfig(core, socket) ++ new BaseConfig(core)
+class FullL3Config extends Config(
+  new LLCConfig
 )
 
-class MinimalConfig(core: String, socket: String) extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(2 * 1024 * 1024, 8) ++ new MinimalNocConfig(core, socket) ++ new BaseConfig(core)
+class MediumL3Config extends Config(
+  new LLCConfig(4 * 1024 * 1024, 8)
 )
 
-class SpecConfig(core: String, socket: String) extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config ++ new LLCConfig ++ new MinimalNocConfig(core, socket) ++ new BaseConfig(core)
+class SmallL3Config extends Config(
+  new LLCConfig(2 * 1024 * 1024, 8)
 )
 
-class FpgaConfig(core: String, socket: String) extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(8 * 1024 * 1024, 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
+class ExtremeL3Config extends Config(
+  new LLCConfig(64 * 2 * 2 * 2, 2, 2, 16)
 )
 
-class BtestConfig(core: String, socket: String) extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config(256, 8) ++ new LLCConfig(1 * 1024 * 1024, 8) ++ new ReducedNocConfig(core, socket) ++ new BaseConfig(core)
-)
+object ConfigGenerater {
+  private def generate(core:String, l3:String, noc:String, socket:String):Parameters = {
+    println(
+      s"""core:   $core
+         |l3:     $l3
+         |noc:    $noc
+         |socket: $socket
+         |""".stripMargin)
+    val coreCfg = core match {
+      case "full" => new FullCoreConfig
+      case "minimal" => new MinimalCoreConfig
+      case _ =>
+        require(requirement = false, s"not supported core config: $l3")
+        new MinimalCoreConfig
+    }
+    val l3Cfg = l3 match {
+      case "full" => new FullL3Config
+      case "medium" => new MediumL3Config
+      case "small" => new SmallL3Config
+      case "extreme" => new ExtremeL3Config
+      case _ =>
+        require(requirement = false, s"not supported l3 config: $l3")
+        new ExtremeL3Config
+    }
+    val nocCfg = noc match {
+      case "full" => new FullNocConfig(socket)
+      case "medium" => new ReducedNocConfig(socket)
+      case "small" => new MinimalNocConfig(socket)
+      case _ =>
+        require(requirement = false, s"not supported noc config: $noc")
+        new MinimalNocConfig(socket)
+    }
+    new Config(
+      coreCfg ++ l3Cfg ++ nocCfg ++ new BaseConfig
+    )
+  }
+  private var core = ""
+  private var l3 = ""
+  private var noc = ""
+  private var socket = ""
+  private var opts = Array[String]()
+
+  @tailrec
+  private def doParse(args: List[String]): Unit = {
+    args match {
+      case "--core" :: cfgStr :: tail =>
+        core = cfgStr
+        doParse(tail)
+
+      case "--l3" :: cfgStr :: tail =>
+        l3 = cfgStr
+        doParse(tail)
+
+      case "--noc" :: cfgStr :: tail =>
+        noc = cfgStr
+        doParse(tail)
+
+      case "--socket" :: cfgStr :: tail =>
+        socket = cfgStr
+        doParse(tail)
+
+      case option :: tail =>
+        opts :+= option
+        doParse(tail)
+
+      case Nil =>
+    }
+  }
+
+  def parse(args: List[String]):(Parameters, Array[String]) = {
+    doParse(args)
+    (generate(core, l3, noc, socket), opts)
+  }
+}

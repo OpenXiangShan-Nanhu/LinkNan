@@ -38,7 +38,7 @@ function simv_comp(num_cores)
     task.run("soc", {
       vcs = true, sim = true, config = option.get("config"),
       socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
-      core = option.get("core")
+      core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc")
     })
     local vsrc = os.files(path.join(design_vsrc, "*v"))
     table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))

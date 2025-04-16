@@ -13,7 +13,7 @@ import org.chipsalliance.diplomacy.bundlebridge.BundleBridgeSource
 import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import xiangshan.{HasXSParameter, XSCoreParamsKey}
 import xijiang.Node
-import xs.utils.cacheParam.common.{AliasField, IsKeywordField, L2ParamKey, PrefetchField, PrefetchRecv, VaddrField}
+import xs.utils.cache.common.{AliasField, IsKeywordField, L2ParamKey, PrefetchField, PrefetchRecv, VaddrField}
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import xs.utils.tl.ReqSourceField
 import zhujiang.HasZJParams

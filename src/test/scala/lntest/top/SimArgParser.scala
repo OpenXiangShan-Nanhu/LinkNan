@@ -10,47 +10,12 @@ import zhujiang.ZJParametersKey
 import scala.annotation.tailrec
 
 object SimArgParser {
-  private var core = "nanhu"
-  private var cfg = "minimal"
-  private var socket = "async"
-  private var opts = Array[String]()
-  @tailrec
-  def configParse(args: List[String]): Unit = {
-    args match {
-      case "--config" :: cfgStr :: tail => {
-        cfg = cfgStr
-        configParse(tail)
-      }
-      case "--core" :: cfgStr :: tail => {
-        core = cfgStr
-        configParse(tail)
-      }
-      case "--socket" :: cfgStr :: tail => {
-        socket = cfgStr
-        configParse(tail)
-      }
-      case option :: tail => {
-        opts :+= option
-        configParse(tail)
-      }
-      case Nil =>
-    }
-  }
-
   def apply(args: Array[String]): (Parameters, Array[String]) = {
-    configParse(args.toList)
-    val configuration = cfg match {
-      case "reduced" => new ReducedConfig(core, socket)
-      case "minimal" => new MinimalConfig(core, socket)
-      case "spec" => new SpecConfig(core, socket)
-      case "fpga" => new FpgaConfig(core, socket)
-      case "btest" => new BtestConfig(core, socket)
-      case _ => new FullConfig(core, socket)
-    }
-    println(s"Using $cfg config with $core cores and use $socket socket")
+    val (configuration, opts) = ConfigGenerater.parse(args.toList)
 
     var firrtlOpts = Array[String]()
 
+    @tailrec
     def parse(config: Parameters, args: List[String]): Parameters = {
       args match {
         case Nil => config

@@ -15,7 +15,7 @@ import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import xiangshan._
 import xijiang.Node
 import xs.utils.IntBuffer
-import xs.utils.cacheParam.common.L2ParamKey
+import xs.utils.cache.common.L2ParamKey
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import zhujiang.HasZJParams
 import zhujiang.chi.FlitHelper.connIcn

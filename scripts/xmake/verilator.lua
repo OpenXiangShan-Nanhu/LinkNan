@@ -33,7 +33,7 @@ function emu_comp(num_cores)
       sim = true, config = option.get("config"),
       dramsim3 = option.get("dramsim3"), enable_perf = not option.get("no_perf"),
       socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
-      core = option.get("core")
+      core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc")
     })
     local vsrc = os.files(path.join(design_vsrc, "*v"))
     table.join2(vsrc, os.files(path.join(difftest_vsrc, "*v")))
