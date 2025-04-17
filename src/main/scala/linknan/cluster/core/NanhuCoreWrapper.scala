@@ -117,8 +117,8 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
 
     _l2.io_nodeID := 0.U(7.W)
     _l2.io.l2Flush.foreach(_ := false.B)
-    _l2.io.dft.foreach(_ := io.dft.func)
-    _l2.io.dft_reset.foreach(_ := io.dft.reset)
+    _l2.io.dft.func.foreach(_ := io.dft.func)
+    _l2.io.dft.reset.foreach(_ := io.dft.reset)
 
     reset_state := (_core.io.resetInFrontend || implicitReset.asBool).asAsyncReset
 
@@ -126,8 +126,8 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     _l2.io.debugTopDown.robHeadPaddr := _core.io.debugTopDown.robHeadPaddr
     _core.io.debugTopDown.l2MissMatch := _l2.io.debugTopDown.l2MissMatch
     _core.io.debugTopDown.l3MissMatch := false.B
-    _core.dft.foreach(_ := io.dft.func)
-    _core.dft_reset := io.dft.reset
+    _core.io.dft.func.foreach(_ := io.dft.func)
+    _core.io.dft.reset.foreach(_ := io.dft.reset)
 
     clintIntNode.out.head._1(0) := io.msip
     clintIntNode.out.head._1(1) := io.mtip
