@@ -124,6 +124,25 @@ class MinimalNocConfig(socket: String) extends Config((site, here, up) => {
   )
 })
 
+class ExtremeNocConfig(socket: String) extends Config((site, here, up) => {
+  case ZJParametersKey => ZJParameters(
+    nodeParams = Seq(
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
+
+      NodeParam(nodeType = NodeType.RI, attr = "main"),
+      NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
+
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
+
+      NodeParam(nodeType = NodeType.S, outstanding = 32),
+      NodeParam(nodeType = NodeType.M),
+    )
+  )
+})
+
 class LLCConfig(sizeInB: Int = 8 * 1024 * 1024, ways: Int = 16, sfWays: Int = 16, outstanding: Int = 64 * 4, dirBank: Int = 2) extends Config((site, here, up) => {
   case ZJParametersKey => up(ZJParametersKey).copy(
     cacheSizeInB = sizeInB,
@@ -184,7 +203,7 @@ class FullCoreConfig extends Config(
 )
 
 class MinimalCoreConfig extends Config(
-  new L1IConfig ++ new L1DConfig ++ new L2Config(128, 8)
+  new MinimalNanhuConfig ++ new L2Config(64, 8)
 )
 
 class FullL3Config extends Config(
@@ -232,6 +251,7 @@ object ConfigGenerater {
       case "full" => new FullNocConfig(socket)
       case "medium" => new ReducedNocConfig(socket)
       case "small" => new MinimalNocConfig(socket)
+      case "extreme" => new ExtremeNocConfig(socket)
       case _ =>
         require(requirement = false, s"not supported noc config: $noc")
         new MinimalNocConfig(socket)
