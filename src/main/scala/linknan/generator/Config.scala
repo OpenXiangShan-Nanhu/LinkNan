@@ -60,23 +60,23 @@ class FullNocConfig(socket: String) extends Config((site, here, up) => {
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
 
       NodeParam(nodeType = NodeType.RI, attr = "main"),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
-      NodeParam(nodeType = NodeType.M),
       NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem2, outstanding = 32, attr = "soc"),
+
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
 
       NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
 
-      NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem1, outstanding = 32, attr = "loc_1"),
       NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem0, outstanding = 32, attr = "loc_0"),
-      NodeParam(nodeType = NodeType.P)
+      NodeParam(nodeType = NodeType.M),
+
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
     )
   )
 })
