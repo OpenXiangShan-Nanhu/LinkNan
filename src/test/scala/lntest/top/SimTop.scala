@@ -28,6 +28,7 @@ import linknan.cluster.BlockTestIO
 import linknan.devicetree.DeviceTreeGenerator
 import linknan.generator.Generator
 import linknan.soc.{LNTop, LinkNanParamsKey}
+import lntest.info.InfoGen
 import org.chipsalliance.diplomacy.DisableMonitors
 import xiangshan.XSCoreParamsKey
 import xijiang.NodeType
@@ -176,6 +177,7 @@ class SimTop(implicit p: Parameters) extends Module {
   }
 
   DeviceTreeGenerator.simGenerate
+  lntest.info.InfoGen.register(soc)
 }
 
 object SimGenerator extends App {
@@ -188,5 +190,6 @@ object SimGenerator extends App {
     })
   ))
   if(config(ZJParametersKey).tfbParams.isDefined) TrafficBoardFileManager.release("generated-src", "generated-src")(config)
+  InfoGen.generate()(config)
   FileRegisters.write(filePrefix = config(LinkNanParamsKey).prefix + "LNTop.")
 }
