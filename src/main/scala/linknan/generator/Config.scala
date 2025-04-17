@@ -124,12 +124,13 @@ class MinimalNocConfig(socket: String) extends Config((site, here, up) => {
   )
 })
 
-class LLCConfig(sizeInB: Int = 8 * 1024 * 1024, ways: Int = 16, sfWays: Int = 16, outstanding: Int = 64 * 4) extends Config((site, here, up) => {
+class LLCConfig(sizeInB: Int = 8 * 1024 * 1024, ways: Int = 16, sfWays: Int = 16, outstanding: Int = 64 * 4, dirBank: Int = 2) extends Config((site, here, up) => {
   case ZJParametersKey => up(ZJParametersKey).copy(
     cacheSizeInB = sizeInB,
     cacheWays = ways,
     snoopFilterWays = sfWays,
     hnxOutstanding = outstanding,
+    hnxDirSRAMBank = dirBank,
   )
 })
 
@@ -198,8 +199,9 @@ class SmallL3Config extends Config(
   new LLCConfig(2 * 1024 * 1024, 8)
 )
 
+// use extreme l3 config require the number of HNF no more than 4 in NoC
 class ExtremeL3Config extends Config(
-  new LLCConfig(64 * 2 * 2 * 2, 2, 2, 16)
+  new LLCConfig(64 * 16, 2, 2, 16, 1)
 )
 
 object ConfigGenerater {
