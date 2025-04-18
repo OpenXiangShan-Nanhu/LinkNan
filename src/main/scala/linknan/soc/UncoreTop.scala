@@ -7,7 +7,7 @@ import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import linknan.soc.device.DevicesWrapper
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.ResetGen
-import zhujiang.axi.{AxiBuffer, AxiParams, AxiUtils, AxiWidthAdapter, BaseAxiXbar}
+import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, AxiWidthAdapter, BaseAxiXbar}
 import zhujiang.chi.NodeIdBundle
 import zhujiang._
 
@@ -36,35 +36,31 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
 
   private val devWrp = Module(new DevicesWrapper(cfgPort.params, devWrpSlvP))
   private val dmaXBar = Module(new AxiDmaXBar(dmaXBarParams))
-  private val extCfgSlvBuf = Module(new AxiBuffer(extCfgSlvP.copy(dataBits = 64)))
-  private val extDmaSlvBuf = Module(new AxiBuffer(extDmaSlvP))
+  private val extDmaDrv = Wire(new AxiBundle(extDmaSlvP))
+  private val cfgWidthAdapter = Module(new AxiWidthAdapter(extCfgSlvP, extCfgSlvP.copy(dataBits = 64), 4))
 
   devWrp.io.slv <> cfgPort
   dmaPort <> dmaXBar.io.downstream.head
 
   dmaXBar.io.upstream(0) <> devWrp.io.mst
-  AxiWidthAdapter(dmaXBar.io.upstream(1), extCfgSlvBuf.io.out)
-  dmaXBar.io.upstream(2) <> extDmaSlvBuf.io.out
+  dmaXBar.io.upstream(1) <> cfgWidthAdapter.io.slv
+  dmaXBar.io.upstream(2) <> extDmaDrv
+
+  dmaXBar.io.upstream(1).aw.bits.addr := AclintAddrRemapper(cfgWidthAdapter.io.slv.aw.bits.addr)
+  dmaXBar.io.upstream(1).aw.bits.cache := "b0000".U
+  dmaXBar.io.upstream(1).ar.bits.addr := AclintAddrRemapper(cfgWidthAdapter.io.slv.ar.bits.addr)
+  dmaXBar.io.upstream(1).ar.bits.cache := "b0000".U
+  dontTouch(dmaXBar.io.upstream(1))
+
+  dmaXBar.io.upstream(2).aw.bits.cache := "b0010".U | extDmaDrv.aw.bits.cache
+  dmaXBar.io.upstream(2).ar.bits.cache := "b0010".U | extDmaDrv.ar.bits.cache
 
   val ddrDrv = noc.ddrIO.map(AxiUtils.getIntnl)
   val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
-  val dmaDrv = Seq(extCfgSlvBuf.io.in, extDmaSlvBuf.io.in) ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
+  val dmaDrv = Seq(cfgWidthAdapter.io.mst, extDmaDrv) ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   val hwaDrv = noc.hwaIO.map(AxiUtils.getIntnl)
-  runIOAutomation()
-
-  dmaXBar.io.upstream.tail.zip(dmaIO.take(dmaXBar.io.upstream.tail.size)).foreach({case(a, b) =>
-    dontTouch(a)
-    if(a.params.attr == "cfg") {
-      a.aw.bits.addr := AclintAddrRemapper(b.awaddr)
-      a.aw.bits.cache := "b0000".U
-      a.ar.bits.addr := AclintAddrRemapper(b.araddr)
-      a.ar.bits.cache := "b0000".U
-    } else {
-      a.aw.bits.cache := "b0010".U | b.awcache
-      a.ar.bits.cache := "b0010".U | b.arcache
-    }
-  })
+  runIOAutomation(p(LinkNanParamsKey).nrAxiInterfaceBuffer)
 
   private val clusterNum = noc.ccnIO.size
   val io = IO(new Bundle {
