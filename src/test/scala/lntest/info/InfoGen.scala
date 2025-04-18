@@ -19,7 +19,7 @@ object InfoGen {
     val ccns = zjP.island.filter(_.nodeType == NodeType.CC)
     val ccnStrSeq = ccns.map(n => s"{\"$socPath.cc_${n.domainId}.tile.l2cache\", {0x${(n.nodeId + 1).toHexString}}},\n")
     val l2cStrSeq = s"l2c = {\n" +: ccnStrSeq.map(b => s"  $b") :+ "},\n"
-    val result = s"soc = {\n" +: (zjInfo ++ l2cStrSeq).map(b => s"  $b") :+ "}\n"
+    val result = s"local soc = {\n" +: (zjInfo ++ l2cStrSeq).map(b => s"  $b") :+ "}\nreturn soc\n"
     FileRegisters.add("generated-src", "soc.lua", result.reduce(_ ++ _), dontCarePrefix = true)
   }
 }
