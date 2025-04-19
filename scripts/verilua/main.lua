@@ -360,11 +360,11 @@ fork {
 
 verilua "finishTask" {
     function (is_error)
-        -- if is_error and cfg.simulator == "verilator" then
-        --     local symbol_helper = require "verilua.utils.SymbolHelper"
-        --     local xs_assert = symbol_helper.ffi_cast("void (*)(long long)", "xs_assert")
+         if is_error and cfg.simulator == "verilator" then
+             local symbol_helper = require "verilua.utils.SymbolHelper"
+             local xs_assert = symbol_helper.ffi_cast("void (*)(long long)", "xs_assert")
             
-        --     xs_assert(0)
-        -- end
+             xs_assert(0)
+         end
     end
 }
