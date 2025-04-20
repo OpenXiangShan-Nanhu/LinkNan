@@ -152,6 +152,9 @@ function emu_comp(num_cores)
   if not option.get("no_diff") then
     verilator_flags = verilator_flags .. " +define+DIFFTEST"
   end
+  if option.get("lua_scoreboard") then
+    verilator_flags = verilator_flags .. " +define+MANUALLY_CALL_DPI_EXPORTER_TICK"
+  end
   verilator_flags = verilator_flags .. " -CFLAGS \"" .. cxx_flags .. "\""
   verilator_flags = verilator_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""
   verilator_flags = verilator_flags .. " -Mdir " .. comp_dir
