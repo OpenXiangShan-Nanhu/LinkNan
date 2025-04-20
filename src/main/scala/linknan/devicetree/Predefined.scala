@@ -74,7 +74,7 @@ final case class CoreNode(
       Property("device_type", StringValue("cpu")),
       Property("reg", IntegerValue(id)),
       Property("status", StringValue(if(id == 0) "okay" else "disabled")),
-      Property("compatible", StringValue("bosc,nanhu-v5")),
+      Property("compatible", PropertyValues(List(StringValue("bosc,nanhu-v5"), StringValue("riscv")))),
       Property("riscv,isa", StringValue("rv64imafdc")),
       Property("riscv,pmpregions", IntegerValue(pmpP.NumPMP)),
       Property("riscv,pmpgranularity", IntegerValue(1 << pmpP.PlatformGrain)),
@@ -112,8 +112,8 @@ final case class MtimerNode(
   children = Nil,
   properties = {
     val base = id << p(ZJParametersKey).cpuSpaceBits
-    val regList = List(RegValue(base + 0x2000L, 8), RegValue(base + 0x2008L, 8))
-    val regNameList = List(StringValue("mtimecmp"), StringValue("mtime"))
+    val regList = List(RegValue(base + 0x2000L, 8), RegValue(base + 0x2008L, 0xFF8))
+    val regNameList = List(StringValue("mtime"), StringValue("mtimecmp"))
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${id + i}_intc", 7))
     List(
       Property("compatible", StringValue("riscv,aclint-mtimer")),
@@ -133,8 +133,8 @@ final case class PpuNode(
   properties = {
     val base = (id << p(ZJParametersKey).cpuSpaceBits)
     val regList = List(
-      RegValue(base + 0x0000L, 0x08),
-      RegValue(base + 0x1000L, 0x10),
+      RegValue(base + 0x0000L, 0x1000),
+      RegValue(base + 0x1000L, 0x1000),
     )
     val regNameList = List(
       StringValue("CBAR"),
@@ -158,7 +158,7 @@ final case class MswiNode(
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${i}_intc", 3))
     List(
       Property("compatible", StringValue("riscv,aclint-mswi")),
-      Property("reg", RegValue(p(LinkNanParamsKey).mswiBase, 8.max(harts * 0x4))),
+      Property("reg", RegValue(p(LinkNanParamsKey).mswiBase, 0x4000)),
       Property("reg-names", StringValue("msip")),
       Property("interrupts-extended", IntrValue(intrSeq))
     )
@@ -195,8 +195,8 @@ final case class RefMtimerNode(
   children = Nil,
   properties = {
     val base = p(LinkNanParamsKey).refTimerBase
-    val regList = List(RegValue(base, 8), RegValue(base + 8, 8))
-    val regNameList = List(StringValue("mtimecmp"), StringValue("mtime"))
+    val regList = List(RegValue(base, 8), RegValue(base + 8, 0xFF8))
+    val regNameList = List(StringValue("mtime"), StringValue("mtimecmp"))
     List(
       Property("compatible", StringValue("riscv,aclint-mtimer")),
       Property("reg", PropertyValues(regList)),
