@@ -37,8 +37,17 @@ cfg.load_config_from_env = function ()
     cfg.l2_cfg = l2_cfg
 end
 
+do
+	local soc_cfg
+	local soc_cfg_file = assert(os.getenv("SOC_CFG_FILE"), "`SOC_CFG_FILE` is not set!")
+	local soc_cfg_func = loadfile(soc_cfg_file)
+	assert(type(soc_cfg_func) == "function", "`" .. soc_cfg_file .. "`" .. " is not exist or not a valid soc configuration file!")
+	soc_cfg = soc_cfg_func()
 
-cfg.nr_sn = 1
+	cfg.soc_cfg = soc_cfg
+end
+
+cfg.nr_sn = #cfg.soc_cfg.snf
 
 cfg.enable_scoreboard = true
 

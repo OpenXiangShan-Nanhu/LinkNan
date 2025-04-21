@@ -242,10 +242,15 @@ local function init_components()
         table.insert(l2_mon_out_vec, l2_mon_out)
     end
 
-    do
-        assert(cfg.nr_sn == 1, "TODO: nr_sn != 1")
-
-        local sn_hier = tostring(dut.soc.uncore.noc.chi_to_axi_0x30)
+    for i = 0, cfg.nr_sn - 1 do
+        -- e.g.
+        -- 	cfg.soc_cfg.snf = {
+        -- 		{ "SimTop.soc.uncore.noc.chi_to_axi_0x20", { 32 } },
+        -- 		{ "SimTop.soc.uncore.noc.chi_to_axi_0x48", { 72 } },
+        -- 		{ "SimTop.soc.uncore.noc.chi_to_axi_0x50", { 80 } }
+        -- 	}
+        local sn_cfg = cfg.soc_cfg.snf[i + 1]
+        local sn_hier = sn_cfg[1]:gsub("SimTop", cfg.top)
 
         local axi_aw = ([[
             | valid
