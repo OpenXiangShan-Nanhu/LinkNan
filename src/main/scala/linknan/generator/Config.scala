@@ -129,6 +129,7 @@ class ExtremeNocConfig(socket: String) extends Config((site, here, up) => {
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
 
       NodeParam(nodeType = NodeType.RI, attr = "main"),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
