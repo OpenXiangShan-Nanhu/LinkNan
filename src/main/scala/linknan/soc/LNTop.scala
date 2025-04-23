@@ -101,7 +101,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     case XLen => 64
     case BankBitsKey => log2Ceil(GlobalStaticParameters.xsParams.L2NBanks)
     case CHIIssue => Issue.Eb
-    case xiangshan.EnableCHI => true
+    case xs.utils.cache.EnableCHI => true
     case EnableCHI => true
     case DecoupledCHI => true
   })
