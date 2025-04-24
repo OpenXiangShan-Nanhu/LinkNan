@@ -26,7 +26,7 @@ task("soc" , function()
       {'j', "jobs", "kv", "16", "post-compile process jobs"}
     }
   }
-  local chisel_opts =  {"mill", "-i"}
+  local chisel_opts =  {"-i"}
 
   on_run(function()
     import("core.base.option")
@@ -51,7 +51,11 @@ task("soc" , function()
     table.join2(chisel_opts, {"--noc", option.get("noc")})
     table.join2(chisel_opts, {"--socket", option.get("socket")})
     table.join2(chisel_opts, {"--target", "systemverilog", "--full-stacktrace", "-td", build_dir})
-    os.execv(os.shell(), chisel_opts)
+    if os.host() == "windows" then
+      os.execv(os.shell(), table.join({"mill"}, chisel_opts))
+    else
+      os.execv("mill", chisel_opts)
+    end
 
     os.rm(path.join(build_dir, "firrtl_black_box_resource_files.f"))
     os.rm(path.join(build_dir, "filelist.f"))
