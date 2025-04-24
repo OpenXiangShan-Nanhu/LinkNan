@@ -80,7 +80,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     _core.io.reset_vector := io.reset_vector
     cpuHalt := _core.io.cpu_halt
     _core.io.traceCoreInterface := DontCare
-    _l2.io.pfCtrlFromCore.elements.foreach(e => e._2 := _core.io.l2_pf_enable)
+    _l2.io.pfCtrlFromCore := _core.io.l2PfCtrl
     _core.io.l2_hint := _l2.io.l2_hint
     _core.io.l2PfqBusy := false.B
 
