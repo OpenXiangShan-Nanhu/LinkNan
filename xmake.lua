@@ -198,7 +198,11 @@ end)
 
 task("idea", function()
   on_run(function()
-    os.execv(os.shell(), {"mill", "-i", "mill.idea.GenIdea/idea"})
+    if os.host() == "windows" then
+      os.execv(os.shell(), {"mill", "-i", "mill.idea.GenIdea/idea"})
+    else
+      os.execv("mill", {"-i", "mill.idea.GenIdea/idea"})
+    end
   end)
   set_menu {}
 end)
@@ -216,8 +220,13 @@ end)
 
 task("comp", function()
   on_run(function()
-    os.execv(os.shell(), {"mill", "-i", "linknan.compile"})
-    os.execv(os.shell(), {"mill", "-i", "linknan.test.compile"})
+    if os.host() == "windows" then
+      os.execv(os.shell(), {"mill", "-i", "linknan.compile"})
+      os.execv(os.shell(), {"mill", "-i", "linknan.test.compile"})
+    else
+      os.execv("mill", {"-i", "linknan.compile"})
+      os.execv("mill", {"-i", "linknan.test.compile"})
+    end
   end)
   set_menu {}
 end)
