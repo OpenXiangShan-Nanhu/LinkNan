@@ -121,7 +121,6 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     _l2.io.dft.func := io.dft.func
     _l2.io.dft.reset := io.dft.reset
     _l2.io.ramctl := io.ramctl
-    SramHelper.genSramCtrlBundleTop() := io.ramctl
 
     reset_state := (_core.io.resetInFrontend || implicitReset.asBool).asAsyncReset
 
@@ -131,6 +130,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     _core.io.debugTopDown.l3MissMatch := false.B
     _core.io.dft.func.foreach(_ := io.dft.func)
     _core.io.dft.reset.foreach(_ := io.dft.reset)
+    _core.io.ramctl := io.ramctl
 
     clintIntNode.out.head._1(0) := io.msip
     clintIntNode.out.head._1(1) := io.mtip
