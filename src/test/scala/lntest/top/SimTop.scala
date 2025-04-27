@@ -126,6 +126,7 @@ class SimTop(implicit p: Parameters) extends Module {
   soc.io.cluster_clocks.foreach(_ := clock)
   soc.io.reset := socReset.asAsyncReset
   soc.io.dft := DontCare
+  soc.io.ramctl := DontCare
   soc.io.dft.reset.lgc_rst_n := true.B.asAsyncReset
   soc.io.default_reset_vector := bootAddr
   soc.io.ci := 0.U

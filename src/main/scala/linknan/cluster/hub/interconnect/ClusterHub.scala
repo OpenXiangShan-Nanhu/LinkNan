@@ -6,6 +6,7 @@ import org.chipsalliance.cde.config.Parameters
 import xijiang.{Node, NodeType}
 import xijiang.router.base.IcnBundle
 import xs.utils.ResetRRArbiter
+import xs.utils.sram.SramCtrlBundle
 import zhujiang.chi._
 import zhujiang.device.socket.{ChiPdcIcnSide, IcnPdcBundle, SocketDevSide, SocketDevSideBundle, SocketIcnSideBundle}
 import zhujiang.tilelink.TLULBundle
@@ -35,11 +36,13 @@ class ClusterDeviceBundle(node: Node)(implicit p: Parameters) extends ZJBundle {
   val misc = new ClusterMiscWires(node)
   val osc_clock = Input(Clock())
   val dft = Input(new DftWires)
+  val ramctl = Input(new SramCtrlBundle)
   def <> (that: ClusterIcnBundle):Unit = {
     this.socket <> that.socket
     this.misc <> that.misc
     this.osc_clock <> that.osc_clock
     this.dft <> that.dft
+    this.ramctl <> that.ramctl
   }
 }
 
@@ -48,11 +51,13 @@ class ClusterIcnBundle(node: Node)(implicit p: Parameters) extends ZJBundle {
   val misc = Flipped(new ClusterMiscWires(node))
   val osc_clock = Output(Clock())
   val dft = Output(new DftWires)
+  val ramctl = Output(new SramCtrlBundle)
   def <> (that: ClusterDeviceBundle):Unit = {
     this.socket <> that.socket
     this.misc <> that.misc
     this.osc_clock <> that.osc_clock
     this.dft <> that.dft
+    this.ramctl <> that.ramctl
   }
 }
 
@@ -64,23 +69,22 @@ class ClusterHub(node: Node)(implicit p: Parameters) extends ZJModule {
   private val bridge = Module(new ClusterBridge(node))
 
   val io = IO(new Bundle {
-    val icn = new ClusterDeviceBundle(node)
+    val socket = new SocketDevSideBundle(node)
     val core = new IcnPdcBundle(node.copy(nodeType = NodeType.RF))
     val tlm = new TLULBundle(bridge.io.tlm.params)
-    val cpu = Flipped(new ClusterMiscWires(node))
+    val nodeNid = Input(UInt(nodeNidBits.W))
+    val clusterId = Input(UInt(clusterIdBits.W))
     val pdcxClean = Output(Bool())
     val blockSnp = Input(Bool())
     val snpPending = Output(Bool())
   })
-  io.cpu <> io.icn.misc
-
-  socket.io.socket <> io.icn.socket
+  socket.io.socket <> io.socket
 
   io.pdcxClean := pdc.io.clean
   pdc.io.icn <> io.core
 
-  bridge.io.nodeNid := io.icn.misc.nodeNid
-  bridge.io.clusterId := io.icn.misc.clusterId
+  bridge.io.nodeNid := io.nodeNid
+  bridge.io.clusterId := io.clusterId
   bridge.io.blockSnp := io.blockSnp
   io.snpPending := bridge.io.snpPending
   bridge.io.icn <> socket.io.icn

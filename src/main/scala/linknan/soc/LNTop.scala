@@ -15,6 +15,7 @@ import xiangshan.{PMParameKey, XLen, XSCoreParameters, XSCoreParamsKey}
 import xs.utils.cache.common.{BankBitsKey, L2ParamKey}
 import xs.utils.debug.HardwareAssertionKey
 import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
+import xs.utils.sram.SramCtrlBundle
 import zhujiang.axi.AxiUtils
 import zhujiang.{DftWires, NocIOHelper, ZJParametersKey, ZJRawModule}
 
@@ -66,6 +67,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = uncore.io.jtag.map(t => chiselTypeOf(t))
     val dft = Input(new DftWires)
+    val ramctl = Input(new SramCtrlBundle)
   })
 
   val ddrDrv = uncore.ddrIO.map(AxiUtils.getIntnl)
@@ -85,6 +87,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   uncore.io.dft := io.dft
   io.ndreset := uncore.io.ndreset
   uncore.io.cluster_clocks := io.cluster_clocks
+  uncore.io.ramctl := io.ramctl
 
   private val clusterP = new Config((_,_,_) => {
     case HardwareAssertionKey => p(HardwareAssertionKey)

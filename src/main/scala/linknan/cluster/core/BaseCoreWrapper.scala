@@ -11,6 +11,7 @@ import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.lazymodule.{LazyModule, LazyRawModuleImp}
 import xijiang.Node
 import xs.utils.ResetGen
+import xs.utils.sram.SramCtrlBundle
 import zhujiang.chi.{DataFlit, RReqFlit, RespFlit, SnoopFlit}
 import zhujiang.device.socket.{ChiPdcDevSide, DevPdcBundle}
 import zhujiang.{DftWires, ZJParametersKey}
@@ -33,6 +34,7 @@ class CoreWrapperIO(node:Node)(implicit p:Parameters) extends Bundle {
   val timerUpdate = Input(Valid(UInt(64.W)))
   val reset_state = Output(Bool())
   val dft = Input(new DftWires)
+  val ramctl = Input(new SramCtrlBundle)
 }
 
 abstract class BaseCoreWrapper

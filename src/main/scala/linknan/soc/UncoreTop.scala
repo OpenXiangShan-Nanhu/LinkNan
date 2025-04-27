@@ -7,6 +7,7 @@ import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import linknan.soc.device.DevicesWrapper
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.ResetGen
+import xs.utils.sram.SramCtrlBundle
 import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, AxiWidthAdapter, BaseAxiXbar}
 import zhujiang.chi.NodeIdBundle
 import zhujiang._
@@ -74,6 +75,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = devWrp.io.debug.systemjtag.map(t => chiselTypeOf(t))
     val dft = Input(new DftWires)
+    val ramctl = Input(new SramCtrlBundle)
   })
   val cluster = noc.ccnIO.map(ccn => IO(new ClusterIcnBundle(ccn.node)))
   cluster.foreach(c => dontTouch(c))
@@ -94,6 +96,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   io.ndreset := devWrp.io.debug.ndreset
   noc.io.ci := io.ci
   noc.io.dft := io.dft
+  noc.io.ramctl := io.ramctl
 
   private var rstIdx = 0
   for(((ext, noc), idx) <- cluster.zip(noc.ccnIO).zipWithIndex) {
@@ -105,6 +108,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
       ext.osc_clock := io.noc_clock
     }
     ext.dft := io.dft
+    ext.ramctl := io.ramctl
     ext.socket <> noc
     ext.misc.clusterId := Cat(io.ci, clusterId.U((clusterIdBits - ciIdBits).W))
     ext.misc.defaultBootAddr := io.default_reset_vector

@@ -33,8 +33,10 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   implicitReset := resetSync
 
   clusterPeriCx.io.tls.head <> clusterHub.io.tlm
-  clusterHub.io.icn <> io.icn
+  clusterHub.io.socket <> io.icn.socket
   clusterHub.io.core <> io.cpu.chiPdc
+  clusterHub.io.nodeNid := io.icn.misc.nodeNid
+  clusterHub.io.clusterId := io.icn.misc.clusterId
 
   pll.io.cfg := clusterPeriCx.io.cluster.pllCfg
   clusterPeriCx.io.cluster.pllLock := pll.io.lock
@@ -44,15 +46,15 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   coreCg.io.TE := io.icn.dft.func.cgen
   coreCg.io.E := cpuCtl.pcsm.clkEn
 
-  cpuCtl.defaultBootAddr := clusterHub.io.cpu.defaultBootAddr
+  cpuCtl.defaultBootAddr := io.icn.misc.defaultBootAddr
   if(p(LinkNanParamsKey).removeCore) {
     cpuCtl.defaultEnable := true.B
   } else {
-    cpuCtl.defaultEnable := clusterHub.io.cpu.clusterId === 0.U
+    cpuCtl.defaultEnable := io.icn.misc.clusterId === 0.U
   }
 
   clusterHub.io.blockSnp := cpuCtl.blockReq
-  private val intrPending = Cat(io.icn.misc.dbip ++ io.icn.misc.meip ++ io.icn.misc.seip ++ Seq(cpuCtl.msip, cpuCtl.mtip)).orR
+  private val intrPending = Cat(cpuDev.msip, cpuDev.mtip, cpuDev.meip, cpuDev.seip, cpuDev.dbip).orR
   private val reqToOn = RegNext(intrPending) || RegNext(clusterHub.io.snpPending)
 
   cpuDev.clock := coreCg.io.Q
@@ -62,15 +64,16 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   cpuDev.pwrEnReq := cpuCtl.pcsm.pwrReq
   cpuCtl.pcsm.pwrResp := cpuDev.pwrEnAck
   cpuDev.isoEn := cpuCtl.pcsm.isoEn
-  cpuDev.mhartid := clusterHub.io.cpu.clusterId
+  cpuDev.mhartid := io.icn.misc.clusterId
   cpuDev.reset_vector := cpuCtl.bootAddr
   cpuDev.msip := cpuCtl.msip
   cpuDev.mtip := cpuCtl.mtip
-  cpuDev.meip := clusterHub.io.cpu.meip(0)
-  cpuDev.seip := clusterHub.io.cpu.seip(0)
-  cpuDev.dbip := clusterHub.io.cpu.dbip(0)
+  cpuDev.meip := RegNext(io.icn.misc.meip(0))
+  cpuDev.seip := RegNext(io.icn.misc.seip(0))
+  cpuDev.dbip := RegNext(io.icn.misc.dbip(0))
   cpuDev.timerUpdate := cpuCtl.timerUpdate
-  clusterHub.io.cpu.resetState(0) := RegNext(cpuDev.reset_state, true.B)
+  io.icn.misc.resetState(0) := withReset(cpuDev.reset) { RegNext(cpuDev.reset_state, true.B) }
   cpuDev.dft := io.icn.dft
+  cpuDev.ramctl := io.icn.ramctl
   cpuCtl.coreId := cpuDev.mhartid.tail(ciIdBits)
 }
