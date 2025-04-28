@@ -118,7 +118,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
 
     _l2.io_nodeID := 0.U(7.W)
     _l2.io.l2Flush.foreach(_ := false.B)
-    _l2.io.dft.func := io.dft.func
+    _l2.io.dft.func.foreach(_ := io.dft.func)
     _l2.io.dft.reset := io.dft.reset
     _l2.io.ramctl := io.ramctl
 
