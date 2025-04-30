@@ -185,7 +185,7 @@ object SimGenerator extends App {
   val (config, firrtlOpts) = SimArgParser(args)
   xs.utils.GlobalData.prefix = config(LinkNanParamsKey).prefix
   difftest.GlobalData.prefix = config(LinkNanParamsKey).prefix
-  (new XsStage).execute(firrtlOpts, Generator.firtoolOpts(config(LinkNanParamsKey).random) ++ Seq(
+  (new XsStage).execute(firrtlOpts, Generator.firtoolOpts ++ Seq(
     ChiselGeneratorAnnotation(() => {
       DisableMonitors(p => new SimTop()(p))(config)
     })

@@ -24,7 +24,7 @@ class BaseConfig extends Config((site, here, up) => {
   case PMParameKey => PMParameters()
   case LogUtilsOptionsKey => LogUtilsOptions(enableDebug = false, enablePerf = true, fpgaPlatform = false)
   case PerfCounterOptionsKey => PerfCounterOptions(enablePerfPrint = true, enablePerfDB = false, XSPerfLevel.VERBOSE, 0)
-  case LinkNanParamsKey => LinkNanParams(random = false)
+  case LinkNanParamsKey => LinkNanParams()
 })
 
 object AddrConfig {

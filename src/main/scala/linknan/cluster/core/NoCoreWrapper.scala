@@ -110,7 +110,7 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
     l2cache.module.io.l2_tlb_req := DontCare
     l2cache.module.io.debugTopDown := DontCare
     l2cache.module.io.dft.func.foreach(_ := io.dft.func)
-    l2cache.module.io.dft.reset := io.dft.reset
+    l2cache.module.io.dft.reset.foreach(_ := io.dft.reset)
     l2cache.module.io.ramctl := io.ramctl
 
     tpMetaSinkNode.foreach(_.in.head._1.ready := false.B)

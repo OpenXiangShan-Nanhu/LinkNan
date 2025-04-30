@@ -14,7 +14,6 @@ case object LinkNanParamsKey extends Field[LinkNanParams]
 case class LinkNanParams(
   removeCore: Boolean = false,
   prefix:String = "",
-  random:Boolean = false,
   iodChipId:Int = 6,
   nrExtIntr: Int = 64,
   nrAxiInterfaceBuffer:Int = 2,
