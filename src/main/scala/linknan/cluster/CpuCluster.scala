@@ -17,6 +17,7 @@ class BlockTestIO(val params:BlockTestIOParams)(implicit p:Parameters) extends B
   val clock = Output(Clock())
   val reset = Output(AsyncReset())
   val cio = Flipped(new TLBundle(params.cioTlParams))
+  val cmo = Flipped(new TLBundle(params.cmoTLParams))
   val icache = Flipped(new TLBundle(params.icacheTlParams))
   val ptw = Flipped(new TLBundle(params.ptwTlParams))
   val dcache = Flipped(new TLBundle(params.dcacheTlParams))
@@ -28,6 +29,7 @@ case class BlockTestIOParams(
   icacheTlParams: TLBundleParameters,
   ptwTlParams: TLBundleParameters,
   dcacheTlParams: TLBundleParameters,
+  cmoTLParams: TLBundleParameters,
   node:Node
 ) extends IsLookupable
 
