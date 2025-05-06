@@ -169,6 +169,7 @@ class PowerController(tlParams:TilelinkParams) extends Module {
     holdCnt := holdCnt - 1.U
   }
   fsm := fsmNext
+  assert(PopCount(fsm) === 1.U, cf"Illegal state $fsm%x!")
   switch(fsm) {
     is(sIdle) {
       fsmNext := Mux(modeUpdateReg && !io.deactivate, Mux(upgrade, sUpHold, sDnHold), fsm)
