@@ -60,6 +60,18 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
     ))
   )))
 
+
+  val cmoNode = TLClientNode(Seq(
+      TLMasterPortParameters.v1(
+        Seq(TLMasterParameters.v1(
+          name="cmo",
+          sourceId=IdRange(0, 7)
+        )),
+        requestFields = Nil,
+      )
+  ))
+
+
   private val preftchNode = coreP.prefetcher.map(_ => BundleBridgeSource(() => new PrefetchRecv))
 
   private val cacheXBar = LazyModule(new TLXbar)
@@ -67,6 +79,8 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
   cacheXBar.node :=* TLBuffer.chainNode(1, Some(s"l1d_buffer")) :=* dcacheNode
   cacheXBar.node :=* TLBuffer.chainNode(1, Some(s"ptw_buffer")) :=* ptwNode
   cacheXBar.node :=* TLBuffer.chainNode(1, Some(s"l1i_buffer")) :=* icacheNode
+  cacheXBar.node :=* TLBuffer.chainNode(1, Some(s"cmo_buffer")) :=* cmoNode
+
 
   //L2 Connections
   private val l2cache = LazyModule(new TL2CHICoupledL2)
@@ -90,6 +104,7 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
     icacheTlParams = icacheNode.edges.out.head.bundle,
     ptwTlParams = ptwNode.edges.out.head.bundle,
     dcacheTlParams = dcacheNode.edges.out.head.bundle,
+    cmoTLParams = cmoNode.edges.out.head.bundle,
     node = node
   )
   @instantiable
@@ -100,6 +115,7 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
     btio.icache <> icacheNode.out.head._1
     btio.ptw <> ptwNode.out.head._1
     btio.dcache <> dcacheNode.out.head._1
+    btio.cmo <> cmoNode.out.head._1
     btio.mhartid := io.mhartid
     btio.clock := io.clock
     btio.reset := io.reset
