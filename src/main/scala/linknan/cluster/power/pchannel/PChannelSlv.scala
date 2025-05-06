@@ -52,13 +52,15 @@ class PChannelSlv(N:Int, M:Int) extends Module {
     rstCnt := rstCnt - 1.U
   }
 
-  fsm := fsmNext
+  when(preq || fsm =/= sStable0) {
+    fsm := fsmNext
+  }
   switch(fsm) {
     is(sReset) {
       fsmNext := Mux(rstCnt === 0.U, sRequest, fsm)
     }
     is(sStable0) {
-      fsmNext := Mux(preq, sRequest, fsm)
+      fsmNext := sRequest
     }
     is(sRequest) {
       fsmNext := Mux(respValid, Mux(respAccept, sAccept, sDenied), fsm)

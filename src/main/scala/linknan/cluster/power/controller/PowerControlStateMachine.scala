@@ -98,11 +98,13 @@ class PcsmCtrlDriver(isoDelay:Int = 16, clkEnDelay:Int = 64, rstDelay:Int = 16) 
   private val ckDone = Mux(ckNotChange, true.B, cnt === 0.U)
   private val fnDone = Mux(fnNotChange, true.B, cnt === 0.U)
 
-  fsm := fsmNext
   assert(PopCount(fsm) === 1.U, cf"Illegal state $fsm%x!")
+  when(reqValid || !fsm(idleBit)) {
+    fsm := fsmNext
+  }
   switch(fsm) {
     is(sIdle) {
-      fsmNext := Mux(reqValid, Mux(reqUp, sUpPwr, sDnFn), fsm)
+      fsmNext := Mux(reqUp, sUpPwr, sDnFn)
     }
     is(sUpPwr) {
       fsmNext := Mux(pwrDone, sUpSig, fsm)
