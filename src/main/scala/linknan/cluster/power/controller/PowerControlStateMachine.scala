@@ -65,10 +65,11 @@ class PcsmCtrlDriver(isoDelay:Int = 16, clkEnDelay:Int = 64, rstDelay:Int = 16) 
   private val doIso = (fsmNext(upSigBit) & !fsm(upSigBit)) | (fsmNext(dnSigBit) & !fsm(dnSigBit))
   private val doClk = (fsmNext(upCkBit) & !fsm(upCkBit)) | (fsmNext(dnCkBit) & !fsm(dnCkBit))
   private val doRst = (fsmNext(upFnBit) & !fsm(upFnBit)) | (fsmNext(dnFnBit) & !fsm(dnFnBit))
-  ctrlState.pwrEn := Mux(doPwr, reqCtrl.pwrEn, ctrlState.pwrEn)
-  ctrlState.sigEn := Mux(doIso, reqCtrl.sigEn, ctrlState.sigEn)
-  ctrlState.ckEn := Mux(doClk, reqCtrl.ckEn, ctrlState.ckEn)
-  ctrlState.fnEn := Mux(doRst, reqCtrl.fnEn, ctrlState.fnEn)
+  private val running = !fsm(idleBit)
+  ctrlState.pwrEn := Mux(doPwr & running, reqCtrl.pwrEn, ctrlState.pwrEn)
+  ctrlState.sigEn := Mux(doIso & running, reqCtrl.sigEn, ctrlState.sigEn)
+  ctrlState.ckEn := Mux(doClk & running, reqCtrl.ckEn, ctrlState.ckEn)
+  ctrlState.fnEn := Mux(doRst & running, reqCtrl.fnEn, ctrlState.fnEn)
 
   io.ctrl.pwrReq := ctrlState.pwrEn
   io.ctrl.isoEn := !ctrlState.sigEn
@@ -99,7 +100,7 @@ class PcsmCtrlDriver(isoDelay:Int = 16, clkEnDelay:Int = 64, rstDelay:Int = 16) 
   private val fnDone = Mux(fnNotChange, true.B, cnt === 0.U)
 
   assert(PopCount(fsm) === 1.U, cf"Illegal state $fsm%x!")
-  when(reqValid || !fsm(idleBit)) {
+  when(reqValid || running) {
     fsm := fsmNext
   }
   switch(fsm) {
