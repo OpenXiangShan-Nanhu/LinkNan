@@ -51,15 +51,13 @@ class PChannelMst(N:Int, M:Int, tinit:Int = 64, preTs:Int = 127, postTs:Int = 12
   io.resp.valid := fsm === sAccept || fsm === sDenied
   io.resp.bits := paccept
 
-  when(io.req.fire || fsm =/= sStable0) {
-    fsm := fsmNext
-  }
+  fsm := fsmNext
   switch(fsm) {
     is(sReset) {
       fsmNext := Mux(utilCnt === 0.U, sStable0, fsm)
     }
     is(sStable0) {
-      fsmNext := sRequest
+      fsmNext := Mux(io.req.fire, sRequest, fsm)
     }
     is(sRequest) {
       fsmNext := Mux(paccept, sAccept, Mux(pdenied, sDenied, fsm))
