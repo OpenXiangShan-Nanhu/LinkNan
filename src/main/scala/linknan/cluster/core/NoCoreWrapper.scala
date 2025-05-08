@@ -119,6 +119,8 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
     btio.mhartid := io.mhartid
     btio.clock := io.clock
     btio.reset := io.reset
+    btio.mtip := io.mtip
+    btio.msip := io.msip
 
     l2cache.module.io.hartId := io.mhartid
     l2cache.module.io_nodeID := 0.U(7.W)

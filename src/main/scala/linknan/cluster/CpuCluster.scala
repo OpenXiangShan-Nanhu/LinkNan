@@ -22,6 +22,8 @@ class BlockTestIO(val params:BlockTestIOParams)(implicit p:Parameters) extends B
   val ptw = Flipped(new TLBundle(params.ptwTlParams))
   val dcache = Flipped(new TLBundle(params.dcacheTlParams))
   val mhartid = Output(UInt(p(ZJParametersKey).clusterIdBits.W))
+  val mtip = Output(Bool())
+  val msip = Output(Bool())
 }
 
 case class BlockTestIOParams(
