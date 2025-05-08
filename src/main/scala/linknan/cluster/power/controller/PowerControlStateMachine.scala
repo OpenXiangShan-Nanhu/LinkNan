@@ -58,7 +58,7 @@ class PcsmCtrlDriver(isoDelay:Int = 16, clkEnDelay:Int = 64, rstDelay:Int = 16) 
   private val reqCtrl = RegEnable(io.req.bits.ctrlVec, reqFire)
   private val reqUp = RegEnable(io.req.bits.up, reqFire)
   private val ctrlState = RegInit(0.U.asTypeOf(new PcsmCtrlVec))
-  private val cnt = RegInit(0.U(log2Ceil(maxDelay + 1).W))
+  private val cnt = Reg(UInt(log2Ceil(maxDelay + 1).W))
   private val pwrResp = Some(RegNextN(io.ctrl.pwrResp, 2)).get
 
   private val doPwr = (fsmNext(upPwrBit) & !fsm(upPwrBit)) | (fsmNext(dnPwrBit) & !fsm(dnPwrBit))

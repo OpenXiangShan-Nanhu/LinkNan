@@ -162,9 +162,9 @@ class PowerController(tlParams:TilelinkParams) extends Module {
 
   private val upgrade = nextModeReg > currentMode
   private val fsmNext = WireInit(fsm)
-  private val holdCnt = RegInit(0.U(3.W))
+  private val holdCnt = Reg(UInt(3.W))
   when(modeUpdateReg && !io.deactivate) {
-    holdCnt := 7.U
+    holdCnt := Fill(holdCnt.getWidth, true.B)
   }.elsewhen(holdCnt.orR) {
     holdCnt := holdCnt - 1.U
   }
