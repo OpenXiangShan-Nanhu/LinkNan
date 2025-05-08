@@ -61,7 +61,7 @@ class FullNocConfig(socket: String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
 
-      NodeParam(nodeType = NodeType.RI, attr = "main"),
+      NodeParam(nodeType = NodeType.RI, attr = "main", outstanding = 32),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
       NodeParam(nodeType = NodeType.S,  addrSets = AddrConfig.mem2, outstanding = 32, attr = "soc"),
 
@@ -89,7 +89,7 @@ class ReducedNocConfig(socket: String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
       NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
 
-      NodeParam(nodeType = NodeType.RI, attr = "main"),
+      NodeParam(nodeType = NodeType.RI, attr = "main", outstanding = 32),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
 
       NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
@@ -111,7 +111,7 @@ class MinimalNocConfig(socket: String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.CC, cpuNum = 1, outstanding = 8, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
 
-      NodeParam(nodeType = NodeType.RI, attr = "main"),
+      NodeParam(nodeType = NodeType.RI, attr = "main", outstanding = 32),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
 
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
@@ -131,7 +131,7 @@ class ExtremeNocConfig(socket: String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
       NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
 
-      NodeParam(nodeType = NodeType.RI, attr = "main"),
+      NodeParam(nodeType = NodeType.RI, attr = "main", outstanding = 32),
       NodeParam(nodeType = NodeType.HI, defaultHni = true, attr = "main", outstanding = 32),
 
       NodeParam(nodeType = NodeType.CC, outstanding = 8, socket = socket),
