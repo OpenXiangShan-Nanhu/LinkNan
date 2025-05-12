@@ -251,6 +251,9 @@ local function init_components()
         -- 	}
         local sn_cfg = cfg.soc_cfg.snf[i + 1]
         local sn_hier = sn_cfg[1]:gsub("SimTop", cfg.top)
+        if cfg.simulator == "vcs" then
+            sn_hier = sn_cfg[1]:gsub("SimTop", dut:tostring())
+        end
 
         local axi_aw = ([[
             | valid
