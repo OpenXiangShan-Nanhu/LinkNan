@@ -211,7 +211,7 @@ class AXI4DramMemoryImp[T <: Data](outer: AXI4DramMemory) extends AXI4SlaveModul
 
   println(s"[AXI4Memory] ramWidth: ${ramWidth}")
   println(s"[AXI4Memory] ramSplit: ${ramSplit}")
-  println(s"[AXI4Memory] ramBaseAddr: ${ramBaseAddr}")
+  println(s"[AXI4Memory] ramBaseAddr: 0x${ramBaseAddr.toLong.toHexString}")
   println(s"[AXI4Memory] ramOffsetBits: ${ramOffsetBits}")
 
   // accept a read request and send it to the external model

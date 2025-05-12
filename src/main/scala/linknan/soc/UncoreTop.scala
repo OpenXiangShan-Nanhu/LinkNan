@@ -8,7 +8,7 @@ import linknan.soc.device.DevicesWrapper
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.ResetGen
 import xs.utils.sram.SramCtrlBundle
-import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, AxiWidthAdapter, BaseAxiXbar}
+import zhujiang.axi.{AxiBufferChain, AxiBundle, AxiParams, AxiUtils, AxiWidthAdapter, BaseAxiXbar}
 import zhujiang.chi.NodeIdBundle
 import zhujiang._
 
@@ -30,22 +30,27 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   private val dmaPort = noc.dmaIO.filter(_.params.attr.contains("main")).head
 
   private val dmaXBarP = dmaPort.params
-  private val devWrpSlvP = dmaXBarP.copy(attr = "debug", idBits = dmaXBarP.idBits - 2)
-  private val extCfgSlvP = dmaXBarP.copy(attr = "cfg", idBits = dmaXBarP.idBits - 2)
-  private val extDmaSlvP = dmaXBarP.copy(attr = "mem", idBits = dmaXBarP.idBits - 2)
-  private val dmaXBarParams = Seq(devWrpSlvP, extCfgSlvP, extDmaSlvP)
+  private val dbgWrpSlvP = dmaXBarP.copy(attr = "debug", idBits = dmaXBarP.idBits - 2)
+  private val extCfgSlvP = dmaXBarP.copy(attr = "cfg_s", idBits = dmaXBarP.idBits - 2)
+  private val extDmaSlvP = dmaXBarP.copy(attr = "mem_s", idBits = dmaXBarP.idBits - 2)
+  private val dmaXBarParams = Seq(dbgWrpSlvP, extCfgSlvP, extDmaSlvP)
 
-  private val devWrp = Module(new DevicesWrapper(cfgPort.params, devWrpSlvP))
+  private val devWrp = Module(new DevicesWrapper(cfgPort.params, dbgWrpSlvP))
   private val dmaXBar = Module(new AxiDmaXBar(dmaXBarParams))
-  private val extDmaDrv = Wire(new AxiBundle(extDmaSlvP))
-  private val cfgWidthAdapter = Module(new AxiWidthAdapter(extCfgSlvP, extCfgSlvP.copy(dataBits = 64), 4))
+  private val cfgWidthAdapter = Module(new AxiWidthAdapter(extCfgSlvP, extCfgSlvP.copy(dataBits = 64), 16))
+
+  private val extSlvMemBuf = Module(new AxiBufferChain(extDmaSlvP, 2))
+  private val extSlvCfgBuf = Module(new AxiBufferChain(extCfgSlvP.copy(dataBits = 64), 2))
+  private val extMstCfgBuf = Module(new AxiBufferChain(devWrp.io.ext.cfg.params, 2))
 
   devWrp.io.slv <> cfgPort
-  dmaPort <> dmaXBar.io.downstream.head
+  extMstCfgBuf.io.in <> devWrp.io.ext.cfg
+  cfgWidthAdapter.io.mst <> extSlvCfgBuf.io.out
 
   dmaXBar.io.upstream(0) <> devWrp.io.mst
   dmaXBar.io.upstream(1) <> cfgWidthAdapter.io.slv
-  dmaXBar.io.upstream(2) <> extDmaDrv
+  dmaXBar.io.upstream(2) <> extSlvMemBuf.io.out
+  dmaPort <> dmaXBar.io.downstream.head
 
   dmaXBar.io.upstream(1).aw.bits.addr := AclintAddrRemapper(cfgWidthAdapter.io.slv.aw.bits.addr)
   dmaXBar.io.upstream(1).aw.bits.cache := "b0000".U
@@ -53,15 +58,15 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   dmaXBar.io.upstream(1).ar.bits.cache := "b0000".U
   dontTouch(dmaXBar.io.upstream(1))
 
-  dmaXBar.io.upstream(2).aw.bits.cache := "b0010".U | extDmaDrv.aw.bits.cache
-  dmaXBar.io.upstream(2).ar.bits.cache := "b0010".U | extDmaDrv.ar.bits.cache
+  dmaXBar.io.upstream(2).aw.bits.cache := "b0010".U | extSlvMemBuf.io.out.aw.bits.cache
+  dmaXBar.io.upstream(2).ar.bits.cache := "b0010".U | extSlvMemBuf.io.out.ar.bits.cache
 
   val ddrDrv = noc.ddrIO.map(AxiUtils.getIntnl)
-  val cfgDrv = Seq(devWrp.io.ext.cfg) ++ noc.cfgIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
-  val dmaDrv = Seq(cfgWidthAdapter.io.mst, extDmaDrv) ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
+  val cfgDrv = Seq(extMstCfgBuf.io.out) ++ noc.cfgIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
+  val dmaDrv = Seq(extSlvCfgBuf.io.in, extSlvMemBuf.io.in) ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   val hwaDrv = noc.hwaIO.map(AxiUtils.getIntnl)
-  runIOAutomation(p(LinkNanParamsKey).nrAxiInterfaceBuffer)
+  runIOAutomation()
 
   private val clusterNum = noc.ccnIO.size
   val io = IO(new Bundle {

@@ -16,7 +16,6 @@ case class LinkNanParams(
   prefix:String = "",
   iodChipId:Int = 6,
   nrExtIntr: Int = 64,
-  nrAxiInterfaceBuffer:Int = 2,
   remapBase:Long = 0xE0_0000_0000L,
   remapMask: Long = 0xE0_1FFF_FFFFL,
   memBase:Long = 0x8000_0000L,

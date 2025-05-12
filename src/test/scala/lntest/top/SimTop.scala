@@ -118,8 +118,6 @@ class SimTop(implicit p: Parameters) extends Module {
   val tick = cnt < (freq / 2).U
   cnt := Mux(cnt === 0.U, (freq - 1).U, cnt - 1.U)
 
-  private val ccns = p(ZJParametersKey).island.filter(_.nodeType == NodeType.CC).map(_.attr)
-  private val bootAddr = if(ccns.contains("boom")) 0x80000000L.U else 0x10000000L.U
   private val socReset = reset.asAsyncReset.asBool || soc.io.ndreset
   soc.io.rtc_clock := tick
   soc.io.noc_clock := clock
@@ -128,7 +126,7 @@ class SimTop(implicit p: Parameters) extends Module {
   soc.io.dft := DontCare
   soc.io.ramctl := DontCare
   soc.io.dft.reset.lgc_rst_n := true.B.asAsyncReset
-  soc.io.default_reset_vector := bootAddr
+  soc.io.default_reset_vector := 0x80000000L.U
   soc.io.ci := 0.U
 
 
