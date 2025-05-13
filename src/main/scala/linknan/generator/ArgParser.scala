@@ -36,9 +36,14 @@ object ArgParser {
             case DebugOptionsKey => up(DebugOptionsKey).copy(AlwaysBasicDiff = true)
           }), tail)
 
-        case "--no-cores" :: tail =>
+        case "--no-core" :: tail =>
           parse(config.alter((site, here, up) => {
             case LinkNanParamsKey => up(LinkNanParamsKey).copy(removeCore = true)
+          }), tail)
+
+        case "--keep-l1c" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case LinkNanParamsKey => up(LinkNanParamsKey).copy(keepL1c = true)
           }), tail)
 
         case "--enable-hardware-assertion" :: tail =>

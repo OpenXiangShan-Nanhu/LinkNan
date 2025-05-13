@@ -13,6 +13,7 @@ case object LinkNanParamsKey extends Field[LinkNanParams]
 
 case class LinkNanParams(
   removeCore: Boolean = false,
+  keepL1c: Boolean = false,
   prefix:String = "",
   iodChipId:Int = 6,
   nrExtIntr: Int = 64,

@@ -160,7 +160,8 @@ class SimTop(implicit p: Parameters) extends Module {
   if(doBlockTest) {
     for(i <- soc.core.get.indices) {
       val ext = IO(new BlockTestIO(soc.core.get(i).params))
-      ext.suggestName(s"core_icn_$i")
+      if(soc.core.get(i).params.dcache) ext.suggestName(s"core_$i")
+      else ext.suggestName(s"core_icn_$i")
       ext <> soc.core.get(i)
     }
   }
