@@ -247,7 +247,7 @@ class MediumL3Config extends Config(
 )
 
 class SmallL3Config extends Config(
-  new LLCConfig(2 * 1024 * 1024, 8)
+  new LLCConfig(2 * 1024 * 1024, 8, 8, 64, 2)
 )
 
 // use extreme l3 config require the number of HNF no more than 4 in NoC
