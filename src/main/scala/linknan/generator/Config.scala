@@ -45,7 +45,7 @@ object AddrConfig {
   // interleaving granularity: 1KiB
   // DDR: 0x0_8000_0000 ~ 0xF_FFFF_FFFF
   val pmemRange = MemoryRange(0x000_8000_0000L, 0x010_0000_0000L)
-  private val interleaveOffset = 10
+  val interleaveOffset = 10
   private val interleaveBits = 2
   private val interleaveMask = ((0x1L << interleaveBits) - 1) << interleaveOffset
   private val nr4GSegments = (pmemRange.upper.toLong >> 32).toInt
@@ -72,6 +72,7 @@ object AddrConfig {
 
 class FullNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
+    hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
@@ -110,6 +111,7 @@ class FullNocConfig(socket: String) extends Config((site, here, up) => {
 
 class ReducedNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
+    hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
@@ -135,6 +137,7 @@ class ReducedNocConfig(socket: String) extends Config((site, here, up) => {
 
 class MinimalNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
+    hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
       NodeParam(nodeType = NodeType.CC, socket = socket),
@@ -155,6 +158,7 @@ class MinimalNocConfig(socket: String) extends Config((site, here, up) => {
 
 class ExtremeNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
+    hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
