@@ -4,5 +4,5 @@ s/_LOG_MODULE_PATH_/%m/g
 /FILE "firrtl_black_box_resource_files\.f"/,$d
 /^  .*DummyDPICWrapper/i\`ifndef SYNTHESIS
 /^  .*DummyDPICWrapper/{:L0; N; /;/!b L0; s/;/;\n`endif/ };
-/^  .*Delayer(_[0-9]*)? difftest/i\`ifndef SYNTHESIS
-/^  .*Delayer(_[0-9]*)? difftest/{:L1; N; /;/!b L1; s/;/;\n`endif/ };
+/^  .*DelayReg(_[0-9]*)? difftest/i\`ifndef SYNTHESIS
+/^  .*DelayReg(_[0-9]*)? difftest/{:L1; N; /;/!b L1; s/;/;\n`endif/ };
