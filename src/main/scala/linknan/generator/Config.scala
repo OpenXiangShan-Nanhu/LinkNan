@@ -3,6 +3,7 @@ package linknan.generator
 import coupledL2.prefetch.PrefetchReceiverParams
 import linknan.soc.{LinkNanParams, LinkNanParamsKey}
 import org.chipsalliance.cde.config.{Config, _}
+import xiangshan.backend.fu.{MemoryRange, PMAConfigEntry}
 import xiangshan.{PMParameKey, PMParameters, XSCoreParameters, XSCoreParamsKey}
 import xiangshan.cache.DCacheParameters
 import xiangshan.frontend.icache.ICacheParameters
@@ -23,19 +24,32 @@ class BaseConfig extends Config((site, here, up) => {
   case DebugOptionsKey => DebugOptions()
   case L2ParamKey => L2Param(hasMbist = false)
   case XSCoreParamsKey => XSCoreParameters(hasMbist = false)
-  case PMParameKey => PMParameters()
   case LogUtilsOptionsKey => LogUtilsOptions(enableDebug = false, enablePerf = true, fpgaPlatform = false)
   case PerfCounterOptionsKey => PerfCounterOptions(enablePerfPrint = true, enablePerfDB = false, XSPerfLevel.VERBOSE, 0)
   case LinkNanParamsKey => LinkNanParams()
+  case PMParameKey => PMParameters(
+    PmemRanges = Seq(AddrConfig.pmemRange),
+    PMAConfigs = Seq(
+      PMAConfigEntry(AddrConfig.pmemRange.upper, c = true, atomic = true, a = 1, x = true, w = true, r = true),
+      PMAConfigEntry(AddrConfig.pmemRange.lower, a = 1, w = true, r = true),
+      PMAConfigEntry(0x20000000L, a = 1, x = true, w = true, r = true),
+      PMAConfigEntry(0x10000000L, a = 1),
+      PMAConfigEntry(0x08001000L, a = 1, x = true, w = true, r = true), //linknan debug
+      PMAConfigEntry(0x08000000L, a = 1, w = true, r = true), //linknan peri
+      PMAConfigEntry(0)
+    )
+  )
 })
 
 object AddrConfig {
   // interleaving granularity: 1KiB
   // DDR: 0x0_8000_0000 ~ 0xF_FFFF_FFFF
+  val pmemRange = MemoryRange(0x000_8000_0000L, 0x010_0000_0000L)
   private val interleaveOffset = 10
   private val interleaveBits = 2
   private val interleaveMask = ((0x1L << interleaveBits) - 1) << interleaveOffset
-  private val memRange = Seq((0x000_8000_0000L, 0xFFF_8000_0000L)) ++ Seq.tabulate(14)(i => ((i.toLong + 1) << 32, 0xFFF_0000_0000L))
+  private val nr4GSegments = (pmemRange.upper.toLong >> 32).toInt
+  private val memRange = Seq((pmemRange.lower.toLong, 0xFFF_8000_0000L)) ++ Seq.tabulate(nr4GSegments - 2)(i => ((i.toLong + 1) << 32, 0xFFF_0000_0000L))
   private val memInterleaved = memRange.map(e => (e._1, e._2 | interleaveMask))
 
   private def memBank(bank: Long): Seq[(Long, Long)] = {
