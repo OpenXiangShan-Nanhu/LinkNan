@@ -45,7 +45,7 @@ object AddrConfig {
   // interleaving granularity: 1KiB
   // DDR: 0x0_8000_0000 ~ 0xF_FFFF_FFFF
   val pmemRange = MemoryRange(0x000_8000_0000L, 0x010_0000_0000L)
-  val interleaveOffset = 10
+  val interleaveOffset = 6
   private val interleaveBits = 2
   private val interleaveMask = ((0x1L << interleaveBits) - 1) << interleaveOffset
   private val nr4GSegments = (pmemRange.upper.toLong >> 32).toInt
