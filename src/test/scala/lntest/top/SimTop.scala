@@ -126,7 +126,7 @@ class SimTop(implicit p: Parameters) extends Module {
   soc.io.dft := DontCare
   soc.io.ramctl := DontCare
   soc.io.dft.reset.lgc_rst_n := true.B.asAsyncReset
-  soc.io.default_reset_vector := 0x80000000L.U
+  soc.io.default_reset_vector := 0x10000000L.U
   soc.io.ci := 0.U
 
 
