@@ -53,9 +53,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   dmaPort <> dmaXBar.io.downstream.head
 
   dmaXBar.io.upstream(1).aw.bits.addr := AclintAddrRemapper(cfgWidthAdapter.io.slv.aw.bits.addr)
-  dmaXBar.io.upstream(1).aw.bits.cache := "b0000".U
   dmaXBar.io.upstream(1).ar.bits.addr := AclintAddrRemapper(cfgWidthAdapter.io.slv.ar.bits.addr)
-  dmaXBar.io.upstream(1).ar.bits.cache := "b0000".U
   dontTouch(dmaXBar.io.upstream(1))
 
   dmaXBar.io.upstream(2).aw.bits.cache := "b0010".U | extSlvMemBuf.io.out.aw.bits.cache
