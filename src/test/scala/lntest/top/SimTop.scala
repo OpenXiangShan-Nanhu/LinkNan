@@ -64,7 +64,7 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   private val simMMIO = if(doBlockTest) None else Some(Module(l_simMMIO.get.module))
 
   val io = IO(new Bundle(){
-    val simFinal = Input(Bool())
+    val simFinal = Option.when(p(DebugOptionsKey).EnableLuaScoreBoard)(Input(Bool()))
   })
   soc.hwaIO.foreach(_ := DontCare)
   val ddrDrv = Seq()
@@ -156,7 +156,7 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
     val luaScb = Module(new LuaScoreboard(s"{ $l2Str }", nrHnf))
     luaScb.io.clock := clock
     luaScb.io.reset := reset.asBool
-    luaScb.io.sim_final := io.simFinal
+    luaScb.io.sim_final := io.simFinal.get
   }
 
   if(doBlockTest) {
