@@ -35,7 +35,7 @@ import xijiang.NodeType
 import xijiang.tfb.TrafficBoardFileManager
 import xs.utils.perf.{DebugOptionsKey, LogPerfHelper}
 import xs.utils.stage.XsStage
-import zhujiang.ZJParametersKey
+import zhujiang.{NocIOHelper, ZJParametersKey}
 import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
 
 class MasterBridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
@@ -43,7 +43,7 @@ class MasterBridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
   initialize()
 }
 
-class SimTop(implicit p: Parameters) extends Module {
+class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   override def resetType = Module.ResetType.Asynchronous
   private val debugOpts = p(DebugOptionsKey)
   private val doBlockTest = p(LinkNanParamsKey).removeCore
@@ -65,10 +65,13 @@ class SimTop(implicit p: Parameters) extends Module {
 
   val io = IO(new Bundle(){
     val simFinal = Input(Bool())
-    val dma = if(doBlockTest) Some(MixedVec(soc.dmaIO.map(drv => Flipped(new AxiBundle(drv.params))))) else None
-    val cfg = if(doBlockTest) Some(new AxiBundle(cfgPort.params)) else None
   })
   soc.hwaIO.foreach(_ := DontCare)
+  val ddrDrv = Seq()
+  val cfgDrv = Seq(cfgPort)
+  val dmaDrv = soc.dmaIO.map(AxiUtils.getIntnl)
+  val ccnDrv = Seq()
+  val hwaDrv = None
 
   private def connByName(sink:ReadyValidIO[Bundle], src:ReadyValidIO[Bundle]):Unit = {
     sink.valid := src.valid
@@ -82,9 +85,8 @@ class SimTop(implicit p: Parameters) extends Module {
   }
 
   if(doBlockTest) {
-    io.dma.get.zip(soc.dmaIO).foreach({case(a, b) => a <> b})
-    io.cfg.get <> cfgPort
     soc.io.ext_intr := 0.U
+    runIOAutomation()
   } else {
     soc.io.ext_intr := simMMIO.get.io.interrupt.intrVec
     val periCfg = simMMIO.get.cfg.head
