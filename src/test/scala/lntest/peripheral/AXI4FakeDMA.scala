@@ -76,12 +76,12 @@ class DMAFakeMSHR(implicit p: Parameters) extends Module {
     }.elsewhen(io.slave.addr === 6.U) {
       mask := io.slave.wdata
     }.otherwise {
-      data(io.slave.addr) := io.slave.wdata
+      data(io.slave.addr(log2Ceil(data.size) - 1, 0)) := io.slave.wdata
     }
   }
   io.slave.rdata := Mux(io.slave.addr === 4.U, state,
     Mux(io.slave.addr === 5.U, address,
-      Mux(io.slave.addr === 6.U, mask, data(io.slave.addr))))
+      Mux(io.slave.addr === 6.U, mask, data(io.slave.addr(log2Ceil(data.size) - 1, 0)))))
 
   io.master.req.valid := io.enable && (state === s_read || state === s_write)
   io.master.req.is_write := state === s_write
@@ -144,7 +144,7 @@ class AXI4FakeDMA
 
     // DMACtrl slave READ
     val reqReadOffset = raddr(5, 3)
-    val reqReadIdx = raddr(6 + log2Ceil(numInflight + 1) - 1, 6)
+    val reqReadIdx = raddr(6 + log2Ceil(numInflight) - 1, 6)
     val req_r = VecInit(mshr.map(_.slave_read(reqReadOffset)))
     in.r.bits.data := Mux(raddr(enable_addr_bit), enable, req_r(reqReadIdx))
 
