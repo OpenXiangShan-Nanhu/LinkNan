@@ -32,7 +32,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   private val dmaXBarP = dmaPort.params
   private val dbgWrpSlvP = dmaXBarP.copy(attr = "debug", idBits = dmaXBarP.idBits - 2)
   private val extCfgSlvP = dmaXBarP.copy(attr = "cfg_s", idBits = dmaXBarP.idBits - 2)
-  private val extDmaSlvP = dmaXBarP.copy(attr = "mem_s", idBits = dmaXBarP.idBits - 2)
+  private val extDmaSlvP = dmaXBarP.copy(attr = "mem_s_rt", idBits = dmaXBarP.idBits - 2)
   private val dmaXBarParams = Seq(dbgWrpSlvP, extCfgSlvP, extDmaSlvP)
 
   private val devWrp = Module(new DevicesWrapper(cfgPort.params, dbgWrpSlvP))
