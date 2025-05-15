@@ -107,6 +107,9 @@ function emu_comp(num_cores)
   cxx_flags = cxx_flags .. " -I" .. difftest_csrc_spikedasm
   cxx_flags = cxx_flags .. " -I" .. difftest_csrc_verilator
   cxx_flags = cxx_flags .. " -DNOOP_HOME=\\\\\\\"" .. abs_base .. "\\\\\\\""
+  if option.get("lua_scoreboard") then
+      cxx_flags = cxx_flags .. " -DDUT_CLEAN"
+  end
   if option.get("ref") == "Spike" then
     cxx_flags = cxx_flags .. " -DREF_PROXY=SpikeProxy"
   else

@@ -146,6 +146,7 @@ function simv_comp(num_cores)
   vcs_flags = vcs_flags .. " +incdir+" .. design_gen_dir
   if option.get("lua_scoreboard") then
     vcs_flags = vcs_flags .. " +define+MANUALLY_CALL_DPI_EXPORTER_TICK"
+    vcs_flags = vcs_flags .. " +define+DUT_CLEAN"
     vcs_flags = "vl-vcs-dpi " .. vcs_flags
   else
     vcs_flags = "vcs " .. vcs_flags
