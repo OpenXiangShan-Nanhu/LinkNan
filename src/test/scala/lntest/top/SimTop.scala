@@ -56,7 +56,6 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
     xbar.io.downstream.head
   }
 
-  soc.dmaIO.foreach(_ := DontCare)
   private val cfgPort = genAxiMstPort(soc.cfgIO)
   private val memPort = genAxiMstPort(soc.ddrIO)
 
@@ -88,10 +87,11 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
     soc.io.ext_intr := 0.U
     runIOAutomation()
   } else {
+    dmaDrv.foreach(_ := DontCare)
     soc.io.ext_intr := simMMIO.get.io.interrupt.intrVec
     val periCfg = simMMIO.get.cfg.head
     val periDma = simMMIO.get.dma.head
-    val dmaMain = AxiUtils.getIntnl(soc.dmaIO.head)
+    val dmaMain = dmaDrv.head
 
     connByName(periCfg.aw, cfgPort.aw)
     connByName(periCfg.ar, cfgPort.ar)
