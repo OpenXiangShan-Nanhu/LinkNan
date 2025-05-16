@@ -86,6 +86,8 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   if(doBlockTest) {
     soc.io.ext_intr := 0.U
     runIOAutomation()
+    dmaIO.foreach(InfoGen.addSaxi)
+    cfgIO.foreach(InfoGen.addMaxi)
   } else {
     dmaDrv.foreach(_ := DontCare)
     soc.io.ext_intr := simMMIO.get.io.interrupt.intrVec
