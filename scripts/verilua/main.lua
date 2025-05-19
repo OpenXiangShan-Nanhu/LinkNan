@@ -63,11 +63,28 @@ local function init_components()
         verbose = false,
     })
 
+    local axi_db = LuaDataBase {
+        table_name = "axi_db",
+        elements = {
+            "cycles => INTEGER",
+            "channel => TEXT",
+            "addr => TEXT",
+            "id => INTEGER",
+            "strb_hex_str => TEXT",
+            "data_hex_str => TEXT",
+            "others => TEXT",
+        },
+        save_cnt_max = 1000000 * 1,
+        path = ".",
+        file_name = "axi_db.db",
+        verbose = false
+    }
+
     for k, v in pairs(cfg.l2_cfg) do
         local l2_id = k
         local nr_slice = v[1]
         local nr_core = v[2] -- TODO: Not used for now
-        
+
         local l2_prefix = ""
         local l2_hier = ""
 
@@ -318,6 +335,8 @@ local function init_components()
             axi_w,
             axi_b,
             axi_r,
+
+            axi_db,
 
             cfg:get_or_else("verbose_sn_mon", true),
             cfg:get_or_else("enable_sn_mon", true)
