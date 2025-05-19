@@ -308,8 +308,8 @@ local function init_components()
         ]]):abdl {hier = sn_hier, prefix = "axi_r_", name = "SN AXI R"}
 
         local sn_mon = AXI4Monitor(
-            "sn_mon_out",
-                
+            "sn_mon_out_" .. i,
+
             -- 
             -- AXI Channels
             -- 
