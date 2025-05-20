@@ -1,6 +1,8 @@
 package linknan.generator
 
+import chisel3.util.log2Ceil
 import coupledL2.prefetch.PrefetchReceiverParams
+import freechips.rocketchip.diplomacy.{AddressRange, AddressSet}
 import linknan.soc.{LinkNanParams, LinkNanParamsKey}
 import org.chipsalliance.cde.config.{Config, _}
 import xiangshan.backend.fu.{MemoryRange, PMAConfigEntry}
@@ -44,17 +46,22 @@ class BaseConfig extends Config((site, here, up) => {
 object AddrConfig {
   // interleaving granularity: 1KiB
   // DDR: 0x0_8000_0000 ~ 0xF_FFFF_FFFF
-  val pmemRange = MemoryRange(0x000_8000_0000L, 0x010_0000_0000L)
   val interleaveOffset = 6
+  val pmemRange = MemoryRange(0x00_8000_0000L, 0x10_0000_0000L)
   private val interleaveBits = 2
   private val interleaveMask = ((0x1L << interleaveBits) - 1) << interleaveOffset
-  private val nr4GSegments = (pmemRange.upper.toLong >> 32).toInt
-  private val memRange = Seq((pmemRange.lower.toLong, 0xFFF_8000_0000L)) ++ Seq.tabulate(nr4GSegments - 2)(i => ((i.toLong + 1) << 32, 0xFFF_0000_0000L))
-  private val memInterleaved = memRange.map(e => (e._1, e._2 | interleaveMask))
+  private val memFullMask = (1L << log2Ceil(pmemRange.upper)) - 1
+  private val everything = AddressSet(0x0L, memFullMask)
 
-  private def memBank(bank: Long): Seq[(Long, Long)] = {
+  private val memFullAddrSet = everything.subtract(AddressSet(0x0L, (1L << log2Ceil(pmemRange.lower)) - 1))
+
+  def memBank(bank: Long):Seq[(Long, Long)] = {
     require(bank < (0x1L << interleaveBits))
-    memInterleaved.map(a => (a._1 | (bank << interleaveOffset), a._2))
+    memFullAddrSet.map(as => {
+      val base = as.base | (bank << interleaveOffset)
+      val mask = (as.mask.toLong ^ memFullMask) | interleaveMask
+      (base.toLong, mask)
+    })
   }
 
   val mem0 = memBank(0)
