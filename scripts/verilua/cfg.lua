@@ -49,6 +49,7 @@ end
 
 cfg.nr_sn = #cfg.soc_cfg.snf
 
+cfg.enable_scoreboard_db = false
 cfg.enable_scoreboard = true
 
 cfg.enable_l2_mon_out = true

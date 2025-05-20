@@ -344,6 +344,15 @@ local function init_components()
 
         table.insert(sn_mon_vec, sn_mon)
     end
+
+    if cfg.enable_scoreboard_db then
+        local scb = require "GlobalScoreboard"
+        scb:enable_debug_db({
+            get_cycles = function ()
+                return l2_mon_in_vec[1].cycles
+            end,
+        })
+    end
 end
 
 local print = function(...) print("[main.lua]", ...) end
