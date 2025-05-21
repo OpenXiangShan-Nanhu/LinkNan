@@ -5,11 +5,9 @@ local L2TLMonitor do
     os.setenv("KMH", 1)
     L2TLMonitor = require "L2TLMonitorV2"
 end
-local L2CHIMonitor do
-    os.setenv("L2CHIMonitorLCrd", 0)
-    L2CHIMonitor = require "L2CHIMonitorV2"
-end
+local L2CHIMonitor = require "L2CHIMonitorV2"
 local AXI4Monitor = require "AXI4Monitor"
+local DJMonitor = require "DongJiangMonitor"
 
 local f = string.format
 local tonumber = tonumber
@@ -20,6 +18,7 @@ end
 
 local l2_mon_in_vec = {}
 local l2_mon_out_vec = {}
+local hnf_mon_vec = {}
 local sn_mon_vec = {}
 
 local function init_components()
@@ -78,6 +77,27 @@ local function init_components()
         path = ".",
         file_name = "axi_db.db",
         verbose = false
+    }
+
+    local hnf_chi_db = LuaDataBase {
+        table_name = "HNFChiDB",
+        elements = {
+            "cycles => INTEGER",
+            "channel => TEXT",
+            "opcode => TEXT",
+            "address => TEXT",
+            "txn_id => INTEGER",
+            "dbid => INTEGER",
+            "src_id => INTEGER",
+            "tgt_id => INTEGER",
+            "resp => TEXT",
+            "data => TEXT",
+            "others => TEXT",
+        },
+        path = ".",
+        file_name = "hnf_chi_db.db",
+        save_cnt_max = 1000000 * 1,
+        verbose = false,
     }
 
     for k, v in pairs(cfg.l2_cfg) do
@@ -345,6 +365,141 @@ local function init_components()
         table.insert(sn_mon_vec, sn_mon)
     end
 
+    for i = 0, cfg.nr_hnf - 1 do
+        local hnf_cfg = cfg.soc_cfg.hnf[i + 1]
+        local hnf_hier = hnf_cfg[1]:gsub("SimTop", cfg.top)
+        if cfg.simulator == "vcs" then
+            hnf_hier = hnf_cfg[1]:gsub("SimTop", dut:tostring())
+        end
+
+        local function make_fake_chdl()
+            return {
+                __type = "CallableHDL",
+                get = function ()
+                    return 5555
+                end
+            }
+        end
+
+        local chi_txreq = ([[
+            | valid
+            | ready
+            | bits_TgtID => tgtID
+            | bits_SrcID => srcID
+            | bits_TxnID => txnID
+            | bits_Opcode => opcode
+            | bits_Size => size
+            | bits_Addr => addr
+            | bits_Order => order
+            | bits_ExpCompAck => expCompAck
+            | bits_ReturnTxnID => returnTxnID
+            | bits_ReturnNID => returnNID
+        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_tx_req_", name = "chi_txreq for hnf_mon" }
+        chi_txreq.memAttr = make_fake_chdl()
+        chi_txreq.snpAttr = make_fake_chdl()
+
+        local chi_txrsp = ([[
+            | valid
+            | ready
+            | bits_TgtID => tgtID
+            | bits_SrcID => srcID
+            | bits_TxnID => txnID
+            | bits_Opcode => opcode
+            | bits_Resp => resp
+            | bits_FwdState => fwdState
+            | bits_DBID => dbID
+        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_tx_resp_", name = "chi_txrsp for hnf_mon" }
+
+        local chi_txdat = ([[
+            | valid
+            | ready
+            | bits_TgtID => tgtID
+            | bits_SrcID => srcID
+            | bits_TxnID => txnID
+            | bits_HomeNID => homeNID
+            | bits_Opcode => opcode
+            | bits_Resp => resp
+            | bits_DBID => dbID
+            | bits_DataSource => fwdState
+            | bits_DataID => dataID
+            | bits_BE => be
+            | bits_Data => data
+        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_tx_data_", name = "chi_txdat for hnf_mon" }
+
+        local chi_rxreq = ([[
+            | valid
+            | ready
+            | bits_TgtID => tgtID
+            | bits_SrcID => srcID
+            | bits_TxnID => txnID
+            | bits_Opcode => opcode
+            | bits_Size => size
+            | bits_Addr => addr
+            | bits_Order => order
+            | bits_ExpCompAck => expCompAck
+        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_rx_req_", name = "chi_rxreq for hnf_mon" }
+        chi_rxreq.memAttr = make_fake_chdl()
+        chi_rxreq.snpAttr = make_fake_chdl()
+
+        local chi_rxrsp = ([[
+            | valid
+            | ready
+            | bits_TgtID => tgtID
+            | bits_SrcID => srcID
+            | bits_TxnID => txnID
+            | bits_Opcode => opcode
+            | bits_Resp => resp
+            | bits_FwdState => fwdState
+            | bits_DBID => dbID
+        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_rx_resp_", name = "chi_rxrsp for hnf_mon" }
+
+        local chi_rxdat = ([[
+            | valid
+            | ready
+            | bits_TgtID => tgtID
+            | bits_SrcID => srcID
+            | bits_TxnID => txnID
+            | bits_HomeNID => homeNID
+            | bits_Opcode => opcode
+            | bits_Resp => resp
+            | bits_DBID => dbID
+            | bits_DataID => dataID
+            | bits_BE => be
+            | bits_Data => data
+        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_rx_data_", name = "chi_rxdat for dj_mon" }
+
+        local chi_txsnp = ([[
+            | valid
+            | ready
+            | bits_TgtID => tgtID
+            | bits_SrcID => srcID
+            | bits_TxnID => txnID
+            | bits_FwdNID => fwdNID
+            | bits_FwdTxnID => fwdTxnID
+            | bits_Opcode => opcode
+            | bits_Addr => addr
+            | bits_RetToSrc => retToSrc
+        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_tx_snoop_", name = "chi_rxsnp for hnf_mon" }
+
+        local hnf_mon = DJMonitor(
+            "hnf_mon_" .. i,
+
+            chi_txreq,
+            chi_txrsp,
+            chi_txdat,
+            chi_txsnp,
+            chi_rxreq,
+            chi_rxrsp,
+            chi_rxdat,
+
+            hnf_chi_db,
+            cfg:get_or_else("verbose_hnf_mon", true),
+            cfg:get_or_else("enable_hnf_mon", true)
+        )
+
+        table.insert(hnf_mon_vec, hnf_mon)
+    end
+
     if cfg.enable_scoreboard_db then
         local scb = require "GlobalScoreboard"
         scb:enable_debug_db({
@@ -367,9 +522,10 @@ fork {
             cfg.load_config_from_env()
             init_components()
         end
-        
+ 
         local nr_l2_mon_in = #l2_mon_in_vec
         local nr_l2_mon_out = #l2_mon_out_vec
+        local nr_hnf_mon = #hnf_mon_vec
         local nr_sn_mon = #sn_mon_vec
 
         print("hello from main.lua")
@@ -382,6 +538,10 @@ fork {
 
             for i = 1, nr_l2_mon_out do
                 l2_mon_out_vec[i]:sample_all(cycles)
+            end
+
+            for i = 1, nr_hnf_mon do
+                hnf_mon_vec[i]:sample_all(cycles)
             end
 
             for i = 1, nr_sn_mon do
@@ -399,7 +559,7 @@ verilua "finishTask" {
          if is_error and cfg.simulator == "verilator" then
              local symbol_helper = require "verilua.utils.SymbolHelper"
              local xs_assert = symbol_helper.ffi_cast("void (*)(long long)", "xs_assert")
-            
+
              xs_assert(0)
          end
     end

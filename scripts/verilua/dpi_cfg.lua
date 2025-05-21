@@ -42,3 +42,9 @@ add_pattern {
     module = "AxiBridge",
     signals = "axi_r_.*(valid|ready|bits_id|bits_data|bits_resp|bits_last)"
 }
+
+add_pattern {
+    module = "HomeWrapper",
+    -- TODO: more than 1 lan IO?
+    signals = "io_lans_0_(tx_req|tx_resp|tx_data|tx_snoop|rx_req|rx_resp|rx_data)(?!.*(Excl|RespErr|CBusy|DoNotGoToSD|.*Attr)).*"
+}
