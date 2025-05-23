@@ -264,14 +264,18 @@ final case class SocNode(
     Property("#size-cells", IntegerValue(1)),
     Property("compatible", StringValue("simple-bus"))
   ),
-  children = if(p(LinkNanParamsKey).useClint) {
-    List(ClintNode(cpuCount))
-  } else {List.tabulate(cpuCount)(id => MtimerNode(
-    id = id,
-    harts = 1
-  )) ++ List(MswiNode(cpuCount), RefMtimerNode())
-  } ++ List.tabulate(cpuCount)(id => PpuNode(id = id)) ++
-    List(PlicNode(cpuCount) , DebugModuleNode(cpuCount))
+  children = {
+    val ppuList = List.tabulate(cpuCount)(id => PpuNode(id = id))
+    val clintList = if(p(LinkNanParamsKey).useClint) {
+      List(ClintNode(cpuCount))
+    } else {
+      List.tabulate(cpuCount)(id => MtimerNode(
+        id = id,
+        harts = 1
+      )) ++ List(MswiNode(cpuCount), RefMtimerNode())
+    }
+    ppuList ++ clintList ++ List(PlicNode(cpuCount) , DebugModuleNode(cpuCount))
+  }
 )
 
 final case class MemNode(
