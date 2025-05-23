@@ -165,6 +165,24 @@ final case class MswiNode(
   },
 )
 
+final case class ClintNode(
+  harts:Int
+)(implicit p:Parameters) extends DeviceNode(
+  name = s"clint@${p(LinkNanParamsKey).clintBase.toHexString}",
+  label = s"clint",
+  children = Nil,
+  properties = {
+    val intrSeq = Seq.tabulate(harts)(i => (s"cpu${i}_intc", 3)) ++
+      Seq.tabulate(harts)(i => (s"cpu${i}_intc", 7))
+    List(
+      Property("compatible", StringValue("thead,c900-clint")),
+      Property("reg", RegValue(p(LinkNanParamsKey).clintBase, 0x1_0000)),
+      Property("reg-names", StringValue("control")),
+      Property("interrupts-extended", IntrValue(intrSeq))
+    )
+  },
+)
+
 final case class PlicNode(
   harts:Int
 )(implicit p:Parameters) extends DeviceNode(
@@ -246,12 +264,14 @@ final case class SocNode(
     Property("#size-cells", IntegerValue(1)),
     Property("compatible", StringValue("simple-bus"))
   ),
-  children = List.tabulate(cpuCount)(id => MtimerNode(
+  children = if(p(LinkNanParamsKey).useClint) {
+    List(ClintNode(cpuCount))
+  } else {List.tabulate(cpuCount)(id => MtimerNode(
     id = id,
     harts = 1
-  )) ++
-    List.tabulate(cpuCount)(id => PpuNode(id = id)) ++
-    List(MswiNode(cpuCount), PlicNode(cpuCount), RefMtimerNode(), DebugModuleNode(cpuCount))
+  )) ++ List(MswiNode(cpuCount), RefMtimerNode())
+  } ++ List.tabulate(cpuCount)(id => PpuNode(id = id)) ++
+    List(PlicNode(cpuCount) , DebugModuleNode(cpuCount))
 )
 
 final case class MemNode(

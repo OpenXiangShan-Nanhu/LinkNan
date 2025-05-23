@@ -44,15 +44,49 @@ class DistributedAclint(tlParams: TilelinkParams)(implicit p: Parameters) extend
   private val updateMap = genWriteMap()
 }
 
-class AclintAddrRemapper(implicit p:Parameters) extends ZJModule {
-  private val lnP = p(LinkNanParamsKey)
-  private val mswiBase = lnP.mswiBase.U(raw.W)
-  private val sswiBase = lnP.sswiBase.U(raw.W)
-
+abstract class AddrRemapper(implicit p:Parameters) extends ZJModule {
+  val lnP = p(LinkNanParamsKey)
   val io = IO(new Bundle{
     val in = Input(UInt(raw.W))
     val out = Output(UInt(raw.W))
   })
+}
+
+class ClintAddrRemapper(implicit p:Parameters) extends AddrRemapper {
+  private val spaceBits = 16
+  private val clintBase = lnP.clintBase.U(raw.W)
+  private val mtimecmpBase = 0x4000
+  private val regAddr = io.in(spaceBits - 1, 0)
+  private val devAddr = io.in(raw - 1, spaceBits)
+
+  private val accessClint = devAddr === clintBase(raw - 1, spaceBits)
+  private val accessMsip = regAddr < mtimecmpBase.U
+  private val msipCoreId = regAddr(spaceBits - 1, log2Ceil(4))
+  private val mtimecmpCoreId = (regAddr - mtimecmpBase.U)(spaceBits - 1, log2Ceil(8))
+
+  private val out = Wire(new DeviceReqAddrBundle)
+  when(accessClint) {
+    when(accessMsip) {
+      out.ci := 0.U
+      out.tag := 0.U
+      out.core := msipCoreId
+      out.dev := 0x2010.U
+    }.otherwise {
+      out.ci := 0.U
+      out.tag := 0.U
+      out.core := mtimecmpCoreId
+      out.dev := 0x2008.U
+    }
+  }.otherwise {
+    out := io.in.asTypeOf(out)
+  }
+  io.out := out.asUInt
+}
+
+class AclintAddrRemapper(implicit p:Parameters) extends AddrRemapper {
+  private val mswiBase = lnP.mswiBase.U(raw.W)
+  private val sswiBase = lnP.sswiBase.U(raw.W)
+
   private val spaceBits = 14
   private val accessRefTimer = io.in(raw - 1, 4) === lnP.refTimerBase.U(raw.W)(raw - 1, 4)
   private val accessMswi = io.in(raw - 1, spaceBits) === mswiBase(raw - 1, spaceBits)
@@ -85,7 +119,7 @@ class AclintAddrRemapper(implicit p:Parameters) extends ZJModule {
 
 object AclintAddrRemapper {
   def apply(addr: UInt)(implicit p:Parameters): UInt = {
-    val remapper = Module(new AclintAddrRemapper)
+    val remapper = if(p(LinkNanParamsKey).useClint) Module(new ClintAddrRemapper) else Module(new AclintAddrRemapper)
     remapper.io.in := addr
     remapper.io.out
   }

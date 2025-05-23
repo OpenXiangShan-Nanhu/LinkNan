@@ -14,6 +14,7 @@ case object LinkNanParamsKey extends Field[LinkNanParams]
 case class LinkNanParams(
   removeCore: Boolean = false,
   keepL1c: Boolean = false,
+  useClint:Boolean = true,
   prefix:String = "",
   iodChipId:Int = 6,
   nrExtIntr: Int = 64,
@@ -30,6 +31,7 @@ case class LinkNanParams(
   refTimerBase: Long = 0x0100_8000L,
   rtcFreq: Long = 1_000_000
 ) {
+  lazy val clintBase = mswiBase
   lazy val remapBaseMaskBits = Seq.tabulate(64)(i => (remapMask >> i) & 0x1L).sum.toInt
   lazy val finalSgBase = remapBase + imiscSgBase
   lazy val finalMBase = remapBase + imsicMBase
