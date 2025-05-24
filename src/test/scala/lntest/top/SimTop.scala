@@ -117,10 +117,10 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   connByName(memPort.r, memAxi.r)
   connByName(memPort.b, memAxi.b)
 
-  val freq = 100
-  val cnt = RegInit((freq - 1).U)
-  val tick = cnt < (freq / 2).U
-  cnt := Mux(cnt === 0.U, (freq - 1).U, cnt - 1.U)
+  private val cntDiv = p(LinkNanParamsKey).rtcDiv
+  val cnt = RegInit((cntDiv - 1).U)
+  val tick = cnt < (cntDiv / 2).U
+  cnt := Mux(cnt === 0.U, (cntDiv - 1).U, cnt - 1.U)
 
   private val socReset = reset.asAsyncReset.asBool || soc.io.ndreset
   soc.io.rtc_clock := tick

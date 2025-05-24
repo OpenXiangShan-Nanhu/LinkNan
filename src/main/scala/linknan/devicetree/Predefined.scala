@@ -49,8 +49,7 @@ final case class InterruptControllerNode(
   label = s"cpu${id}_intc",
   children = Nil,
   properties = List(
-    Property("#address-cells", IntegerValue(1)),
-    Property("#size-cells", IntegerValue(0)),
+    Property("#address-cells", IntegerValue(0)),
     Property("#interrupt-cells", IntegerValue(1)),
     Property("interrupt-controller", FlagValue()),
     Property("compatible", StringValue("riscv,cpu-intc")),
@@ -75,7 +74,7 @@ final case class CoreNode(
       Property("reg", IntegerValue(id)),
       Property("status", StringValue(if(id == 0) "okay" else "disabled")),
       Property("compatible", PropertyValues(List(StringValue("bosc,nanhu-v5"), StringValue("riscv")))),
-      Property("riscv,isa", StringValue("rv64imafdc")),
+      Property("riscv,isa", StringValue("rv64imafdcv")),
       Property("riscv,pmpregions", IntegerValue(pmpP.NumPMP)),
       Property("riscv,pmpgranularity", IntegerValue(1 << pmpP.PlatformGrain)),
       Property("cache-op-block-size", IntegerValue(icacheP.blockBytes)),
@@ -192,8 +191,7 @@ final case class PlicNode(
   properties = {
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${i}_intc", 11)) ++ Seq.tabulate(harts)(i => (s"cpu${i}_intc", 9))
     List(
-      Property("#address-cells", IntegerValue(2)),
-      Property("#size-cells", IntegerValue(1)),
+      Property("#address-cells", IntegerValue(0)),
       Property("compatible", StringValue("riscv,plic0")),
       Property("reg", RegValue(p(LinkNanParamsKey).plicBase, 0x400_0000)),
       Property("reg-names", StringValue("control")),

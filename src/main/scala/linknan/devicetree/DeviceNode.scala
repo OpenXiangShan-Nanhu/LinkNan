@@ -30,7 +30,7 @@ case class HexValue(value: Long, utype:IntegerType.IntegerType = IntegerType.U64
   }
 }
 
-case class RegValue(base:Long, size:Long, addrCell:Int = 2, sizeCell:Int = 1) extends DeviceTreeValue {
+case class RegValue(base:Long, size:Long, addrCell:Int = 2, sizeCell:Int = 2) extends DeviceTreeValue {
   require(addrCell > 0)
   private def cellStr(data:Long, cells:Int) = {
     Seq.tabulate(cells)(i => "0x" + (0xFFFF_FFFF & (data >> (cells - i - 1) * 32)).toHexString).reduce((a:String, b:String) => s"$a $b")
@@ -78,6 +78,7 @@ class DeviceNode(
   def withProperty(prop: Property): DeviceNode = copy(properties = properties :+ prop)
   def withChild(child: DeviceNode): DeviceNode = copy(children = children :+ child)
   def withProperties(props:List[Property]):DeviceNode = copy(properties = properties ++ props)
+  def withChildren(in: List[DeviceNode]): DeviceNode = copy(children = children ++ in)
 
   def copy(
     name: String = name,

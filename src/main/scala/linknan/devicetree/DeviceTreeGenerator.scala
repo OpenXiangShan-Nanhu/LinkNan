@@ -1,5 +1,6 @@
 package linknan.devicetree
 
+import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
 import xijiang.NodeType
 import xs.utils.FileRegisters
@@ -31,20 +32,32 @@ object DeviceTreeGenerator {
 
   def lnGenerate(implicit p:Parameters): Unit = {
     val cpuNum = p(ZJParametersKey).island.filter(_.nodeType == NodeType.CC).map(_.cpuNum).sum
+    val ppuList = List.tabulate(cpuNum)(id => PpuNode(id = id))
+    val clintList = if(p(LinkNanParamsKey).useClint) {
+      List(ClintNode(cpuNum))
+    } else {
+      List.tabulate(cpuNum)(id => MtimerNode(
+        id = id,
+        harts = 1
+      )) ++ List(MswiNode(cpuNum), RefMtimerNode())
+    }
     val root = new DeviceNode(name = "/")
       .withProperties(List(
         Property("#address-cells", IntegerValue(2)),
         Property("#size-cells", IntegerValue(2))
       ))
       .withChild(CpuNode(cpuNum))
-      .withChild(SocNode(cpuNum))
+      .withChildren(ppuList)
+      .withChildren(clintList)
+      .withChild(PlicNode(cpuNum))
+      .withChild(DebugModuleNode(cpuNum))
 
     FileRegisters.add("software", s"dtsi", s"/dts-v1/;\n\n${formatNode(root)}")
   }
 
   def simGenerate(implicit p:Parameters):Unit = {
     val dts = new DeviceNode(name = "/")
-      .withChild(new DeviceNode(name = "soc", children = List(SerialNode())))
+      .withChild(SerialNode())
       .withChild(ChosenNode())
       .withChild(MemNode())
 
