@@ -192,7 +192,7 @@ final case class PlicNode(
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${i}_intc", 11)) ++ Seq.tabulate(harts)(i => (s"cpu${i}_intc", 9))
     List(
       Property("#address-cells", IntegerValue(0)),
-      Property("compatible", StringValue("riscv,plic0")),
+      Property("compatible", StringValue("sifive,plic-1.0.0")),
       Property("reg", RegValue(p(LinkNanParamsKey).plicBase, 0x400_0000)),
       Property("reg-names", StringValue("control")),
       Property("interrupt-controller", FlagValue()),
