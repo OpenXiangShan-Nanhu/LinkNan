@@ -21,7 +21,7 @@ case class LinkNanParams(
   remapBase:Long = 0xE0_0000_0000L,
   remapMask: Long = 0xE0_1FFF_FFFFL,
   memBase:Long = 0x8000_0000L,
-  memSizeInMiB: Long = 128,
+  memSizeInMiB: Long = 32,
   imiscSgBase: Long = 0x0000_0000L,
   imsicMBase: Long = 0x0080_0000L,
   debugBase: Long = 0x0800_0000L,
