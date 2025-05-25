@@ -15,10 +15,11 @@ class PolicyBundle extends Bundle {
 }
 
 class StateBundle extends Bundle {
-  val rsvd = UInt(16.W)
+  val rsvd = UInt(15.W)
+  val active = Bool()
   val pcsmMode = UInt(8.W)
   val devMode = UInt(8.W)
-  def readMask:UInt = Cat(0.U(16.W), Fill(16, true.B))
+  def readMask:UInt = Cat(0.U(15.W), Fill(17, true.B))
   def writeMask:UInt = 0.U(32.W)
 }
 
@@ -36,6 +37,7 @@ class PwrCtlBundle extends Bundle {
   val powerPolicy = Output(UInt(PowerMode.powerModeBits.W))
   val pcsmMode = Input(UInt(8.W))
   val devMode = Input(UInt(8.W))
+  val active = Input(Bool())
   val transResp = Input(Valid(Bool()))
 }
 
@@ -58,6 +60,7 @@ class PwrCtlTlIntf(tlParams:TilelinkParams) extends BaseTLULPeripheral(tlParams)
   private val stateWire = WireInit(0.U.asTypeOf(new StateBundle))
   stateWire.pcsmMode := ctl.pcsmMode
   stateWire.devMode := ctl.devMode
+  stateWire.active := ctl.active
   private val irqMaskReg = RegInit(Fill(32, true.B).asTypeOf(new IntrMaskBundle))
   private val irqPendingReg = RegInit(Fill(32, false.B).asTypeOf(new IntrMaskBundle))
 
@@ -160,6 +163,7 @@ class PowerController(tlParams:TilelinkParams) extends Module {
   devMst.io.req.bits := nextModeReg
   tlSlv.ctl.devMode := currentMode
   tlSlv.ctl.pcsmMode := RegNext(io.pcsm.modestat)
+  tlSlv.ctl.active := RegNext(io.dev.active(N - 1))
 
   private val upgrade = nextModeReg > currentMode
   private val fsmNext = WireInit(fsm)
