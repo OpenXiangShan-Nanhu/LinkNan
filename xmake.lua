@@ -92,7 +92,7 @@ task("emu", function()
       {'t', "threads", "kv", "16", "simulation threads"},
       {'j', "jobs", "kv", "16", "compilation jobs"},
       {'r', "ref", "kv", "Nemu", "reference model"},
-      {'C', "core", "kv", "minimal", "define cpu core config in soc"},
+      {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
       {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"}
@@ -146,7 +146,7 @@ task("simv", function()
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
       {'r', "ref", "kv", "Nemu", "reference model"},
-      {'C', "core", "kv", "minimal", "define cpu core config in soc"},
+      {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
       {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"}
