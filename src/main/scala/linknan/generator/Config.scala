@@ -143,17 +143,21 @@ class ReducedNocConfig(socket: String) extends Config((site, here, up) => {
   )
 })
 
-class MinimalNocConfig(socket: String) extends Config((site, here, up) => {
+class MinimalNocConfig(socket: String, ddrBuf:Int) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
       NodeParam(nodeType = NodeType.CC, socket = socket),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "memsys"))),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
 
       NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main", Some(AxiParams(idBits = 14))))),
       NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main")), defaultHni = true),
+
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(ddrBuf, 64, "memsys"))),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
+
       NodeParam(nodeType = NodeType.M),
       NodeParam(nodeType = NodeType.P)
     )
@@ -290,11 +294,12 @@ object ConfigGenerater {
     val nocCfg = noc match {
       case "full" => new FullNocConfig(socket)
       case "medium" => new ReducedNocConfig(socket)
-      case "small" => new MinimalNocConfig(socket)
+      case "small" => new MinimalNocConfig(socket, 0)
+      case "fpga" => new MinimalNocConfig(socket, 32)
       case "extreme" => new ExtremeNocConfig(socket)
       case _ =>
         require(requirement = false, s"not supported noc config: $noc")
-        new MinimalNocConfig(socket)
+        new MinimalNocConfig(socket, 0)
     }
     new Config(
       coreCfg ++ l3Cfg ++ nocCfg ++ new BaseConfig
