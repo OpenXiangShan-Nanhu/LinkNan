@@ -74,7 +74,7 @@ final case class CoreNode(
       Property("reg", IntegerValue(id)),
       Property("status", StringValue(if(id == 0) "okay" else "disabled")),
       Property("compatible", PropertyValues(List(StringValue("bosc,nanhu-v5"), StringValue("riscv")))),
-      Property("riscv,isa", StringValue("rv64imafdcv")),
+      Property("riscv,isa", StringValue("rv64imafdc")),
       Property("riscv,pmpregions", IntegerValue(pmpP.NumPMP)),
       Property("riscv,pmpgranularity", IntegerValue(1 << pmpP.PlatformGrain)),
       Property("cache-op-block-size", IntegerValue(icacheP.blockBytes)),
