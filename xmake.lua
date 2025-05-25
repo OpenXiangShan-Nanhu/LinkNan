@@ -71,8 +71,11 @@ task("soc" , function()
     os.execv(py_exec, postcompile_opts)
 
     local harden_table = {"LNTop", "NanhuCoreWrapper", "CpuCluster"}
+    local rel_opts = {"-x", option.get("prefix")}
+    if option.get("sim") then table.join2(rel_opts, {"-s", "SimTop"}) end
     local rel_scr_path = { path.join("scripts", "linknan", "release.py") }
-    if option.get("release") then os.execv(py_exec, table.join2(rel_scr_path, harden_table)) end
+    table.join2(rel_opts, harden_table)
+    if option.get("release") then os.execv(py_exec, table.join2(rel_scr_path, rel_opts)) end
   end)
 end)
 

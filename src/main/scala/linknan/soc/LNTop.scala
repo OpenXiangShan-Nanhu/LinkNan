@@ -76,6 +76,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   val ccnDrv = Seq()
   val hwaDrv = uncore.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
+  dontTouch(io)
 
   uncore.io.reset := io.reset
   uncore.io.noc_clock := io.noc_clock

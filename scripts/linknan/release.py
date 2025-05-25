@@ -103,10 +103,31 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Post Compilation Script for XS')
     parser.add_argument('harden', type=str, nargs='*', help='harden module list for filelist generation')
     parser.add_argument('-b', '--build', type=str, default="build", help='build directory')
+    parser.add_argument('-x', '--prefix', type=str, default="", help='module prefix')
+    parser.add_argument('-s', '--sim', type=str, default="", help='simulation top')
     args = parser.parse_args()
     curdir = os.path.abspath(os.getcwd())
 
     rtl_dir = os.path.join(curdir, args.build)
     release_dir = os.path.join(curdir, f'Release-LinkNan-{date.today().strftime("%b-%d-%Y")}')
 
-    release_pack(rtl_dir, release_dir, args.harden)
+    harden_list = [args.prefix + elm for elm in args.harden]
+    if args.sim != "":
+        harden_list.append(args.sim)
+    release_pack(rtl_dir, release_dir, harden_list)
+
+    if args.sim != "":
+        sim_fl = os.path.join(release_dir, args.sim + ".f")
+        sim_dir = os.path.join(release_dir, "sim")
+        if os.path.exists(sim_dir):
+            shutil.rmtree(sim_dir)
+        os.makedirs(sim_dir)
+        with open(sim_fl, 'r') as file:
+            for line in file:
+                abs_src = line.replace('$release_path', release_dir).rstrip('\n')
+                base_src = os.path.basename(abs_src)
+                shutil.move(abs_src, os.path.join(sim_dir, base_src))
+                
+
+
+
