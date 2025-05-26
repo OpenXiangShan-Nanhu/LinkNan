@@ -155,7 +155,7 @@ class ClkDiv2Reg extends BlackBox with HasBlackBoxInline {
   })
   setInline(s"$desiredName.sv",
     s"""
-       |module ClkDiv2Reg (
+       |module $desiredName (
        |  input wire clock,
        |  output reg out
        |);
