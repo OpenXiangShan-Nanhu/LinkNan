@@ -141,6 +141,7 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
       case l2_chi: coupledL2.tl2chi.DecoupledPortIO =>
         connectByName(txreq, l2_chi.tx.req)
         txreq.bits.SnoopMe := l2_chi.tx.req.bits.snoopMe
+        txreq.bits.QoS := 0.U
         connectByName(txrsp, l2_chi.tx.rsp)
         connectByName(txdat, l2_chi.tx.dat)
         connectByName(l2_chi.rx.snp, rxsnp)
