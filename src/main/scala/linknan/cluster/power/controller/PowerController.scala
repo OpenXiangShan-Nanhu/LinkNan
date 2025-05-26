@@ -132,7 +132,9 @@ class PowerController(tlParams:TilelinkParams) extends Module {
   private val modeUpdateReg = RegNext(modeUpdate, false.B)
   private val nextModeReg = RegEnable(nextMode, modeUpdate)
   dontTouch(nextDynMode)
-  assert(nextDynMode >= tlSlv.ctl.powerPolicy)
+  when(tlSlv.ctl.dynamicEn) {
+    assert(nextDynMode >= tlSlv.ctl.powerPolicy)
+  }
 
   tlSlv.tls <> io.tls
   tlSlv.tls.a.valid := io.tls.a.valid & fsm(idleBit)
