@@ -18,7 +18,7 @@ import xs.utils.cache.common.{AliasField, IsKeywordField, L2ParamKey, PrefetchFi
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import xs.utils.tl.ReqSourceField
 import zhujiang.HasZJParams
-import zhujiang.chi.FlitHelper.connIcn
+import zhujiang.chi.FlitHelper.{connIcn, hwaConn}
 import zhujiang.chi.{DataFlit, RReqFlit, RespFlit, RingFlit, SnoopFlit}
 
 class DCacheCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper with HasXSParameter {
@@ -112,9 +112,7 @@ class DCacheCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapp
       val dbgBd = WireInit(0.U.asTypeOf(Decoupled(new RingFlit(debugFlitBits))))
       if(assertionNode.isDefined) {
         dontTouch(assertionNode.get.hassert)
-        dbgBd.bits.Payload := assertionNode.get.hassert.bus.get.bits
-        dbgBd.valid := assertionNode.get.hassert.bus.get.valid
-        assertionNode.get.hassert.bus.get.ready := dbgBd.ready
+        hwaConn(dbgBd, assertionNode.get.hassert)
       }
       connIcn(pdc.io.icn.rx.debug.get, dbgBd)
     }
