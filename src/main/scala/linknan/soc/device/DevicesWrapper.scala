@@ -37,9 +37,10 @@ class AxiCfgXBar(icnAxiParams: AxiParams)(implicit val p: Parameters) extends Ba
   val misc = IO(new Bundle {
     val ci = Input(UInt(zjParams.ciIdBits.W))
   })
+  private val maxAddr = p(LinkNanParamsKey).internalDeviceMax
   private def slvMatcher(internal: Boolean)(addr: UInt): Bool = {
     val reqAddr = addr.asTypeOf(new ReqAddrBundle)
-    val matchRes = WireInit(reqAddr.ci === misc.ci && 0x0000_0000.U <= reqAddr.devAddr && reqAddr.devAddr < 0x1000_0000.U)
+    val matchRes = WireInit(reqAddr.ci === misc.ci && 0x0000_0000.U <= reqAddr.devAddr && reqAddr.devAddr < maxAddr.U)
     if(internal) {
       matchRes
     } else {

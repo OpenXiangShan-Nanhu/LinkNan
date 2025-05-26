@@ -31,6 +31,15 @@ object ArgParser {
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDifftest = true)
           }), tail)
 
+        case "--legacy" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case LinkNanParamsKey => up(LinkNanParamsKey).copy(
+              internalDeviceMax = 0x4000_0000L,
+              mswiBase = 0x3800_0000L,
+              plicBase = 0x3C00_0000L
+            )
+          }), tail)
+
         case "--basic-difftest" :: tail =>
           parse(config.alter((site, here, up) => {
             case DebugOptionsKey => up(DebugOptionsKey).copy(AlwaysBasicDiff = true)

@@ -33,11 +33,7 @@ class BaseConfig extends Config((site, here, up) => {
     PmemRanges = Seq(AddrConfig.pmemRange),
     PMAConfigs = Seq(
       PMAConfigEntry(AddrConfig.pmemRange.upper, c = true, atomic = true, a = 1, x = true, w = true, r = true),
-      PMAConfigEntry(AddrConfig.pmemRange.lower, a = 1, w = true, r = true),
-      PMAConfigEntry(0x20000000L, a = 1, x = true, w = true, r = true),
-      PMAConfigEntry(0x10000000L, a = 1),
-      PMAConfigEntry(0x08001000L, a = 1, x = true, w = true, r = true), //linknan debug
-      PMAConfigEntry(0x08000000L, a = 1, w = true, r = true), //linknan peri
+      PMAConfigEntry(AddrConfig.pmemRange.lower, a = 1, w = true, r = true, x = true),
       PMAConfigEntry(0)
     )
   )

@@ -18,6 +18,7 @@ task("soc" , function()
       {'m', "mbist", "k", nil, "generate simulation top"},
       {'p', "pldm_verilog", "k", nil, "enable only basic difftest function"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
+      {'Y', "legacy", "k", nil, "use XS legacy memory map"},
       {'x', "prefix", "kv", "", "assign a prefix for rtl modules"},
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "full", "define L3 config"},
@@ -38,6 +39,7 @@ task("soc" , function()
     if option.get("block_test_l2l3") then table.join2(chisel_opts, {"--no-core"}) end
     if option.get("keep_l1") then table.join2(chisel_opts, {"--keep-l1c"}) end
     if option.get("mbist") then table.join2(chisel_opts, {"--enable-mbist"}) end
+    if option.get("legacy") then table.join2(chisel_opts, {"--legacy"}) end
     if not option.get("clean_difftest") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--basic-difftest"}) end
     if not option.get("clean_difftest") and not option.get("pldm_verilog") then table.join2(chisel_opts, {"--enable-difftest"}) end
     if not option.get("enable_perf") then table.join2(chisel_opts, {"--fpga-platform"}) end
@@ -91,6 +93,7 @@ task("emu", function()
       {'n', "no_diff", "k", nil, "disable difftest"},
       {'f', "fast", "k", nil, "disable trace to improve simulation speed"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
+      {'Y', "legacy", "k", nil, "use XS legacy memory map"},
       {'h', "dramsim3_home", "kv", path.join(os.curdir(), "dependencies", "dramsim"), "dramsim3 home dir"},
       {'t', "threads", "kv", "16", "simulation threads"},
       {'j', "jobs", "kv", "16", "compilation jobs"},
@@ -148,6 +151,7 @@ task("simv", function()
       {'x', "no_xprop", "k", nil, "do not set xprop"},
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
+      {'Y', "legacy", "k", nil, "use XS legacy memory map"},
       {'r', "ref", "kv", "Nemu", "reference model"},
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "small", "define L3 config"},

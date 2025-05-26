@@ -61,6 +61,7 @@ class ClintAddrRemapper(implicit p:Parameters) extends AddrRemapper {
 
   private val accessClint = devAddr === clintBase(raw - 1, spaceBits)
   private val accessMsip = regAddr < mtimecmpBase.U
+  private val accessMtimer = regAddr === 0xBFF8.U
   private val msipCoreId = regAddr(spaceBits - 1, log2Ceil(4))
   private val mtimecmpCoreId = (regAddr - mtimecmpBase.U)(spaceBits - 1, log2Ceil(8))
 
@@ -71,6 +72,11 @@ class ClintAddrRemapper(implicit p:Parameters) extends AddrRemapper {
       out.tag := 0.U
       out.core := msipCoreId
       out.dev := 0x2010.U
+    }.elsewhen(accessMtimer){
+      out.ci := 0.U
+      out.tag := 0.U
+      out.core := 0.U
+      out.dev := 0x2000.U
     }.otherwise {
       out.ci := 0.U
       out.tag := 0.U
