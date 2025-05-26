@@ -19,10 +19,10 @@ mkdir -p "$release_dir"
 mkdir -p "$env_dir"
 
 # 2. get nexus-am and NEMU
-git clone https://github.com/OpenXiangShan-Nanhu/nexus-am.git -b nact $am_dir
-git clone https://github.com/OpenXiangShan-Nanhu/NEMU.git $nemu_dir
-git clone https://github.com/ucb-bar/berkeley-softfloat-3.git $nemu_dir/resource/softfloat/repo
-git clone https://github.com/OpenXiangShan/LibcheckpointAlpha.git $nemu_dir/resource/gcpt_restore
+git clone --depth=1 -b nact https://github.com/OpenXiangShan-Nanhu/nexus-am.git $am_dir
+git clone --depth=1 -b master https://github.com/OpenXiangShan-Nanhu/NEMU.git  $nemu_dir
+git clone --depth=1 -b master https://github.com/ucb-bar/berkeley-softfloat-3.git $nemu_dir/resource/softfloat/repo
+git clone --depth=1 -b main https://github.com/OpenXiangShan/LibcheckpointAlpha.git $nemu_dir/resource/gcpt_restore
 
 # 3. compile cases
 mkdir -p "$case_dir"
