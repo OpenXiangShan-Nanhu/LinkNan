@@ -1,6 +1,7 @@
 package linknan.soc.device
 
 import chisel3._
+import chisel3.util.Cat
 import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import zhujiang.axi._
@@ -37,10 +38,14 @@ class AxiCfgXBar(icnAxiParams: AxiParams)(implicit val p: Parameters) extends Ba
   val misc = IO(new Bundle {
     val ci = Input(UInt(zjParams.ciIdBits.W))
   })
-  private val maxAddr = p(LinkNanParamsKey).internalDeviceMax
+  private val idas = p(LinkNanParamsKey).internalDeviceAdressSets
   private def slvMatcher(internal: Boolean)(addr: UInt): Bool = {
-    val reqAddr = addr.asTypeOf(new ReqAddrBundle)
-    val matchRes = WireInit(reqAddr.ci === misc.ci && 0x0000_0000.U <= reqAddr.devAddr && reqAddr.devAddr < maxAddr.U)
+    val addrMatchVec = idas.map(as => {
+      val base = as.base.U(raw.W)
+      val mask = (~(as.mask.U(raw.W))).asUInt
+      (addr & mask) === base
+    })
+    val matchRes = WireInit(Cat(addrMatchVec).orR)
     if(internal) {
       matchRes
     } else {

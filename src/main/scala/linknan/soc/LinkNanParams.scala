@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.experimental.{SourceInfo, SourceLine}
 import chisel3.util._
 import freechips.rocketchip.devices.debug.DebugModuleParams
+import freechips.rocketchip.diplomacy.AddressSet
 import org.chipsalliance.cde.config.{Field, Parameters}
 import xijiang.NodeType
 import zhujiang.ZJParametersKey
@@ -29,7 +30,7 @@ case class LinkNanParams(
   mswiBase: Long = 0x0100_0000L,
   sswiBase: Long = 0x0100_4000L,
   refTimerBase: Long = 0x0100_8000L,
-  internalDeviceMax: Long = 0x1000_0000L,
+  internalDeviceAdressSets: Seq[AddressSet] = Seq(AddressSet(0x1000_0000L, 0x0FFF_FFFFL)),
   rtcFreq: Long = 12_000_000L,
   cpuFreq: Long = 2_000_000_000L
 ) {

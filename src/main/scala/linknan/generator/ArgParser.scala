@@ -1,5 +1,6 @@
 package linknan.generator
 
+import freechips.rocketchip.diplomacy.AddressSet
 import xs.utils.cache.common.L2ParamKey
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
@@ -34,7 +35,7 @@ object ArgParser {
         case "--legacy" :: tail =>
           parse(config.alter((site, here, up) => {
             case LinkNanParamsKey => up(LinkNanParamsKey).copy(
-              internalDeviceMax = 0x4000_0000L,
+              internalDeviceAdressSets = up(LinkNanParamsKey).internalDeviceAdressSets :+ AddressSet(0x3800_0000L, 0x07FF_FFFF),
               mswiBase = 0x3800_0000L,
               plicBase = 0x3C00_0000L
             )
