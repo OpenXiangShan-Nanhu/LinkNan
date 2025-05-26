@@ -18,7 +18,7 @@ class PChannelSlv(N:Int, M:Int) extends Module {
   private val fsm = RegInit(sReset)
   private val fsmNext = WireInit(fsm)
   private val rstCnt = RegInit(7.U(3.W))
-  private val pactive = RegNext(io.active)
+  private val pactive = RegNext(io.active, 0.U)
   private val preq = Some(RegNextN(io.p.req, 2)).get
   private val pstate = RegEnable(io.p.state, preq | fsm === sReset)
   private val paccept = RegNext(fsm === sAccept && resetDone)
