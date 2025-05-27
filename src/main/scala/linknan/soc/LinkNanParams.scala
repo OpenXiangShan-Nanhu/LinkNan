@@ -30,7 +30,7 @@ case class LinkNanParams(
   mswiBase: Long = 0x0100_0000L,
   sswiBase: Long = 0x0100_4000L,
   refTimerBase: Long = 0x0100_8000L,
-  internalDeviceAdressSets: Seq[AddressSet] = Seq(AddressSet(0x1000_0000L, 0x0FFF_FFFFL)),
+  internalDeviceAdressSets: Seq[AddressSet] = Seq(AddressSet(0x0000_0000L, 0x0FFF_FFFFL)),
   rtcFreq: Long = 12_000_000L,
   cpuFreq: Long = 2_000_000_000L
 ) {
