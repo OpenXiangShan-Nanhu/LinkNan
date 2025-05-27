@@ -371,6 +371,7 @@ local function init_components()
         if cfg.simulator == "vcs" then
             hnf_hier = hnf_cfg[1]:gsub("SimTop", dut:tostring())
         end
+        local dj_hier = hnf_hier .. ".hnx"
 
         local function make_fake_chdl()
             return {
@@ -394,9 +395,17 @@ local function init_components()
             | bits_ExpCompAck => expCompAck
             | bits_ReturnTxnID => returnTxnID
             | bits_ReturnNID => returnNID
-        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_tx_req_", name = "chi_txreq for hnf_mon" }
+        ]]):abdl { hier = dj_hier, prefix = "io_lan_tx_req_", name = "chi_txreq for hnf_mon" }
         chi_txreq.memAttr = make_fake_chdl()
         chi_txreq.snpAttr = make_fake_chdl()
+
+        local erqTgt = (hnf_hier .. ".erqTgt"):chdl()
+        chi_txreq.tgtID = {
+            __type = "CallableHDL",
+            get = function ()
+                return erqTgt:get()
+            end
+        }
 
         local chi_txrsp = ([[
             | valid
@@ -408,7 +417,7 @@ local function init_components()
             | bits_Resp => resp
             | bits_FwdState => fwdState
             | bits_DBID => dbID
-        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_tx_resp_", name = "chi_txrsp for hnf_mon" }
+        ]]):abdl { hier = dj_hier, prefix = "io_lan_tx_resp_", name = "chi_txrsp for hnf_mon" }
 
         local chi_txdat = ([[
             | valid
@@ -424,7 +433,7 @@ local function init_components()
             | bits_DataID => dataID
             | bits_BE => be
             | bits_Data => data
-        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_tx_data_", name = "chi_txdat for hnf_mon" }
+        ]]):abdl { hier = dj_hier, prefix = "io_lan_tx_data_", name = "chi_txdat for hnf_mon" }
 
         local chi_rxreq = ([[
             | valid
@@ -437,7 +446,7 @@ local function init_components()
             | bits_Addr => addr
             | bits_Order => order
             | bits_ExpCompAck => expCompAck
-        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_rx_req_", name = "chi_rxreq for hnf_mon" }
+        ]]):abdl { hier = dj_hier, prefix = "io_lan_rx_req_", name = "chi_rxreq for hnf_mon" }
         chi_rxreq.memAttr = make_fake_chdl()
         chi_rxreq.snpAttr = make_fake_chdl()
 
@@ -451,7 +460,7 @@ local function init_components()
             | bits_Resp => resp
             | bits_FwdState => fwdState
             | bits_DBID => dbID
-        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_rx_resp_", name = "chi_rxrsp for hnf_mon" }
+        ]]):abdl { hier = dj_hier, prefix = "io_lan_rx_resp_", name = "chi_rxrsp for hnf_mon" }
 
         local chi_rxdat = ([[
             | valid
@@ -466,7 +475,7 @@ local function init_components()
             | bits_DataID => dataID
             | bits_BE => be
             | bits_Data => data
-        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_rx_data_", name = "chi_rxdat for dj_mon" }
+        ]]):abdl { hier = dj_hier, prefix = "io_lan_rx_data_", name = "chi_rxdat for dj_mon" }
 
         local chi_txsnp = ([[
             | valid
@@ -479,7 +488,7 @@ local function init_components()
             | bits_Opcode => opcode
             | bits_Addr => addr
             | bits_RetToSrc => retToSrc
-        ]]):abdl { hier = hnf_hier, prefix = "io_lans_0_tx_snoop_", name = "chi_rxsnp for hnf_mon" }
+        ]]):abdl { hier = dj_hier, prefix = "io_lan_tx_snoop_", name = "chi_rxsnp for hnf_mon" }
 
         local hnf_mon = DJMonitor(
             "hnf_mon_" .. i,
@@ -522,7 +531,7 @@ fork {
             cfg.load_config_from_env()
             init_components()
         end
- 
+
         local nr_l2_mon_in = #l2_mon_in_vec
         local nr_l2_mon_out = #l2_mon_out_vec
         local nr_hnf_mon = #hnf_mon_vec

@@ -44,7 +44,11 @@ add_pattern {
 }
 
 add_pattern {
+    module = "DongJiang",
+    signals = "io_lan_(tx_req|tx_resp|tx_data|tx_snoop|rx_req|rx_resp|rx_data)(?!.*(Excl|RespErr|CBusy|DoNotGoToSD|.*Attr)).*"
+}
+
+add_pattern {
     module = "HomeWrapper",
-    -- TODO: more than 1 lan IO?
-    signals = "io_lans_0_(tx_req|tx_resp|tx_data|tx_snoop|rx_req|rx_resp|rx_data)(?!.*(Excl|RespErr|CBusy|DoNotGoToSD|.*Attr)).*"
+    signals = "erqTgt"
 }
