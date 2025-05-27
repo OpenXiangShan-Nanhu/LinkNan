@@ -128,6 +128,8 @@ if __name__ == "__main__":
                 base_src = os.path.basename(abs_src)
                 shutil.move(abs_src, os.path.join(sim_dir, base_src))
                 
-
+    mbist_dir = os.path.join(release_dir, "mbist")
+    if os.path.exists(mbist_dir):
+        shutil.copy(os.path.join(curdir, "scripts", "release", "sharedBusLvlibGen.tcl"), os.path.join(mbist_dir, "sharedBusLvlibGen.tcl"))
 
 

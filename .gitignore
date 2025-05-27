@@ -10,7 +10,7 @@ hs_err_pid*
 .vscode
 .metals
 .xmake
-Release*
+Release-*
 sim
 *EmuTasks
 debug
