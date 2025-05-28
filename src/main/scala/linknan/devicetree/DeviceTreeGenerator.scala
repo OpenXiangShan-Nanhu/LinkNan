@@ -61,6 +61,6 @@ object DeviceTreeGenerator {
       .withChild(ChosenNode())
       .withChild(MemNode())
 
-    FileRegisters.add("software", s"LNSim.dts", s"/dts-v1/;\n/include/ \"LNTop.dtsi\"\n${formatNode(dts)}", dontCarePrefix = true)
+    FileRegisters.add("software", s"LNSim.dts", s"/dts-v1/;\n/include/ \"${p(LinkNanParamsKey).prefix}LNTop.dtsi\"\n${formatNode(dts)}", dontCarePrefix = true)
   }
 }
