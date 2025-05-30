@@ -74,8 +74,6 @@ def release_pack(build_dir:str, release_dir, harden_list:list[str]):
     os.makedirs(dst_rtl_dir)
     os.makedirs(dst_macro_dir)
 
-    fpga_filelist = os.path.join(release_dir, "FPGA.f")
-    fpga_file = open(fpga_filelist, mode = "w")
 
     for filename in os.listdir(build_dir):
         full_name = os.path.join(build_dir, filename)
@@ -91,10 +89,8 @@ def release_pack(build_dir:str, release_dir, harden_list:list[str]):
             fn, _ = os.path.splitext(bn)
             if is_macros(fn):
                 shutil.copy(cp_src, cp_macro_dst)
-                fpga_file.write(f"$release_path/macros/{bn}\n")
             else:
                 shutil.copy(cp_src, cp_rtl_dst)
-                fpga_file.write(f"$release_path/rtl/{bn}\n")
 
     print("Doing release procedures!")
     parse_children(src_rtl_dir, release_dir, harden_list)
@@ -110,6 +106,8 @@ if __name__ == "__main__":
 
     rtl_dir = os.path.join(curdir, args.build)
     release_dir = os.path.join(curdir, f'Release-LinkNan-{date.today().strftime("%b-%d-%Y")}')
+    if os.path.exists(release_dir):
+        shutil.rmtree(release_dir)
 
     harden_list = [args.prefix + elm for elm in args.harden]
     if args.sim != "":
@@ -128,7 +126,16 @@ if __name__ == "__main__":
                 base_src = os.path.basename(abs_src)
                 shutil.move(abs_src, os.path.join(sim_dir, base_src))
         shutil.os.remove(sim_fl)
-                
+
     mbist_dir = os.path.join(release_dir, "mbist")
     if os.path.exists(mbist_dir):
         shutil.copy(os.path.join(curdir, "scripts", "release", "sharedBusLvlibGen.tcl"), os.path.join(mbist_dir, "sharedBusLvlibGen.tcl"))
+
+    fpga_filelist = os.path.join(release_dir, args.prefix + "FullSys.f")
+    with open(fpga_filelist, 'w') as f:
+        rel_rtl_dir = os.path.join(release_dir, "rtl")
+        rel_mac_dir = os.path.join(release_dir, "macros")
+        for filename in os.listdir(rel_rtl_dir):
+            f.write(f"$release_path/rtl/{filename}\n")
+        for filename in os.listdir(rel_mac_dir):
+            f.write(f"$release_path/macros/{filename}\n")
