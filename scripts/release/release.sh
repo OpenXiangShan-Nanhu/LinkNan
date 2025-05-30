@@ -43,5 +43,5 @@ cp -r "$linknan_dir"/dependencies/difftest "$env_dir"
 cp -r "$linknan_dir"/scripts/release/sram_tb "$env_dir"
 
 # 5. tar and archive
-tar -zcvf "$release_dir.tar.gz" "$release_dir"
+tar -zcvf "release_${data}_${commit}.tar.gz" "release_${data}_${commit}"
 [ -d "/nfs/share/home/nact-release" ] && cp "$release_dir.tar.gz" /nfs/share/home/nact-release
