@@ -45,9 +45,7 @@ FORCE:
 
 $(DUT_FILELIST): FORCE
 	@mkdir -p $(SIM_DIR)
-	@cat $(RELEASE_DIR)/bosc_LNTop.f \
-		 $(RELEASE_DIR)/bosc_CpuCluster.f \
-		 $(RELEASE_DIR)/bosc_NanhuCoreWrapper.f \
+	@cat $(RELEASE_DIR)/bosc_FullSys.f \
 		 | sort -u > $(DUT_FILELIST)
 	sed -i 's|$$release_path|$(RELEASE_DIR)|g' $(DUT_FILELIST)
 

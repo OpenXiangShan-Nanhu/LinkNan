@@ -36,7 +36,9 @@ mv "$package_dir"/generated-src "$package_dir"/sim "$env_dir"
 mv "$package_dir" "$release_dir"
 
 cp -r "$linknan_dir"/scripts/release/Makefile "$release_dir"
+cp -r "$linknan_dir"/scripts/release/sram_tb.mk "$release_dir"
 cp -r "$linknan_dir"/dependencies/difftest "$env_dir"
+cp -r "$linknan_dir"/scripts/release/sram_tb "$env_dir"
 
 # 5. tar and archive
 tar -zcvf "$release_dir.tar.gz" "$release_dir"

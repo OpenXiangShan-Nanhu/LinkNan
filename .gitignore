@@ -14,3 +14,4 @@ Release-*
 sim
 *EmuTasks
 debug
+release_*

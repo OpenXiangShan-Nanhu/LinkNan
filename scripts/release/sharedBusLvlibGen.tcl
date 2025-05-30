@@ -1,13 +1,15 @@
 #!/usr/bin/tclsh
 #--------------------------------------------------------------------------- 
-#             Copyright 2024 Beijing Institute of Open Source Chip
+#             Copyright 2025 Beijing Institute of Open Source Chip
 #--------------------------------------------------------------------------- 
 # Author      : hezhiheng
 # Email       : hezhiheng@bosc.ac.cn
-# Date        : 2024-07-22
-# Version     : v1.4
+# Date        : 2025-04-28
+# Version     : v1.6
 # Language    : TCL
-# Latest   Version Description v1.4 : Modify selectOH and writeMask relationship cause of sharedbus structural adjustment
+# Latest   Version Description v1.6 : More sXhXlX Cfg Support
+# Previous Version Description v1.5 : Multicycle get form sXhXlX,Now just support s1h0l1&s1h0l2
+# Previous Version Description v1.4 : Modify selectOH and writeMask relationship cause of sharedbus structural adjustment
 # Previous Version Description v1.3 : Support Not Fully Mapping Warning Message 
 # Previous Version Description v1.2 : Support BankAddr 
 # Previous Version Description v1.1 : Support DataJoint 
@@ -92,7 +94,7 @@ while { [gets $file_source line] >= 0 } {
         set bankaddr_width [buswidth $arr_mem($num_line,5)]
         set selectOH       $arr_mem($num_line,6)
         set physical_mem   $arr_mem($num_line,8)
-        regexp {([0-9]*)p([0-9]*)x([0-9]*)m([0-9]*)(.*)} $logical_mem sum port_num depth width mask multicycle
+        regexp {([0-9]*)p([0-9]*)[xX]([0-9]*)m([0-9]*)(.*)} $logical_mem sum port_num depth width mask multicycle
         set rambits [bit $depth]
         set rambits [expr $rambits + $bankaddr_width]
         set depth   [expr $depth * (2 ** $bankaddr_width)]
@@ -100,11 +102,31 @@ while { [gets $file_source line] >= 0 } {
         set width [expr $width / $selectOH]
         puts $file_sink_log "MemoryTemplate(mbist_$logical_mem) \{"
         puts $file_sink_log "  Algorithm : SMarchChkbvcd;"
-        if {[regexp {multicycle} $multicycle mtc]} {
-           puts $file_sink_log "  OperationSet : SyncWRVcd_ReadCyclesPerOp2_Setup0_WriteCyclesPerOp2;"
-           puts $file_sink_log "  ExtraOperationSets : SyncWRVcd_ReadCyclesPerOp2_Setup0_WriteCyclesPerOp2;"
+        if {[regexp {s([0-9])h([0-9])l([0-9])} $multicycle mtc inSetup inHold outLatency]} {
+           set extraHold  [expr {($inSetup == $inHold) ? 1 : 0}]
+           set setupCycle [expr $inSetup - 1]
+           set readPerOp  $outLatency
+           if {$outLatency > [expr $setupCycle + $extraHold]} {
+              set writePerOp $outLatency
+           } else {
+              set writePerOp [expr $setupCycle + $extraHold + 1]
+           }
+           if {($inSetup == 1) && ($inHold == 0) && ($outLatency == 1)} {
+             puts $file_sink_log "  OperationSet : SyncWRvcd;"
+           } else {
+             puts $file_sink_log "  OperationSet : SyncWRVcd_ReadCyclesPerOp${readPerOp}_Setup${setupCycle}_WriteCyclesPerOp${writePerOp};"
+             puts $file_sink_log "  ExtraOperationSets : SyncWRVcd_ReadCyclesPerOp${readPerOp}_Setup${setupCycle}_WriteCyclesPerOp${writePerOp};"
+           }
         } else {
            puts $file_sink_log "  OperationSet : SyncWRvcd;"
+        }
+        set data_joint 1
+        if {[regexp {([0-9]*)[xX]([0-9]*)} $physical_mem]} {
+           regexp {([0-9]*)[xX]([0-9]*)} $physical_mem sum cell_depth cell_width
+           if {$cell_width >= $width} {
+           } else {
+              set data_joint [expr int(ceil(double($width)/$cell_width))]
+           }
         }
         if {$port_num == 2} {
             puts $file_sink_log "  LogicalPorts        : 1R1W;"
@@ -117,6 +139,8 @@ while { [gets $file_source line] >= 0 } {
                 } elseif {[regexp {.*mask.*} [lindex $line 0]] && $bitwrite == "true"} {
                     if {$mask_bits > 1} {
                       puts $file_sink_log "  Port([lindex $line 0]\[[expr $mask_bits - 1]:0\]) \{"
+                    } elseif {$data_joint > 1} {
+                      puts $file_sink_log "  Port([lindex $line 0]\[[expr $data_joint - 1]:0\]) \{"
                     } else {
                       puts $file_sink_log "  Port([lindex $line 0]) \{"
                     }
@@ -141,6 +165,8 @@ while { [gets $file_source line] >= 0 } {
                 } elseif {[regexp {.*mask.*} [lindex $line 0]] && $bitwrite == "true"} {
                     if {$mask_bits > 1} {
                       puts $file_sink_log "  Port([lindex $line 0]\[[expr $mask_bits - 1]:0\]) \{"
+                    } elseif {$data_joint > 1} {
+                      puts $file_sink_log "  Port([lindex $line 0]\[[expr $data_joint - 1]:0\]) \{"
                     } else {
                       puts $file_sink_log "  Port([lindex $line 0]) \{"
                     }
@@ -391,7 +417,6 @@ while {$count < $num_line} {
 }
 puts $file_sink_clu "    }"
 set count 3
-set mtc_flag false
 while {$count < $num_line} {
     set logical_label  $arr_mem($count,0)
     set logical_mem    $arr_mem($count,1)
@@ -400,14 +425,11 @@ while {$count < $num_line} {
     set bankaddr_width [buswidth $arr_mem($count,5)]
     set selectOH       $arr_mem($count,6)
     set physical_mem   $arr_mem($count,8)
-    regexp {([0-9]*)p([0-9]*)x([0-9]*)m([0-9]*)(.*)} $logical_mem sum port_num depth width mask multicycle
+    regexp {([0-9]*)p([0-9]*)[xX]([0-9]*)m([0-9]*)(.*)} $logical_mem sum port_num depth width mask multicycle
     set rambits [bit $depth]
     set rambits [expr $rambits + $bankaddr_width]
     set mask_bits [expr $width / $mask / $selectOH]
     set width [expr $width / $selectOH]
-    if {[regexp {multicycle} $multicycle mtc]} {
-       set mtc_flag true
-    }
     puts $file_sink_clu "    LogicalMemoryToInterfaceMapping($logical_label) {"
     puts $file_sink_clu "      MemoryTemplate : mbist_$logical_mem;"
     puts $file_sink_clu "      PipelineDepth : $pipdepth;"
@@ -420,9 +442,19 @@ while {$count < $num_line} {
     } else {
        puts $file_sink_clu "        LogicalMemoryAddress\[[expr $rambits - 1]:0\]          : InterfaceAddress\[[expr $rambits - 1]:0\];"
     }
+    set data_joint 1
+    if {[regexp {([0-9]*)[xX]([0-9]*)} $physical_mem]} {
+       regexp {([0-9]*)[xX]([0-9]*)} $physical_mem sum cell_depth cell_width
+       if {$cell_width >= $width} {
+       } else {
+          set data_joint [expr int(ceil(double($width)/$cell_width))]
+       }
+    }
     if {$bitwrite == "true"} {
        if {$mask_bits > 1} {
          puts $file_sink_clu "        LogicalMemoryGroupWriteEnable\[[expr $mask_bits - 1]:0\]  : InterfaceGroupWriteEnable\[[expr $mask_bits - 1]:0\];"
+       } elseif {$data_joint > 1} {
+         puts $file_sink_clu "        LogicalMemoryGroupWriteEnable\[[expr $data_joint - 1]:0\]  : InterfaceGroupWriteEnable\[[expr $data_joint - 1]:0\];"
        } else {
          puts $file_sink_clu "        LogicalMemoryGroupWriteEnable\[0\]  : InterfaceGroupWriteEnable\[0\];"
        }
@@ -433,341 +465,574 @@ while {$count < $num_line} {
 }
 puts $file_sink_clu "  \}"
 puts $file_sink_clu "\}"
-if {$mtc_flag == "true"} {
-   puts $file_sink_clu ""
-   puts $file_sink_clu "OperationSet(SyncWRVcd_ReadCyclesPerOp2_Setup0_WriteCyclesPerOp2) {"
-   puts $file_sink_clu "  Operation(NoOperation) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(Write) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : On;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      ShadowReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadAddress : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadAddress : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(Read) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadEnable : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      ShadowReadEnable : On;"
-   puts $file_sink_clu "      StrobeDataOut;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(ReadModifyWrite) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadEnable : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : On;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      ShadowReadAddress : On;"
-   puts $file_sink_clu "      StrobeDataOut;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(ReadModifyWrite_WithSelectOff) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : Off;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : Off;"
-   puts $file_sink_clu "      WriteEnable : On;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      StrobeDataOut;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(WriteReadCompare) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : On;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      ShadowReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadAddress : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadAddress : Off;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      ShadowReadAddress : Off;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      StrobeDataOut;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(WriteReadCompare_EvenGWE_ON) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : On;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      ShadowReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadAddress : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      OddGroupWriteEnable : Off;"
-   puts $file_sink_clu "      EvenGroupWriteEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadAddress : Off;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      OddGroupWriteEnable : Off;"
-   puts $file_sink_clu "      EvenGroupWriteEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      OddGroupWriteEnable : Off;"
-   puts $file_sink_clu "      EvenGroupWriteEnable : On;"
-   puts $file_sink_clu "      StrobeDataOut;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(WriteReadCompare_OddGWE_ON) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : On;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      ShadowReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadAddress : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      OddGroupWriteEnable : On;"
-   puts $file_sink_clu "      EvenGroupWriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadAddress : Off;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      OddGroupWriteEnable : On;"
-   puts $file_sink_clu "      EvenGroupWriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      OddGroupWriteEnable : On;"
-   puts $file_sink_clu "      EvenGroupWriteEnable : Off;"
-   puts $file_sink_clu "      StrobeDataOut;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(WriteReadCompare_AllGWE_OFF) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : On;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      ShadowReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadAddress : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      OddGroupWriteEnable : Off;"
-   puts $file_sink_clu "      EvenGroupWriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      ShadowReadAddress : Off;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      OddGroupWriteEnable : Off;"
-   puts $file_sink_clu "      EvenGroupWriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "      OddGroupWriteEnable : Off;"
-   puts $file_sink_clu "      EvenGroupWriteEnable : Off;"
-   puts $file_sink_clu "      StrobeDataOut;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(Read_WithReadEnableOff) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      StrobeDataOut;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(ReadModifyWrite_Column_ShadowWriteRead) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ConcurrentWriteColumnAddress : On;"
-   puts $file_sink_clu "      ConcurrentWriteDataPolarity : Inverse;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      ConcurrentReadEnable : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      ConcurrentWriteColumnAddress : Off;"
-   puts $file_sink_clu "      WriteEnable : On;"
-   puts $file_sink_clu "      ConcurrentReadEnable : On;"
-   puts $file_sink_clu "      ConcurrentReadColumnAddress : On;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      StrobeDataOut;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(ReadModifyWrite_Row_ShadowWriteRead) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ConcurrentWriteRowAddress : On;"
-   puts $file_sink_clu "      ConcurrentWriteDataPolarity : Inverse;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : On;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      ConcurrentWriteRowAddress : Off;"
-   puts $file_sink_clu "      ConcurrentReadEnable : On;"
-   puts $file_sink_clu "      ConcurrentReadRowAddress : On;"
-   puts $file_sink_clu "      StrobeDataOut;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "  Operation(WriteRead_Column_ShadowReadWrite) {"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : On;"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "      ConcurrentReadEnable : On;"
-   puts $file_sink_clu "      ConcurrentReadColumnAddress : On;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      Select : On;"
-   puts $file_sink_clu "      WriteEnable : Off;"
-   puts $file_sink_clu "      ReadEnable : On;"
-   puts $file_sink_clu "      ConcurrentReadColumnAddress : Off;"
-   puts $file_sink_clu "      ConcurrentWriteColumnAddress : On;"
-   puts $file_sink_clu "      ConcurrentWriteDataPolarity : Inverse;"
-   puts $file_sink_clu "      OutputEnable : On;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "    Tick {"
-   puts $file_sink_clu "      ReadEnable : Off;"
-   puts $file_sink_clu "    }"
-   puts $file_sink_clu "  }"
-   puts $file_sink_clu "}"
-}
 
-
-close $file_source
 close $file_sink_clu
 puts "$file_sink_clu_name is generated successfully"
+
+set count 3
+set file_sink_ops_name_forward ""
+while {$count < $num_line} {
+    set logical_mem    $arr_mem($count,1)
+    regexp {([0-9]*)p([0-9]*)[xX]([0-9]*)m([0-9]*)(.*)} $logical_mem sum port_num depth width mask multicycle
+    if {[regexp {s([0-9])h([0-9])l([0-9])} $multicycle mtc inSetup inHold outLatency]} {
+       set extraHold  [expr {($inSetup == $inHold) ? 1 : 0}]
+       set setupCycle [expr $inSetup - 1]
+       set readPerOp  $outLatency
+       if {$outLatency > [expr $setupCycle + $extraHold]} {
+          set writePerOp $outLatency
+       } else {
+          set writePerOp [expr $setupCycle + $extraHold + 1]
+       }
+       if {($inSetup == 1) && ($inHold == 0) && ($outLatency == 1)} {
+       } else {
+          set operationSet SyncWRVcd_ReadCyclesPerOp${readPerOp}_Setup${setupCycle}_WriteCyclesPerOp${writePerOp}
+          set file_sink_ops_name ${operationSet}_OperationSet.lvlib
+          set file_sink_ops [open $file_sink_ops_name w+]
+          puts $file_sink_ops "OperationSet(SyncWRVcd_ReadCyclesPerOp${readPerOp}_Setup${setupCycle}_WriteCyclesPerOp${writePerOp}) {"
+          puts $file_sink_ops "  Operation(NoOperation) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(Write) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : On;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      ShadowReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadAddress : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $writePerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadAddress : Off;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(Read) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadEnable : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      ShadowReadEnable : On;"
+          puts $file_sink_ops "      StrobeDataOut;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(ReadModifyWrite) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadEnable : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : On;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      ShadowReadAddress : On;"
+          puts $file_sink_ops "      StrobeDataOut;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $writePerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(ReadModifyWrite_WithSelectOff) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : Off;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : Off;"
+          puts $file_sink_ops "      WriteEnable : On;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      StrobeDataOut;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $writePerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(WriteReadCompare) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : On;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      ShadowReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadAddress : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $writePerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadAddress : Off;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      ShadowReadAddress : Off;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      StrobeDataOut;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(WriteReadCompare_EvenGWE_ON) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : On;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      ShadowReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadAddress : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      OddGroupWriteEnable : Off;"
+          puts $file_sink_ops "      EvenGroupWriteEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $writePerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadAddress : Off;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      OddGroupWriteEnable : Off;"
+          puts $file_sink_ops "      EvenGroupWriteEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      OddGroupWriteEnable : Off;"
+          puts $file_sink_ops "      EvenGroupWriteEnable : On;"
+          puts $file_sink_ops "      StrobeDataOut;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(WriteReadCompare_OddGWE_ON) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : On;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      ShadowReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadAddress : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      OddGroupWriteEnable : On;"
+          puts $file_sink_ops "      EvenGroupWriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $writePerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadAddress : Off;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      OddGroupWriteEnable : On;"
+          puts $file_sink_ops "      EvenGroupWriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      OddGroupWriteEnable : On;"
+          puts $file_sink_ops "      EvenGroupWriteEnable : Off;"
+          puts $file_sink_ops "      StrobeDataOut;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(WriteReadCompare_AllGWE_OFF) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : On;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      ShadowReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadAddress : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      OddGroupWriteEnable : Off;"
+          puts $file_sink_ops "      EvenGroupWriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $writePerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      ShadowReadAddress : Off;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      OddGroupWriteEnable : Off;"
+          puts $file_sink_ops "      EvenGroupWriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "      OddGroupWriteEnable : Off;"
+          puts $file_sink_ops "      EvenGroupWriteEnable : Off;"
+          puts $file_sink_ops "      StrobeDataOut;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(Read_WithReadEnableOff) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      StrobeDataOut;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(ReadModifyWrite_Column_ShadowWriteRead) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ConcurrentWriteColumnAddress : On;"
+          puts $file_sink_ops "      ConcurrentWriteDataPolarity : Inverse;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      ConcurrentReadEnable : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      ConcurrentWriteColumnAddress : Off;"
+          puts $file_sink_ops "      WriteEnable : On;"
+          puts $file_sink_ops "      ConcurrentReadEnable : On;"
+          puts $file_sink_ops "      ConcurrentReadColumnAddress : On;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      StrobeDataOut;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $writePerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(ReadModifyWrite_Row_ShadowWriteRead) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ConcurrentWriteRowAddress : On;"
+          puts $file_sink_ops "      ConcurrentWriteDataPolarity : Inverse;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : On;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      ConcurrentWriteRowAddress : Off;"
+          puts $file_sink_ops "      ConcurrentReadEnable : On;"
+          puts $file_sink_ops "      ConcurrentReadRowAddress : On;"
+          puts $file_sink_ops "      StrobeDataOut;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $writePerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "  Operation(WriteRead_Column_ShadowReadWrite) {"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : On;"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "      ConcurrentReadEnable : On;"
+          puts $file_sink_ops "      ConcurrentReadColumnAddress : On;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $writePerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      Select : On;"
+          puts $file_sink_ops "      WriteEnable : Off;"
+          puts $file_sink_ops "      ReadEnable : On;"
+          puts $file_sink_ops "      ConcurrentReadColumnAddress : Off;"
+          puts $file_sink_ops "      ConcurrentWriteColumnAddress : On;"
+          puts $file_sink_ops "      ConcurrentWriteDataPolarity : Inverse;"
+          puts $file_sink_ops "      OutputEnable : On;"
+          puts $file_sink_ops "    }"
+          puts $file_sink_ops "    Tick {"
+          puts $file_sink_ops "      ReadEnable : Off;"
+          puts $file_sink_ops "    }"
+          set i 0
+          while {$i < [expr $readPerOp - 2]} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          set i 0
+          while {$i < $setupCycle} {
+             puts $file_sink_ops "    Tick {"
+             puts $file_sink_ops "    }"
+             incr i
+          }
+          puts $file_sink_ops "  }"
+          puts $file_sink_ops "}"
+          close $file_sink_ops
+          if {$file_sink_ops_name_forward == $file_sink_ops_name} {
+          } else {
+             puts "$file_sink_ops_name is generated successfully"
+             set file_sink_ops_name_forward $file_sink_ops_name
+          }
+       }
+    }
+    incr count
+}
+
+close $file_source
+
+
