@@ -32,6 +32,8 @@ find "$am_dir/cases" -name '*.bin'  -exec cp {} "$case_dir" \;
 
 # 4. generate soc package and env
 xmake soc -sgrmA -x bosc_
+cd "$package_dir"/software && dtc -I dts -O dtb -o LNSim.dtb LNSim.dts
+cd "$linknan_dir"
 mv "$package_dir"/generated-src "$package_dir"/sim "$env_dir"
 mv "$package_dir" "$release_dir"
 
