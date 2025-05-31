@@ -224,6 +224,7 @@ function emu_run()
   local cycles = option.get("cycles")
   local wave_begin = option.get("begin")
   local wave_end = option.get("end")
+  local gcpt_restore = option.get("gcpt_restore")
   local image_basename = path.basename(image_file)
   local sim_dir = path.join("sim", "emu", image_basename)
   local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
@@ -243,6 +244,7 @@ function emu_run()
   if(warmup ~= "0") then sh_str = sh_str .. " -W " .. warmup end
   if(instr ~= "0") then sh_str = sh_str .. " -I " .. instr end
   if(cycles ~= "0") then sh_str = sh_str .. " -C " .. cycles end
+  if(gcpt_restore ~= "") then sh_str = sh_str .. " -r " .. gcpt_restore end
   sh_str = sh_str .. " --diff " .. ref_so
   sh_str = sh_str .. " -i " .. image_file
   sh_str = sh_str .. " -s " .. option.get("seed")
