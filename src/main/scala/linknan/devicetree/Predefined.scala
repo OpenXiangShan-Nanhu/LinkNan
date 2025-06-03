@@ -111,7 +111,7 @@ final case class MtimerNode(
   children = Nil,
   properties = {
     val base = id << p(ZJParametersKey).cpuSpaceBits
-    val regList = List(RegValue(base + 0x2000L, 8), RegValue(base + 0x2008L, 0xFF8))
+    val regList = List(RegValue(base + 0x2000L, 8), RegValue(base + 0x2020L, 0xFD8))
     val regNameList = List(StringValue("mtime"), StringValue("mtimecmp"))
     val intrSeq = Seq.tabulate(harts)(i => (s"cpu${id + i}_intc", 7))
     List(

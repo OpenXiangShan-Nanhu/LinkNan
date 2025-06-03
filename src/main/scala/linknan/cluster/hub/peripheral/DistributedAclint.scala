@@ -4,11 +4,11 @@ import chisel3._
 import chisel3.util._
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
-import zhujiang.ZJModule
+import zhujiang.{HasZJParams, ZJModule}
 import zhujiang.chi.DeviceReqAddrBundle
 import zhujiang.tilelink.{BaseTLULPeripheral, TilelinkParams}
 
-class DistributedAclint(tlParams: TilelinkParams)(implicit p: Parameters) extends BaseTLULPeripheral(tlParams) {
+class DistributedAclint(tlParams: TilelinkParams)(implicit val p: Parameters) extends BaseTLULPeripheral(tlParams) with HasZJParams {
   val io = IO(new Bundle {
     val msip = Output(Bool())
     val ssip = Output(Bool())
@@ -31,17 +31,40 @@ class DistributedAclint(tlParams: TilelinkParams)(implicit p: Parameters) extend
   timerUpdate.bits := mtime
   io.timerUpdate := Pipe(timerUpdate)
 
-  val regSeq = Seq(
-    ("mtime", mtime, mtime, 0x0, None, None),
-    ("mtimecmp", mtimecmp, mtimecmp, 0x8, None, None),
-    ("msip", msip, msip, 0x10, Some(0x1.U), Some(0x1.U)),
-    ("ssip", ssip, ssip, 0x14, Some(0x1.U), Some(0x1.U)),
-  )
+  private val mtimeWrVec = WireInit(VecInit(Seq.fill(dw / 64)(mtime)))
+  private val mtcmpWrVec = WireInit(VecInit(Seq.fill(dw / 64)(mtimecmp)))
+  private val msipWrVec = WireInit(VecInit(Seq.fill(dw / 32)(msip)))
+  private val ssipWrVec = WireInit(VecInit(Seq.fill(dw / 32)(ssip)))
+
+  private var base = 0x0
+  private def genRegSeq(reg:UInt, regWrVec:Vec[UInt], name:String, wmask:Option[UInt], rmask:Option[UInt]): Seq[(String, UInt, UInt, Int, Option[UInt], Option[UInt])] = {
+    regWrVec.zipWithIndex.map({case(w, i) =>
+      base = base + w.getWidth / 8
+      (s"${name}_$i", reg, w, base - w.getWidth / 8, wmask, rmask)
+    })
+  }
+  private val mtimeSeq = genRegSeq(mtime, mtimeWrVec, "mtime", None, None)
+  private val mtcmpSeq = genRegSeq(mtimecmp, mtcmpWrVec, "mtcmp", None, None)
+  private val msipSeq = genRegSeq(msip, msipWrVec, "msip", Some(1.U(32.W)), Some(1.U(32.W)))
+  private val ssipSeq = genRegSeq(ssip, ssipWrVec, "ssip", Some(1.U(32.W)), Some(1.U(32.W)))
+
+  val regSeq = mtimeSeq ++ mtcmpSeq ++ msipSeq ++ ssipSeq
+  private val updateMap = genWriteMap()
+
+  private def genWrite(reg:UInt, regSeq:Seq[(String, UInt, UInt, Int, Option[UInt], Option[UInt])]):Unit = {
+    val updSeq = regSeq.map(m => (updateMap(m._1), m._3))
+    when(Cat(updSeq.map(_._1)).orR) {
+      reg := Mux1H(updSeq)
+    }
+  }
+  genWrite(mtime, mtimeSeq)
+  genWrite(mtimecmp, mtcmpSeq)
+  genWrite(msip, msipSeq)
+  genWrite(ssip, ssipSeq)
 
   io.msip := RegNext(msip(0))
   io.ssip := RegNext(ssip(0))
   io.mtip := RegNext(mtimecmp <= mtime)
-  private val updateMap = genWriteMap()
 }
 
 abstract class AddrRemapper(implicit p:Parameters) extends ZJModule {
@@ -50,6 +73,12 @@ abstract class AddrRemapper(implicit p:Parameters) extends ZJModule {
     val in = Input(UInt(raw.W))
     val out = Output(UInt(raw.W))
   })
+  private val dwOff = log2Ceil(dw / 8)
+  private val offsetInDw = io.in(dwOff - 1, 0)
+  val mtimeRmp = 0x2000.U | (0x0 << dwOff).U | offsetInDw
+  val mtcmpRmp = 0x2000.U | (0x1 << dwOff).U | offsetInDw
+  val msipRmp = 0x2000.U | (0x2 << dwOff).U | offsetInDw
+  val ssipRmp = 0x2000.U | (0x3 << dwOff).U | offsetInDw
 }
 
 class ClintAddrRemapper(implicit p:Parameters) extends AddrRemapper {
@@ -71,17 +100,17 @@ class ClintAddrRemapper(implicit p:Parameters) extends AddrRemapper {
       out.ci := 0.U
       out.tag := 0.U
       out.core := msipCoreId
-      out.dev := 0x2010.U
+      out.dev := msipRmp
     }.elsewhen(accessMtimer){
       out.ci := 0.U
       out.tag := 0.U
       out.core := 0.U
-      out.dev := 0x2000.U
+      out.dev := mtimeRmp
     }.otherwise {
       out.ci := 0.U
       out.tag := 0.U
       out.core := mtimecmpCoreId
-      out.dev := 0x2008.U
+      out.dev := mtcmpRmp
     }
   }.otherwise {
     out := io.in.asTypeOf(out)
@@ -106,17 +135,17 @@ class AclintAddrRemapper(implicit p:Parameters) extends AddrRemapper {
     out.ci := 0.U
     out.tag := 0.U
     out.core := 0.U
-    out.dev := 0x2000.U
+    out.dev := mtimeRmp
   }.elsewhen(accessMswi) {
     out.ci := accessCi
     out.tag := 0.U
     out.core := accessCore
-    out.dev := 0x2010.U
+    out.dev := msipRmp
   }.elsewhen(accessSswi) {
     out.ci := accessCi
     out.tag := 0.U
     out.core := accessCore
-    out.dev := 0x2014.U
+    out.dev := ssipRmp
   }.otherwise {
     out := io.in.asTypeOf(out)
   }
