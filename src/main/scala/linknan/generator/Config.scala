@@ -275,7 +275,7 @@ object ConfigGenerater {
       case "full" => new FullCoreConfig
       case "minimal" => new MinimalCoreConfig
       case _ =>
-        require(requirement = false, s"not supported core config: $l3")
+        require(requirement = false, s"not supported core config: $core")
         new MinimalCoreConfig
     }
     val l3Cfg = l3 match {
