@@ -6,5 +6,7 @@ s/_LOG_MODULE_PATH_/%m/g
 /^  .*DummyDPICWrapper/{:L0; N; /;/!b L0; s/;/;\n`endif/ };
 /^  .*DelayReg(_[0-9]*)? difftest/i\`ifndef SYNTHESIS
 /^  .*DelayReg(_[0-9]*)? difftest/{:L1; N; /;/!b L1; s/;/;\n`endif/ };
+/^  .*TrafficBoard[a-zA-Z0-9_]+ cosim_.*/i\`ifndef SYNTHESIS
+/^  .*TrafficBoard[a-zA-Z0-9_]+ cosim_.*/{:L1; N; /;/!b L1; s/;/;\n`endif/ };
 /^ *[a-zA-Z0-9_]*:$/i\`ifndef SYNTHESIS
 /^ *[a-zA-Z0-9_]*:$/{:L1; N; /;/!b L1; s/;/;\n`endif/};
