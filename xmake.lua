@@ -54,7 +54,7 @@ task("soc" , function()
     table.join2(chisel_opts, {"--l3", option.get("l3")})
     table.join2(chisel_opts, {"--noc", option.get("noc")})
     table.join2(chisel_opts, {"--socket", option.get("socket")})
-    table.join2(chisel_opts, {"--target", "systemverilog", "--full-stacktrace", "-td", build_dir})
+    table.join2(chisel_opts, {"--throw-on-first-error", "--target", "systemverilog", "--full-stacktrace", "-td", build_dir})
     if os.host() == "windows" then
       os.execv(os.shell(), table.join({"mill"}, chisel_opts))
     else
