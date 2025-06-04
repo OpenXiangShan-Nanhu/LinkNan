@@ -223,8 +223,6 @@ task("init", function()
     os.exec("git submodule update --init")
     os.cd(path.join("dependencies", "nanhu"))
     os.exec("git submodule update --init YunSuan")
-    os.cd(path.join("src", "main", "resources"))
-    os.exec("git submodule update --init aia")
   end)
   set_menu {}
 end)
