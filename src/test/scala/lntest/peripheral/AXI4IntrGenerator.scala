@@ -18,75 +18,92 @@ package lntest.peripheral
 
 import chisel3._
 import chisel3.util._
+import freechips.rocketchip.amba.axi4._
 import org.chipsalliance.cde.config.Parameters
-import freechips.rocketchip.diplomacy.AddressSet
-import xs.utils._
+import freechips.rocketchip.diplomacy.{AddressSet, RegionType, TransferSizes}
+import org.chipsalliance.diplomacy.lazymodule.{LazyModule, LazyModuleImp}
 
-// we support 256 interrupt bits by default
-trait IntrGenConfig {
-  // we support 256 interrupt bits by default
-  def intrWidth = 256
-  // Delay the intr gen for 1000 cycles.
-  def delayCycles = 1000
-  // Defined in riscv-plic-1.0.0_rc1, page 11
-  def registerWidth = 32
-  def numIntrReg: Int = intrWidth / registerWidth
-  def numIntrGenReg: Int = 4 * numIntrReg
+class IntrGenIO(nrIntr: Int) extends Bundle {
+  val intrVec = Output(UInt(nrIntr.W))
 }
 
-class IntrGenIO extends Bundle with IntrGenConfig {
-  val intrVec = Output(UInt(this.intrWidth.W))
-}
-
-class AXI4IntrGenerator
-(
-  address: Seq[AddressSet]
-)(implicit p: Parameters)
-  extends AXI4SlaveModule(address, executable = false, _extra = new IntrGenIO)
-    with IntrGenConfig
+class AXI4IntrGenerator(
+  address: Seq[AddressSet],
+  nrIntr: Int
+)(implicit p: Parameters) extends LazyModule
 {
+  val node = AXI4SlaveNode(Seq(AXI4SlavePortParameters(
+    Seq(AXI4SlaveParameters(
+      address,
+      regionType = RegionType.UNCACHED,
+      executable = false,
+      supportsWrite = TransferSizes(1, 8),
+      supportsRead = TransferSizes(1, 8),
+      interleavedId = Some(0)
+    )),
+    beatBytes = 8
+  )))
+  lazy val module = new Impl
 
-  override lazy val module = new AXI4SlaveModuleImp(this){
+  class Impl extends LazyModuleImp(this) {
+    val io = IO(new Bundle {
+      val intr = Output(UInt(nrIntr.W))
+    })
+    private val (in, edge) = node.in.head
+    private val axiP = edge.bundle
+    private val regBits = in.r.bits.data.getWidth
+    private val nrRegs = (nrIntr + regBits  - 1) / regBits
+    private val intrRegVec = RegInit(VecInit(Seq.fill(nrRegs)(0.U(regBits.W))))
+    io.intr := intrRegVec.asUInt
 
-    val intrGenRegs = RegInit(VecInit(Seq.fill(numIntrGenReg)(0.U(registerWidth.W))))
-    // 0x0 - 0x20
-    val intrReg = VecInit(intrGenRegs.take(numIntrReg))
-    // 0x20 - 0x40
-    val randEnable = VecInit(intrGenRegs.slice(numIntrReg, 2 * numIntrReg))
-    // 0x40
-    val randMask = intrGenRegs(2 * numIntrReg)
-    val randCounter = intrGenRegs(2 * numIntrReg + 1)
-    val randThres = intrGenRegs(2 * numIntrReg + 2)
-
-    val randomPosition = LFSR64()(4 + log2Up(numIntrReg), 0)
-    val randomCondition = randCounter === randThres &&
-      randEnable(randomPosition(4 + log2Up(numIntrReg), 5))(randomPosition(4, 0))
-    randCounter := randCounter + 1.U
-    when (randomCondition) {
-      intrGenRegs(randomPosition(4 + log2Up(numIntrReg), 5)) :=
-        intrReg(randomPosition(4 + log2Up(numIntrReg), 5)) | UIntToOH(randomPosition(4, 0))
+    private val awq = Module(new Queue(new AXI4BundleAW(axiP), entries = 8))
+    private val wq = Module(new Queue(new AXI4BundleW(axiP), entries = 8))
+    private val rq = Module(new Queue(new AXI4BundleR(axiP), entries = 2))
+    private val bq = Module(new Queue(new AXI4BundleB(axiP), entries = 2))
+    awq.io.enq <> in.aw
+    wq.io.enq <> in.w
+    in.r <> rq.io.deq
+    in.b <> bq.io.deq
+    when(in.aw.fire) {
+      assert(in.aw.bits.cache === "b0000".U)
+      assert(in.aw.bits.size === log2Ceil(regBits).U)
+      assert(in.aw.bits.len === 0.U)
+    }
+    when(in.ar.fire) {
+      assert(in.ar.bits.cache === "b0000".U)
+      assert(in.ar.bits.size === log2Ceil(regBits).U)
+      assert(in.ar.bits.len === 0.U)
+    }
+    when(in.w.fire){
+      assert(in.w.bits.last)
     }
 
-    io.extra.get.intrVec := Cat(intrReg.reverse)
+    rq.io.enq.valid := in.ar.valid
+    rq.io.enq.bits.id := in.ar.bits.id
+    rq.io.enq.bits.data := intrRegVec(in.ar.bits.addr(log2Ceil(nrIntr / 8) - 1, 0))
+    rq.io.enq.bits.resp := 0.U
+    rq.io.enq.bits.user := in.ar.bits.user
+    rq.io.enq.bits.echo := in.ar.bits.echo
+    rq.io.enq.bits.last := true.B
+    in.ar.ready := rq.io.enq.ready
 
-    var w_fire = in.w.fire && in.w.bits.data =/= 0.U
-    for (i <- 0 until delayCycles) {
-      w_fire = RegNext(w_fire, init=false.B)
-    }
-    val w_data = DelayN(in.w.bits.data(31, 0), delayCycles)
-    when (w_fire) {
-      intrGenRegs(DelayN(waddr(log2Up(numIntrGenReg) + 1, 2), delayCycles)) := w_data
-    }
-    // Clear takes effect immediately
-    when (in.w.fire && in.w.bits.data === 0.U) {
-      intrGenRegs(waddr(log2Up(numIntrGenReg) + 1, 2)) := 0.U
-    }
-    // write resets the threshold and counter
-    when (in.w.fire && in.w.bits.data === 0.U || w_fire) {
-      randThres := LFSR64() & randMask
-      randCounter := 0.U
-    }
+    bq.io.enq.valid := awq.io.deq.valid & wq.io.deq.valid
+    bq.io.enq.bits.id := awq.io.deq.bits.id
+    bq.io.enq.bits.resp := 0.U
+    bq.io.enq.bits.user := awq.io.deq.bits.user
+    bq.io.enq.bits.echo := awq.io.deq.bits.echo
 
-    in.r.bits.data := intrReg(raddr)
+    awq.io.deq.ready := bq.io.enq.ready & wq.io.deq.valid
+    wq.io.deq.ready := bq.io.enq.ready & awq.io.deq.valid
+
+    private val waddr = awq.io.deq.bits.addr(log2Ceil(nrIntr / 8) - 1, 0)
+    private val wdata = wq.io.deq.bits.data
+    private val wmask = VecInit(Seq.tabulate(regBits / 8)(i => Fill(8, wq.io.deq.bits.strb(i)))).asUInt
+    private val wen = bq.io.enq.valid
+    for(i <- 0 until nrRegs) {
+      when(wen & waddr === i.U) {
+        intrRegVec(i) := (wmask & wdata) | ((~wmask).asUInt & intrRegVec(i))
+      }
+    }
   }
 }

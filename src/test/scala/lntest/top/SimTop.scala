@@ -90,7 +90,7 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
     cfgIO.foreach(InfoGen.addMaxi)
   } else {
     dmaDrv.foreach(_ := DontCare)
-    soc.io.ext_intr := simMMIO.get.io.interrupt.intrVec
+    soc.io.ext_intr := simMMIO.get.io.intr
     val periCfg = simMMIO.get.cfg.head
     val periDma = simMMIO.get.dma.head
     val dmaMain = dmaDrv.head

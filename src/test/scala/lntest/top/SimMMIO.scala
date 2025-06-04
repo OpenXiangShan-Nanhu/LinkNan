@@ -24,6 +24,7 @@ import freechips.rocketchip.resources.MemoryDevice
 import org.chipsalliance.diplomacy.lazymodule._
 import difftest._
 import freechips.rocketchip.diplomacy.{AddressSet, IdRange, RegionType, TransferSizes}
+import linknan.soc.LinkNanParamsKey
 import zhujiang.ZJParametersKey
 import zhujiang.axi.AxiParams
 
@@ -65,7 +66,7 @@ class SimMMIO(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: config.Par
 
   private val flash = LazyModule(new AXI4Flash(Seq(AddressSet(0x10000000L, 0xfffffff))))
   private val uart = LazyModule(new AXI4UART(Seq(AddressSet(0x40600000L, 0xf))))
-  private val intrGen = LazyModule(new AXI4IntrGenerator(Seq(AddressSet(0x40070000L, 0x0000ffffL))))
+  private val intrGen = LazyModule(new AXI4IntrGenerator(Seq(AddressSet(0x40070000L, 0x0000ffffL)), p(LinkNanParamsKey).nrExtIntr))
   private val dmaGen = LazyModule(new AXI4FakeDMA(Seq(AddressSet(0x40080000L, 0x0000ffffL)), dmaDplmcMstParams))
 
   private val axiBus = AXI4Xbar()
@@ -82,13 +83,13 @@ class SimMMIO(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: config.Par
   class Impl extends LazyModuleImp(this) {
     val io = IO(new Bundle() {
       val uart = new UARTIO
-      val interrupt = new IntrGenIO
+      val intr = Output(UInt(p(LinkNanParamsKey).nrExtIntr.W))
     })
     val cfg = node.makeIOs()
     val dma = dma_node.makeIOs()
     dontTouch(cfg)
     dontTouch(dma)
     io.uart <> uart.module.io.extra.get
-    io.interrupt <> intrGen.module.io.extra.get
+    io.intr := intrGen.module.io.intr
   }
 }
