@@ -66,12 +66,12 @@ class AXI4IntrGenerator(
     in.b <> bq.io.deq
     when(in.aw.fire) {
       assert(in.aw.bits.cache === "b0000".U)
-      assert(in.aw.bits.size === log2Ceil(regBits).U)
+      assert(in.aw.bits.size === log2Ceil(regBits / 8).U)
       assert(in.aw.bits.len === 0.U)
     }
     when(in.ar.fire) {
       assert(in.ar.bits.cache === "b0000".U)
-      assert(in.ar.bits.size === log2Ceil(regBits).U)
+      assert(in.ar.bits.size === log2Ceil(regBits / 8).U)
       assert(in.ar.bits.len === 0.U)
     }
     when(in.w.fire){
@@ -80,7 +80,11 @@ class AXI4IntrGenerator(
 
     rq.io.enq.valid := in.ar.valid
     rq.io.enq.bits.id := in.ar.bits.id
-    rq.io.enq.bits.data := intrRegVec(in.ar.bits.addr(log2Ceil(nrIntr / 8) - 1, 0))
+    if(nrRegs == 1) {
+      rq.io.enq.bits.data := intrRegVec.head
+    } else {
+      rq.io.enq.bits.data := intrRegVec(in.ar.bits.addr(log2Ceil(regBits * nrRegs / 8) - 1, log2Ceil(regBits / 8)))
+    }
     rq.io.enq.bits.resp := 0.U
     rq.io.enq.bits.user := in.ar.bits.user
     rq.io.enq.bits.echo := in.ar.bits.echo
