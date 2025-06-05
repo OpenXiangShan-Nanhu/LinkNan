@@ -6,6 +6,7 @@ import chisel3.experimental.{SourceInfo, SourceLine}
 import chisel3.util._
 import freechips.rocketchip.devices.debug.DebugModuleParams
 import freechips.rocketchip.diplomacy.AddressSet
+import freechips.rocketchip.util.AsyncQueueParams
 import org.chipsalliance.cde.config.{Field, Parameters}
 import xijiang.NodeType
 import zhujiang.ZJParametersKey
@@ -92,4 +93,5 @@ case class LinkNanParams(
     }
     assert(hit, descStr)(s)
   }
+  lazy val coreTimerAsyncParams = AsyncQueueParams(depth = 1, sync = 2)
 }

@@ -105,11 +105,8 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   for(((ext, noc), idx) <- cluster.zip(noc.ccnIO).zipWithIndex) {
     val node = ext.socket.node
     val clusterId = node.clusterId
-    if(node.socket == "async") {
-      ext.osc_clock := io.cluster_clocks(idx)
-    } else {
-      ext.osc_clock := io.noc_clock
-    }
+    ext.cpu_clock := io.cluster_clocks(idx)
+    ext.noc_clock := io.noc_clock
     ext.dft := io.dft
     ext.ramctl := io.ramctl
     ext.socket <> noc

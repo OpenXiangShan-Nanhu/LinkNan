@@ -1,7 +1,8 @@
 package linknan.cluster.hub
 
 import chisel3._
-import chisel3.util.{Cat, Pipe, Valid}
+import chisel3.util.Cat
+import freechips.rocketchip.util.AsyncQueueSource
 import linknan.cluster.core.CoreWrapperIO
 import linknan.cluster.hub.interconnect.{ClusterDeviceBundle, ClusterHub}
 import org.chipsalliance.cde.config.Parameters
@@ -9,6 +10,7 @@ import xijiang.{Node, NodeType}
 import zhujiang.ZJRawModule
 import linknan.soc.LinkNanParamsKey
 import xs.utils.{ClockGate, ClockManagerWrapper, ResetGen}
+import zhujiang.device.socket.IcnSideAsyncModule
 
 class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
  with ImplicitReset with ImplicitClock {
@@ -26,22 +28,25 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   private val resetSync = withClockAndReset(implicitClock, io.icn.socket.resetRx) { ResetGen(dft = Some(io.icn.dft.reset)) }
   private val pll = Module(new ClockManagerWrapper)
   private val coreCg = Module(new ClockGate)
+  private val pdc = Module(new IcnSideAsyncModule(node.copy(nodeType = NodeType.RF)))
+  private val timerSource = Module(new AsyncQueueSource(UInt(64.W), p(LinkNanParamsKey).coreTimerAsyncParams))
   private val cpuCtl = clusterPeriCx.io.cpu.head
   private val cpuDev = io.cpu
 
-  implicitClock := pll.io.cpu_clock
+  implicitClock := io.icn.noc_clock
   implicitReset := resetSync
 
+  pdc.io.async <> io.cpu.chi
   clusterPeriCx.io.tls.head <> clusterHub.io.tlm
   clusterHub.io.socket <> io.icn.socket
-  clusterHub.io.core <> io.cpu.chiPdc
+  clusterHub.io.core <> pdc.io.dev
   clusterHub.io.nodeNid := io.icn.misc.nodeNid
   clusterHub.io.clusterId := io.icn.misc.clusterId
 
   pll.io.cfg := clusterPeriCx.io.cluster.pllCfg
   clusterPeriCx.io.cluster.pllLock := pll.io.lock
   clusterPeriCx.io.cluster.rtc := io.icn.misc.rtc
-  pll.io.in_clock := io.icn.osc_clock
+  pll.io.in_clock := io.icn.cpu_clock
   coreCg.io.CK := pll.io.cpu_clock
   coreCg.io.TE := io.icn.dft.func.cgen
   coreCg.io.E := cpuCtl.pcsm.clkEn
@@ -71,7 +76,9 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   cpuDev.meip := RegNext(io.icn.misc.meip(0))
   cpuDev.seip := RegNext(io.icn.misc.seip(0))
   cpuDev.dbip := RegNext(io.icn.misc.dbip(0))
-  cpuDev.timerUpdate := cpuCtl.timerUpdate
+  timerSource.io.enq.valid := cpuCtl.timerUpdate.valid
+  timerSource.io.enq.bits := cpuCtl.timerUpdate.bits
+  cpuDev.timer <> timerSource.io.async
   io.icn.misc.resetState(0) := withReset(cpuDev.reset) { RegNext(cpuDev.reset_state, true.B) }
   cpuDev.dft := io.icn.dft
   cpuDev.ramctl := io.icn.ramctl

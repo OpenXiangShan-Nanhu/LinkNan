@@ -23,7 +23,7 @@ task("soc" , function()
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "full", "define L3 config"},
       {'N', "noc", "kv", "full", "define noc config"},
-      {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"},
+      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
       {'o', "out_dir", "kv", "build/rtl", "assign build dir"},
       {'j', "jobs", "kv", "16", "post-compile process jobs"}
     }
@@ -72,7 +72,7 @@ task("soc" , function()
     if option.get("vcs") then table.join2(postcompile_opts, {"--vcs"}) end
     os.execv(py_exec, postcompile_opts)
 
-    local harden_table = {"LNTop", "NanhuCoreWrapper", "CpuCluster"}
+    local harden_table = {"LNTop", "NanhuCoreWrapper"}
     local rel_opts = {}
     if option.get("prefix") ~= "" then table.join2(rel_opts, {"-x", option.get("prefix")}) end
     if option.get("sim") then table.join2(rel_opts, {"-s", "SimTop"}) end
@@ -102,7 +102,7 @@ task("emu", function()
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
-      {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"}
+      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"}
     }
   }
 
@@ -158,7 +158,7 @@ task("simv", function()
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
-      {'S', "socket", "kv", "async", "define how cpu cluster connect to noc"}
+      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"}
     }
   }
 

@@ -4,8 +4,10 @@ import chisel3.experimental.hierarchy.{instantiable, public}
 import chisel3.util._
 import chisel3._
 import freechips.rocketchip.resources.BindingScope
+import freechips.rocketchip.util.{AsyncBundle, AsyncQueueParams, AsyncQueueSink}
 import linknan.cluster.power.controller.{PowerMode, devActiveBits}
 import linknan.cluster.power.pchannel.{PChannel, PChannelSlv}
+import linknan.soc.LinkNanParamsKey
 import linknan.utils.connectChiChn
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.lazymodule.{LazyModule, LazyRawModuleImp}
@@ -13,13 +15,13 @@ import xijiang.Node
 import xs.utils.ResetGen
 import xs.utils.sram.SramCtrlBundle
 import zhujiang.chi.{DataFlit, RReqFlit, RespFlit, SnoopFlit}
-import zhujiang.device.socket.{ChiPdcDevSide, DevPdcBundle}
+import zhujiang.device.socket.{DeviceIcnAsyncBundle, DeviceSideAsyncModule}
 import zhujiang.{DftWires, ZJParametersKey}
 
 class CoreWrapperIO(node:Node)(implicit p:Parameters) extends Bundle {
   val clock = Input(Clock())
   val reset = Input(AsyncReset())
-  val chiPdc = new DevPdcBundle(node)
+  val chi = new DeviceIcnAsyncBundle(node)
   val pchn = Flipped(new PChannel(devActiveBits, PowerMode.powerModeBits))
   val pwrEnReq = Input(Bool())
   val pwrEnAck = Output(Bool())
@@ -31,7 +33,7 @@ class CoreWrapperIO(node:Node)(implicit p:Parameters) extends Bundle {
   val meip = Input(Bool())
   val seip = Input(Bool())
   val dbip = Input(Bool())
-  val timerUpdate = Input(Valid(UInt(64.W)))
+  val timer = Flipped(new AsyncBundle(UInt(64.W), p(LinkNanParamsKey).coreTimerAsyncParams))
   val reset_state = Output(Bool())
   val dft = Input(new DftWires)
   val ramctl = Input(new SramCtrlBundle)
@@ -52,9 +54,16 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   def implicitClock = childClock
   def implicitReset = childReset
 
-  val pdc = Module(new ChiPdcDevSide(node))
-  io.chiPdc <> pdc.io.dev
+  val pdc = Module(new DeviceSideAsyncModule(node))
+  io.chi <> pdc.io.async
   pdc.io.icn.rx.debug.foreach(_ := DontCare)
+
+  private val timerSink = Module(new AsyncQueueSink(UInt(64.W), p(LinkNanParamsKey).coreTimerAsyncParams))
+  timerSink.io.async <> io.timer
+  val timerUpdate = Wire(Valid(UInt(64.W)))
+  timerUpdate.valid := timerSink.io.deq.valid
+  timerUpdate.bits := timerSink.io.deq.bits
+  timerSink.io.deq.ready := true.B
 
   val cpuHalt = Wire(Bool())
   val pSlv = Module(new PChannelSlv(devActiveBits, PowerMode.powerModeBits))

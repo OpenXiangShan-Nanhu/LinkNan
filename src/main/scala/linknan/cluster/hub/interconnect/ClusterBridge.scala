@@ -174,8 +174,6 @@ class ClusterBridge(node:Node)(implicit p: Parameters) extends ZJModule with Clu
     val icn = new DeviceIcnBundle(node)
     val core = new IcnBundle(node.copy(nodeType = NodeType.RF))
     val tlm = new TLULBundle(chi2tl.tl.params)
-    val blockSnp = Input(Bool())
-    val snpPending = Output(Bool())
   })
 
   chi2tl.icn.tx.req.get.ready := false.B
@@ -220,9 +218,6 @@ class ClusterBridge(node:Node)(implicit p: Parameters) extends ZJModule with Clu
   connChn(chi2tl.icn.rx.data.get, datXbar.io.tx.peri, None)
 
   connChn(io.core.tx.snoop.get, io.icn.rx.snoop.get, None)
-  io.core.tx.snoop.get.valid := io.icn.rx.snoop.get.valid & !io.blockSnp
-  io.icn.rx.snoop.get.ready := io.core.tx.snoop.get.ready & !io.blockSnp
-  io.snpPending := RegNext(io.blockSnp & io.icn.rx.snoop.get.valid)
 
   if(p(HardwareAssertionKey).enable) connChn(io.icn.tx.debug.get, io.core.rx.debug.get, Some(coreNodeId))
 }

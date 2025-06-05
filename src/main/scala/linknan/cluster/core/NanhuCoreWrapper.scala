@@ -77,7 +77,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     _core.io.hartId := io.mhartid
     _l2.io.hartId := io.mhartid
     _core.io.msiInfo := DontCare
-    _core.io.clintTime := Pipe(io.timerUpdate)
+    _core.io.clintTime := Pipe(timerUpdate)
     _core.io.reset_vector := io.reset_vector
     cpuHalt := _core.io.cpu_halt
     _core.io.traceCoreInterface := DontCare
