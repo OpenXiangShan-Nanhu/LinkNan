@@ -72,7 +72,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val cluster_clocks = Input(Vec(clusterNum, Clock()))
     val noc_clock = Input(Clock())
     val rtc_clock = Input(Bool())
-    val ext_intr = Input(UInt(zjParams.externalInterruptNum.W))
+    val ext_intr = Input(UInt(p(LinkNanParamsKey).nrExtIntr.W))
     val ci = Input(UInt(ciIdBits.W))
     val ndreset = Output(Bool())
     val default_reset_vector = Input(UInt(raw.W))
