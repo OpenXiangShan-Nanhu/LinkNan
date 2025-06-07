@@ -90,5 +90,5 @@ class ClusterHub(node: Node)(implicit p: Parameters) extends ZJModule {
 
   io.core.tx.snoop.get.valid := bridge.io.core.tx.snoop.get.valid & !io.blockSnp
   bridge.io.core.tx.snoop.get.ready := io.core.tx.snoop.get.ready & !io.blockSnp
-  io.snpPending := RegNext(io.blockSnp & io.core.tx.snoop.get.valid)
+  io.snpPending := RegNext(io.blockSnp & bridge.io.core.tx.snoop.get.valid)
 }
