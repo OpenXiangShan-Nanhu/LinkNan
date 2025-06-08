@@ -70,7 +70,7 @@ case class LinkNanParams(
     val coreDevAddrSets = Seq.tabulate(core){ i => Seq(
       (i * coreBase + 0x0000, 0x08), // CBAR
       (i * coreBase + 0x1000, 0x10), // PPU
-      (i * coreBase + 0x2000, 0x18), // DACLINT
+      (i * coreBase + 0x2000, 0x80), // DACLINT
     )}
     coreDevAddrSets.reduce(_ ++ _) ++ Seq(
       (plicBase, 0x400_0000),
