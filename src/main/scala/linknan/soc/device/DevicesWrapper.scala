@@ -11,8 +11,8 @@ import linknan.utils.connectByName
 import org.chipsalliance.cde.config.Parameters
 import xijiang.NodeType
 import xs.utils.ResetGen
-import zhujiang.chi.ReqAddrBundle
-import zhujiang.{DftWires, HasZJParams, ZJRawModule}
+import xs.utils.dft.BaseTestBundle
+import zhujiang.{HasZJParams, ZJRawModule}
 
 class ShiftSync[T <: Data](gen:T, sync:Int = 3) extends Module {
   val io = IO(new Bundle{
@@ -99,11 +99,11 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
     val ci = Input(UInt(ciIdBits.W))
     val debug = pb.dev.debug.cloneType
     val resetCtrl = pb.dev.resetCtrl.cloneType
-    val dft = Input(new DftWires)
+    val dft = new BaseTestBundle
   })
   private val resetGen = Module(new ResetGen)
   resetGen.clock := clock
-  resetGen.dft := io.dft.reset
+  resetGen.dft := io.dft.toResetDftBundle
   implicitReset := resetGen.o_reset
   resetGen.reset := reset
   dontTouch(io)

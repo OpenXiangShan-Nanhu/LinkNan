@@ -25,7 +25,7 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
     val icn = new ClusterDeviceBundle(node)
     val cpu = Flipped(new CoreWrapperIO(node.copy(nodeType = NodeType.RF)))
   })
-  private val resetSync = withClockAndReset(implicitClock, io.icn.socket.resetRx) { ResetGen(dft = Some(io.icn.dft.reset)) }
+  private val resetSync = withClockAndReset(implicitClock, io.icn.socket.resetRx) { ResetGen(dft = Some(io.icn.dft.toResetDftBundle)) }
   private val pll = Module(new ClockManagerWrapper)
   private val coreCg = Module(new ClockGate)
   private val pdc = Module(new IcnSideAsyncModule(node.copy(nodeType = NodeType.RF)))
@@ -48,8 +48,8 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   clusterPeriCx.io.cluster.rtc := io.icn.misc.rtc
   pll.io.in_clock := io.icn.cpu_clock
   coreCg.io.CK := pll.io.cpu_clock
-  coreCg.io.TE := io.icn.dft.func.cgen
-  coreCg.io.E := cpuCtl.pcsm.clkEn
+  coreCg.io.TE := io.icn.dft.cgen | io.icn.dft.core.clk_on
+  coreCg.io.E := cpuCtl.pcsm.clkEn & !io.icn.dft.core.clk_off
 
   cpuCtl.defaultBootAddr := io.icn.misc.defaultBootAddr
   if(p(LinkNanParamsKey).removeCore) {
@@ -66,9 +66,10 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   cpuDev.reset := (resetSync.asBool || cpuCtl.pcsm.reset).asAsyncReset
   cpuDev.pchn <> cpuCtl.pchn
   cpuCtl.pchn.active := Cat(reqToOn, false.B, false.B) | RegNext(cpuDev.pchn.active)
-  cpuDev.pwrEnReq := cpuCtl.pcsm.pwrReq
+  cpuDev.pwrEnReq := cpuCtl.pcsm.pwrReq | io.icn.dft.core.pwr_req.getOrElse(false.B)
   cpuCtl.pcsm.pwrResp := cpuDev.pwrEnAck
-  cpuDev.isoEn := cpuCtl.pcsm.isoEn
+  io.icn.dft.core.pwr_ack.foreach(_ := cpuDev.pwrEnAck)
+  cpuDev.isoEn := cpuCtl.pcsm.isoEn | io.icn.dft.core.iso_on.getOrElse(false.B)
   cpuDev.mhartid := io.icn.misc.clusterId
   cpuDev.reset_vector := cpuCtl.bootAddr
   cpuDev.msip := cpuCtl.msip
@@ -80,7 +81,7 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   timerSource.io.enq.bits := cpuCtl.timerUpdate.bits
   cpuDev.timer <> timerSource.io.async
   io.icn.misc.resetState(0) := withReset(cpuDev.reset) { RegNext(cpuDev.reset_state, true.B) }
-  cpuDev.dft := io.icn.dft
+  cpuDev.dft.from(io.icn.dft)
   cpuDev.ramctl := io.icn.ramctl
   cpuCtl.coreId := cpuDev.mhartid.tail(ciIdBits)
 }

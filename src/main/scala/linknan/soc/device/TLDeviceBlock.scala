@@ -14,8 +14,9 @@ import freechips.rocketchip.tilelink._
 import freechips.rocketchip.util.{FastToSlow, SlowToFast}
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
-import xs.utils.{ClockGate, DFTResetSignals, IntBuffer, ResetGen}
-import zhujiang.{DftWires, ZJParametersKey}
+import xs.utils.dft.BaseTestBundle
+import xs.utils.{ClockGate, IntBuffer, ResetGen}
+import zhujiang.ZJParametersKey
 
 class TLDeviceBlockIO(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) extends Bundle {
   val extIntr = Input(UInt(extIntrNum.W))
@@ -56,9 +57,9 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
     override def provideImplicitClockToLazyChildren = true
     val clock = IO(Input(Clock()))
     val reset = IO(Input(Reset()))
-    val dfx = IO(Input(new DftWires))
+    val dfx = IO(new BaseTestBundle)
     private val rstSync = withClockAndReset(clock, reset) { Module(new ResetGen(3)) }
-    rstSync.dft := dfx.reset
+    rstSync.dft := dfx.toResetDftBundle
     val implicitClock = clock
     val implicitReset = rstSync.o_reset
     childClock := implicitClock
@@ -127,7 +128,7 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
   class Impl extends LazyModuleImp(this) {
     val tlm = clientNode.makeIOs()
     val sba = sbaNode.makeIOs()
-    val dfx = IO(Input(new DftWires))
+    val dfx = IO(new BaseTestBundle)
     val dev = IO(new TLDeviceBlockIO(coreNum, extIntrNum)(innerP))
 
     private val cg = Module(new ClockGate)
@@ -137,7 +138,7 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
     cg.io.E := ff.io.out
     cg.io.CK := clock
     cg.io.TE := false.B
-    rstSync.dft := dfx.reset
+    rstSync.dft := dfx.toResetDftBundle
     rstSync.reset := reset
 
     inner.module.clock := cg.io.Q

@@ -13,10 +13,11 @@ import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.lazymodule.{LazyModule, LazyRawModuleImp}
 import xijiang.Node
 import xs.utils.ResetGen
+import xs.utils.dft.BaseTestBundle
 import xs.utils.sram.SramCtrlBundle
 import zhujiang.chi.{DataFlit, RReqFlit, RespFlit, SnoopFlit}
 import zhujiang.device.socket.{DeviceIcnAsyncBundle, DeviceSideAsyncModule}
-import zhujiang.{DftWires, ZJParametersKey}
+import zhujiang.ZJParametersKey
 
 class CoreWrapperIO(node:Node)(implicit p:Parameters) extends Bundle {
   val clock = Input(Clock())
@@ -35,7 +36,7 @@ class CoreWrapperIO(node:Node)(implicit p:Parameters) extends Bundle {
   val dbip = Input(Bool())
   val timer = Flipped(new AsyncBundle(UInt(64.W), p(LinkNanParamsKey).coreTimerAsyncParams))
   val reset_state = Output(Bool())
-  val dft = Input(new DftWires)
+  val dft = new BaseTestBundle
   val ramctl = Input(new SramCtrlBundle)
 }
 
@@ -50,7 +51,7 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   @public val io = IO(new CoreWrapperIO(node))
   dontTouch(io)
   childClock := io.clock
-  childReset := withClockAndReset(io.clock, io.reset){ ResetGen(dft = Some(io.dft.reset)) }
+  childReset := withClockAndReset(io.clock, io.reset){ ResetGen(dft = Some(io.dft.toResetDftBundle)) }
   def implicitClock = childClock
   def implicitReset = childReset
 

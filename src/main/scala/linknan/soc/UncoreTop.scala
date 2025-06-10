@@ -77,20 +77,20 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val ndreset = Output(Bool())
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = devWrp.io.debug.systemjtag.map(t => chiselTypeOf(t))
-    val dft = Input(new DftWires)
+    val dft = new LnDftWires
     val ramctl = Input(new SramCtrlBundle)
   })
   val cluster = noc.ccnIO.map(ccn => IO(new ClusterIcnBundle(ccn.node)))
   cluster.foreach(c => dontTouch(c))
   implicitClock := io.noc_clock
-  implicitReset := withReset(io.reset){ResetGen(dft = Some(io.dft.reset))}
+  implicitReset := withReset(io.reset){ResetGen(dft = Some(io.dft.toResetDftBundle))}
 
   private val rtcEn = RegNext(!noc.io.onReset)
   private val rtcClockGated = io.rtc_clock & rtcEn
   devWrp.io.ext.intr := io.ext_intr
   devWrp.io.ci := io.ci
   devWrp.io.debug.systemjtag.foreach(_ <> io.jtag.get)
-  devWrp.io.dft := io.dft
+  devWrp.io.dft.from(io.dft)
   devWrp.io.debug.dmactiveAck := devWrp.io.debug.dmactive
   devWrp.io.debug.clock := DontCare
   devWrp.io.debug.reset := DontCare
@@ -98,16 +98,17 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   devWrp.reset := io.reset
   io.ndreset := devWrp.io.debug.ndreset
   noc.io.ci := io.ci
-  noc.io.dft := io.dft
+  noc.io.dft.from(io.dft)
+  noc.io.dft.llc <> io.dft.noc
   noc.io.ramctl := io.ramctl
 
-  private var rstIdx = 0
-  for(((ext, noc), idx) <- cluster.zip(noc.ccnIO).zipWithIndex) {
+  for((ext, noc) <- cluster.zip(noc.ccnIO)) {
     val node = ext.socket.node
     val clusterId = node.clusterId
-    ext.cpu_clock := io.cluster_clocks(idx)
+    ext.cpu_clock := io.cluster_clocks(clusterId)
     ext.noc_clock := io.noc_clock
-    ext.dft := io.dft
+    ext.dft.from(io.dft)
+    ext.dft.core <> io.dft.core(clusterId)
     ext.ramctl := io.ramctl
     ext.socket <> noc
     ext.misc.clusterId := Cat(io.ci, clusterId.U((clusterIdBits - ciIdBits).W))
@@ -120,7 +121,6 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
       ext.misc.seip(i) := devWrp.io.cpu.seip(cid)
       ext.misc.dbip(i) := devWrp.io.cpu.dbip(cid)
       devWrp.io.resetCtrl.hartIsInReset(cid) := ext.misc.resetState(i)
-      rstIdx = rstIdx + 1
     }
   }
 }

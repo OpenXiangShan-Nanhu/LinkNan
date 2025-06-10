@@ -12,17 +12,25 @@ import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
 import xiangshan.{PMParameKey, XLen, XSCoreParameters, XSCoreParamsKey}
+import xijiang.NodeType
 import xs.utils.cache.common.{BankBitsKey, L2ParamKey}
 import xs.utils.debug.HardwareAssertionKey
+import xs.utils.dft.{BaseTestBundle, PowerDomainTestBundle}
 import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
 import xs.utils.sram.SramCtrlBundle
 import zhujiang.axi.AxiUtils
-import zhujiang.{DftWires, NocIOHelper, ZJParametersKey, ZJRawModule}
+import zhujiang.{NocIOHelper, ZJParametersKey, ZJRawModule}
 
 object GlobalStaticParameters {
   var lnParams:LinkNanParams = null
   var xsParams:XSCoreParameters = null
   var l2Params:L2Param = null
+}
+
+class LnDftWires(implicit p:Parameters) extends BaseTestBundle {
+  private val coreNum = p(ZJParametersKey).island.count(_.nodeType == NodeType.CC)
+  val core = Vec(coreNum, new PowerDomainTestBundle(true))
+  val noc = new PowerDomainTestBundle(false)
 }
 
 class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
@@ -66,7 +74,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     val ndreset = Output(Bool())
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = uncore.io.jtag.map(t => chiselTypeOf(t))
-    val dft = Input(new DftWires)
+    val dft = new LnDftWires
     val ramctl = Input(new SramCtrlBundle)
   })
 
@@ -85,7 +93,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   uncore.io.ci := io.ci
   uncore.io.default_reset_vector := io.default_reset_vector
   uncore.io.jtag.foreach(_ <> io.jtag.get)
-  uncore.io.dft := io.dft
+  uncore.io.dft <> io.dft
   io.ndreset := uncore.io.ndreset
   uncore.io.cluster_clocks := io.cluster_clocks
   uncore.io.ramctl := io.ramctl

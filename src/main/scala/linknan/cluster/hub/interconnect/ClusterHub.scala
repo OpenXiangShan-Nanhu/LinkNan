@@ -5,12 +5,15 @@ import chisel3.util._
 import org.chipsalliance.cde.config.Parameters
 import xijiang.{Node, NodeType}
 import xijiang.router.base.IcnBundle
-import xs.utils.ResetRRArbiter
+import xs.utils.dft.{BaseTestBundle, PowerDomainTestBundle}
 import xs.utils.sram.SramCtrlBundle
-import zhujiang.chi._
-import zhujiang.device.socket.{ChiPdcIcnSide, IcnAsyncBundle, IcnPdcBundle, IcnSideAsyncModule, SocketDevSide, SocketDevSideBundle, SocketIcnSideBundle}
+import zhujiang.device.socket.{SocketDevSide, SocketDevSideBundle, SocketIcnSideBundle}
 import zhujiang.tilelink.TLULBundle
-import zhujiang.{DftWires, ZJBundle, ZJModule}
+import zhujiang.{ZJBundle, ZJModule}
+
+class CpuClusterDftWires extends BaseTestBundle {
+  val core = new PowerDomainTestBundle(true)
+}
 
 class ClusterAddrBundle(implicit p:Parameters) extends ZJBundle {
   val ci = UInt(ciIdBits.W)
@@ -36,7 +39,7 @@ class ClusterDeviceBundle(node: Node)(implicit p: Parameters) extends ZJBundle {
   val misc = new ClusterMiscWires(node)
   val cpu_clock = Input(Clock())
   val noc_clock = Input(Clock())
-  val dft = Input(new DftWires)
+  val dft = new CpuClusterDftWires
   val ramctl = Input(new SramCtrlBundle)
   def <> (that: ClusterIcnBundle):Unit = {
     this.socket <> that.socket
@@ -53,7 +56,7 @@ class ClusterIcnBundle(node: Node)(implicit p: Parameters) extends ZJBundle {
   val misc = Flipped(new ClusterMiscWires(node))
   val cpu_clock = Output(Clock())
   val noc_clock = Output(Clock())
-  val dft = Output(new DftWires)
+  val dft = Flipped(new CpuClusterDftWires)
   val ramctl = Output(new SramCtrlBundle)
   def <> (that: ClusterDeviceBundle):Unit = {
     this.socket <> that.socket

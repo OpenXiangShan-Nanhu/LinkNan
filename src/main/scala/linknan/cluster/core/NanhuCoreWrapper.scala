@@ -118,8 +118,8 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
 
     _l2.io_nodeID := 0.U(7.W)
     _l2.io.l2Flush.foreach(_ := false.B)
-    _l2.io.dft.func.foreach(_ := io.dft.func)
-    _l2.io.dft.reset.foreach(_ := io.dft.reset)
+    _l2.io.dft.func.foreach(_ := io.dft.toSramBroadCastBundle)
+    _l2.io.dft.reset.foreach(_ := io.dft.toResetDftBundle)
     _l2.io.ramctl := io.ramctl
 
     reset_state := (_core.io.resetInFrontend || implicitReset.asBool).asAsyncReset
@@ -128,8 +128,8 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     _l2.io.debugTopDown.robHeadPaddr := _core.io.debugTopDown.robHeadPaddr
     _core.io.debugTopDown.l2MissMatch := _l2.io.debugTopDown.l2MissMatch
     _core.io.debugTopDown.l3MissMatch := false.B
-    _core.io.dft.func.foreach(_ := io.dft.func)
-    _core.io.dft.reset.foreach(_ := io.dft.reset)
+    _core.io.dft.func.foreach(_ := io.dft.toSramBroadCastBundle)
+    _core.io.dft.reset.foreach(_ := io.dft.toResetDftBundle)
     _core.io.ramctl := io.ramctl
 
     clintIntNode.out.head._1(0) := io.msip
