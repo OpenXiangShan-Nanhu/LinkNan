@@ -359,7 +359,10 @@ local function init_components()
             axi_db,
 
             cfg:get_or_else("verbose_sn_mon", true),
-            cfg:get_or_else("enable_sn_mon", true)
+            cfg:get_or_else("enable_sn_mon", true),
+            {
+                scb_rd_update_wr_check = true
+            }
         )
 
         table.insert(sn_mon_vec, sn_mon)
@@ -505,6 +508,12 @@ local function init_components()
             cfg:get_or_else("verbose_hnf_mon", true),
             cfg:get_or_else("enable_hnf_mon", true)
         )
+
+        final {
+            function ()
+                hnf_mon:list_tasks()
+            end
+        }
 
         table.insert(hnf_mon_vec, hnf_mon)
     end
