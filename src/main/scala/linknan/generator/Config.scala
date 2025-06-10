@@ -40,11 +40,11 @@ class BaseConfig extends Config((site, here, up) => {
 })
 
 object AddrConfig {
-  // interleaving granularity: 1KiB
+  // interleaving granularity: 64B
   // DDR: 0x0_8000_0000 ~ 0xF_FFFF_FFFF
   val interleaveOffset = 6
   val pmemRange = MemoryRange(0x00_8000_0000L, 0x10_0000_0000L)
-  private val interleaveBits = 2
+  private val interleaveBits = 1
   private val interleaveMask = ((0x1L << interleaveBits) - 1) << interleaveOffset
   private val memFullMask = (1L << log2Ceil(pmemRange.upper)) - 1
   private val everything = AddressSet(0x0L, memFullMask)
@@ -62,8 +62,6 @@ object AddrConfig {
 
   val mem0 = memBank(0)
   val mem1 = memBank(1)
-  val mem2 = memBank(2)
-  val mem3 = memBank(3)
 
   val mem_uc = Seq(
     (0x000_4000_0000L, 0xFFF_C000_0000L),
@@ -77,38 +75,25 @@ class FullNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
-      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "north", "mem_n_0"))),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "north", "mem_n_1"))),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "north", "mem_n_2"))),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "north", "mem_n_3"))),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "north", "mem_n_4"))),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "north", "mem_n_5"))),
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
       NodeParam(nodeType = NodeType.P),
-
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "east", "e_0")), addrSets = AddrConfig.mem2),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "east", "e_1")), addrSets = AddrConfig.mem3),
+      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "north", "pcie"))),
+      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(1, 8,  "north", "pcie")), addrSets = AddrConfig.mem_uc),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(3, 32, "north", "pcie")), addrSets = AddrConfig.mem_uc),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
+      NodeParam(nodeType = NodeType.CC, socket = socket),
 
       NodeParam(nodeType = NodeType.CC, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
-      NodeParam(nodeType = NodeType.CC, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 1),
-      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 32, "south", "s_main")), defaultHni = true),
-      NodeParam(nodeType = NodeType.RH, axiDevParams = Some(AxiDeviceParams(0, 32, "south", "main", Some(AxiParams(idBits = 14))))),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 32, "south", "mem_s_hs"))),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "south", "s_uc")), addrSets = AddrConfig.mem_uc),
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+      NodeParam(nodeType = NodeType.RH, axiDevParams = Some(AxiDeviceParams(0, 16, "south", "main", Some(AxiParams(idBits = 13))))),
+      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8,  "south", "main")), defaultHni = true),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(3, 32, "south", "1")), addrSets = AddrConfig.mem1),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(3, 32, "south", "0")), addrSets = AddrConfig.mem0),
       NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "south"))),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
       NodeParam(nodeType = NodeType.CC, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
-      NodeParam(nodeType = NodeType.CC, socket = socket),
-
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "west", "w_0")), addrSets = AddrConfig.mem0),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "west", "w_1")), addrSets = AddrConfig.mem1),
     )
   )
 })
@@ -118,23 +103,24 @@ class ReducedNocConfig(socket: String) extends Config((site, here, up) => {
     hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.CC, socket = socket),
+
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "north", "pcie"))),
+      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(1, 8,  "north", "pcie")), addrSets = AddrConfig.mem_uc),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "north", "pcie")), addrSets = AddrConfig.mem_uc),
+      NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
+
       NodeParam(nodeType = NodeType.CC, socket = socket),
 
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main", Some(AxiParams(idBits = 14))))),
-      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main")), defaultHni = true),
-
-      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
       NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
-
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "default", "0")), addrSets = AddrConfig.mem0),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "default", "1")), addrSets = AddrConfig.mem1),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "default", "2")), addrSets = AddrConfig.mem2),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "default", "3")), addrSets = AddrConfig.mem3),
-
-      NodeParam(nodeType = NodeType.M),
-      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.RH, axiDevParams = Some(AxiDeviceParams(0, 16, "south", "main", Some(AxiParams(idBits = 13))))),
+      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8,  "south", "main")), defaultHni = true),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "south", "1")), addrSets = AddrConfig.mem1),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "south", "0")), addrSets = AddrConfig.mem0),
+      NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "south"))),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
     )
   )
 })
@@ -147,8 +133,9 @@ class MinimalNocConfig(socket: String, ddrBuf:Int) extends Config((site, here, u
       NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
 
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main", Some(AxiParams(idBits = 14))))),
-      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main")), defaultHni = true),
+      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "default", "dma"))),
+      NodeParam(nodeType = NodeType.RH, axiDevParams = Some(AxiDeviceParams(0, 16, "default", "main", Some(AxiParams(idBits = 13))))),
+      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8, "default", "main")), defaultHni = true),
 
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
       NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(ddrBuf, 64, "memsys"))),
@@ -170,8 +157,8 @@ class ExtremeNocConfig(socket: String) extends Config((site, here, up) => {
 
       NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "default", "mem_0"))),
       NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "default", "mem_1"))),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main", Some(AxiParams(idBits = 15))))),
-      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main")), defaultHni = true),
+      NodeParam(nodeType = NodeType.RH, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main", Some(AxiParams(idBits = 13))))),
+      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8, "default", "main")), defaultHni = true),
 
       NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
