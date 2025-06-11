@@ -71,6 +71,7 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   dontTouch(io.pwrEnReq)
   dontTouch(io.pwrEnAck)
   dontTouch(io.isoEn)
+  io.pchn := DontCare
 
   val txreq = Wire(Decoupled(new RReqFlit))
   val txrsp = Wire(Decoupled(new RespFlit))

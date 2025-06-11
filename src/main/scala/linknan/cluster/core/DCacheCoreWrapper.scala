@@ -86,6 +86,8 @@ class DCacheCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapp
     l2cache.module.io.dft.func.foreach(_ := io.dft.toSramBroadCastBundle)
     l2cache.module.io.dft.reset.foreach(_ := io.dft.toResetDftBundle)
     l2cache.module.io.ramctl := io.ramctl
+    l2cache.module.io.l2Flush.foreach(_ := false.B)
+    l2cache.module.io_cpu_halt.foreach(_ := false.B)
 
     tpMetaSinkNode.foreach(_.in.head._1.ready := false.B)
     tpMetaSourceNode.foreach(_.out.head._1 := DontCare)
