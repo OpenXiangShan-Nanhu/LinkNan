@@ -67,16 +67,10 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   timerSink.io.deq.ready := true.B
 
   val cpuHalt = Wire(Bool())
-  val pSlv = Module(new PChannelSlv(devActiveBits, PowerMode.powerModeBits))
-  pSlv.io.p <> io.pchn
-  pSlv.io.resp.valid := pSlv.io.req.valid
-  pSlv.io.resp.bits := true.B
-  pSlv.io.active := Cat(!cpuHalt, cpuHalt, true.B)
   io.pwrEnAck := io.pwrEnReq
   dontTouch(io.pwrEnReq)
   dontTouch(io.pwrEnAck)
   dontTouch(io.isoEn)
-  dontTouch(pSlv.io)
 
   val txreq = Wire(Decoupled(new RReqFlit))
   val txrsp = Wire(Decoupled(new RespFlit))

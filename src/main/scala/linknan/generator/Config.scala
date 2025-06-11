@@ -184,6 +184,7 @@ class L2Config(sizeInKiB: Int = 512, ways: Int = 8, slices: Int = 2) extends Con
   case L2ParamKey =>
     val core = up(XSCoreParamsKey)
     up(L2ParamKey).copy(
+      enableL2Flush = true,
       tagECC = Some("secded"),
       dataECC = Some("secded"),
       enableTagECC = true,

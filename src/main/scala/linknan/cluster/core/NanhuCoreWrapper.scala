@@ -9,6 +9,7 @@ import freechips.rocketchip.interrupts.{IntSourceNode, IntSourcePortSimple}
 import freechips.rocketchip.tilelink.{BankBinder, TLBuffer, TLXbar}
 import linknan.soc.LinkNanParamsKey
 import linknan.utils.{connectByName, connectChiChn}
+import linknan.cluster.power.controller.CorePowerController
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.bundlebridge.BundleBridgeSource
 import org.chipsalliance.diplomacy.lazymodule.LazyModule
@@ -72,6 +73,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
   lazy val module = new NanhuCoreWrapperImpl
   @instantiable
   class NanhuCoreWrapperImpl extends BaseCoreWrapperImpl(this, node) with HasZJParams {
+    private val cpc = Module(new CorePowerController)
     private val _l2 = l2cache.module
     private val _core = core.module
     _core.io.hartId := io.mhartid
@@ -95,6 +97,17 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     _core.io.l2_tlb_req.req.bits.no_translate := _l2.io.l2_tlb_req.req.bits.no_translate
     _core.io.l2_tlb_req.req_kill := _l2.io.l2_tlb_req.req_kill
 
+    _core.io.power.wfiCtrRst := cpc.io.wfiCtrRst
+    _core.io.power.flushSb := cpc.io.flushSb
+    _core.io.power.fencei := cpc.io.fencei
+    cpc.io.cpuHalt := _core.io.cpu_halt
+    cpc.io.timeout := _core.io.power.timeout
+    cpc.io.sbIsEmpty := _core.io.power.sbIsEmpty
+    cpc.io.pchn <> io.pchn
+    _l2.io.l2Flush.foreach(_ := cpc.io.l2Flush)
+    _l2.io.l2FlushDone.foreach(cpc.io.l2FlushDone := _)
+    _l2.io_cpu_halt.foreach(_ := _core.io.cpu_halt)
+
     _l2.io.l2_tlb_req.resp.valid := _core.io.l2_tlb_req.resp.valid
     _l2.io.l2_tlb_req.req.ready := _core.io.l2_tlb_req.req.ready
     _l2.io.l2_tlb_req.resp.bits.paddr.head := _core.io.l2_tlb_req.resp.bits.paddr.head
@@ -117,7 +130,6 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     }
 
     _l2.io_nodeID := 0.U(7.W)
-    _l2.io.l2Flush.foreach(_ := false.B)
     _l2.io.dft.func.foreach(_ := io.dft.toSramBroadCastBundle)
     _l2.io.dft.reset.foreach(_ := io.dft.toResetDftBundle)
     _l2.io.ramctl := io.ramctl
