@@ -64,7 +64,6 @@ object AddrConfig {
   val mem1 = memBank(1)
 
   val mem_uc = Seq(
-    (0x000_4000_0000L, 0xFFF_C000_0000L),
     (0x000_5000_0000L, 0xFFF_C000_0000L),
     (0x000_6000_0000L, 0xFFF_C000_0000L),
     (0x000_7000_0000L, 0xFFF_C000_0000L),
