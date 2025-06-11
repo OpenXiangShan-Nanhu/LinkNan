@@ -96,12 +96,6 @@ class ReqXBar(implicit p: Parameters) extends ZJModule with ClusterInterconnectH
   rxcore.bits.Addr := AclintAddrRemapper(io.rx.core.bits.Addr)
   private val msts = Seq(io.rx.icn, rxcore)
   conn(slvs, msts, "req")
-
-  if(!p(LogUtilsOptionsKey).fpgaPlatform) {
-    when(rxcore.fire && rxcore.bits.MemAttr(1)) {
-      p(LinkNanParamsKey).checkPeriAddr(rxcore.bits.Addr)
-    }
-  }
 }
 
 class RspXBar(implicit p: Parameters) extends ZJModule with ClusterInterconnectHelper {
