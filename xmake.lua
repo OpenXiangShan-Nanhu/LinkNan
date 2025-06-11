@@ -124,7 +124,7 @@ task("emu-run", function ()
       {'i', "image", "kv", nil, "bin image bin name"},
       {'z', "imagez", "kv", nil, "gz image name"},
       {'c', "cycles", "kv", "0", "simlation max cycles"},
-      {'X', "fork", "kv", "15", "lightSSS fork interval in seconds, ignored when --dump is assigned"},
+      {'X', "fork", "kv", "50", "lightSSS fork interval in seconds, ignored when --dump is assigned"},
       {'b', "begin", "kv", "0", "begin time of waveform, ignored when --dump is not assigned"},
       {'e', "end", "kv", "0", "end time of waveform, ignored when --dump is not assigned"},
       {'g', "gcpt_restore", "kv", "", "overwrite gcptrestore img with this image file"},
