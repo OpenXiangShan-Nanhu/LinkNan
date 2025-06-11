@@ -1,5 +1,6 @@
 CORE_FILE?=bosc_NanhuCoreWrapper.f
 LN_FILE?=bosc_FullSys.f
+TOP_MODULE_NAME?=bosc_LNTop
 #LIB_FILELIST?=
 #LN_FILE ?= bosc_LNTop.f
 
@@ -13,41 +14,23 @@ export release_path=$(rtl_path)
 ver_echo:
 	@echo "Exported release_path: $$release_path"
 
-core_dir_sram_tb:
+dir_sram_tb:
 	mkdir -p ./sim
-	mkdir -p ./sim/sram_tb_core
+	mkdir -p ./sim/sram_tb
 
-core_copy_core_tb:
-	cp ./env/sram_tb/core_tb/* ./sim/sram_tb_core/
+copy_sram_tb:
+	cp ./env/sram_tb/* ./sim/sram_tb/
 
-core_run_core_sram_tb:
+run_sram_tb:
 ifeq ($(LIB_FILELIST), )
-	$(MAKE) -C ./sim/sram_tb_core gen_run CORE_FILE=$(CORE_FILE)
+	$(MAKE) -C ./sim/sram_tb gen_run LN_FILE=$(LN_FILE) TOP_MODULE_NAME=$(TOP_MODULE_NAME)
 else
-	$(MAKE) -C ./sim/sram_tb_core gen_run CORE_FILE=$(CORE_FILE) LIB_FILELIST=$(LIB_FILELIST)
+	$(MAKE) -C ./sim/sram_tb gen_run LN_FILE=$(LN_FILE) TOP_MODULE_NAME=$(TOP_MODULE_NAME) LIB_FILELIST=$(LIB_FILELIST)
 endif
 
-core_run: core_dir_sram_tb core_copy_core_tb core_run_core_sram_tb
-
-ln_dir_sram_tb:
-	mkdir -p ./sim
-	mkdir -p ./sim/sram_tb_ln
-
-ln_copy_core_tb:
-	cp ./env/sram_tb/ln_tb/* ./sim/sram_tb_ln/
-
-ln_run_core_sram_tb:
-ifeq ($(LIB_FILELIST), )
-	$(MAKE) -C ./sim/sram_tb_ln gen_run LN_FILE=$(LN_FILE)
-else 
-	$(MAKE) -C ./sim/sram_tb_ln gen_run LN_FILE=$(LN_FILE) LIB_FILELIST=$(LIB_FILELIST)
-endif
-
-ln_run: ln_dir_sram_tb ln_copy_core_tb ln_run_core_sram_tb
-
-run: ver_echo ln_run core_run
+run: ver_echo dir_sram_tb copy_sram_tb run_sram_tb
 
 clean:
-	rm -rf ./sim/sram_tb_ln ./sim/sram_tb_core
+	rm -rf ./sim/sram_tb
 
 
