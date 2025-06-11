@@ -167,7 +167,7 @@ class ExtremeNocConfig(socket: String) extends Config((site, here, up) => {
   )
 })
 
-class LLCConfig(sizeInB: Int = 8 * 1024 * 1024, ways: Int = 16, sfWays: Int = 16, outstanding: Int = 64 * 4, dirBank: Int = 2) extends Config((site, here, up) => {
+class LLCConfig(sizeInB: Int = 8 * 1024 * 1024, ways: Int = 16, sfWays: Int = 16, outstanding: Int = 32 * 4, dirBank: Int = 2) extends Config((site, here, up) => {
   case ZJParametersKey => up(ZJParametersKey).copy(
     cacheSizeInB = sizeInB,
     cacheWays = ways,
