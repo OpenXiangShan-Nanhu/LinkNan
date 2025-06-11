@@ -75,6 +75,7 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   cpc.io.cpuHalt := false.B
   cpc.io.timeout := false.B
   cpc.io.sbIsEmpty := true.B
+  cpc.io.l2FlushDone := true.B
 
   val txreq = Wire(Decoupled(new RReqFlit))
   val txrsp = Wire(Decoupled(new RespFlit))

@@ -103,7 +103,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     cpc.io.sbIsEmpty := _core.io.power.sbIsEmpty
     cpc.io.pchn <> io.pchn
     _l2.io.l2Flush.foreach(_ := cpc.io.l2Flush)
-    _l2.io.l2FlushDone.foreach(cpc.io.l2FlushDone := _)
+    cpc.io.l2FlushDone := _l2.io.l2FlushDone.getOrElse(true.B)
     _l2.io_cpu_halt.foreach(_ := _core.io.cpu_halt)
 
     _l2.io.l2_tlb_req.resp.valid := _core.io.l2_tlb_req.resp.valid
