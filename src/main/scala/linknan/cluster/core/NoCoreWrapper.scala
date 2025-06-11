@@ -137,8 +137,6 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
     tpMetaSinkNode.foreach(_.in.head._1.ready := false.B)
     tpMetaSourceNode.foreach(_.out.head._1 := DontCare)
 
-    cpuHalt := false.B
-
     l2cache.module.io_chi match {
       case l2_chi: coupledL2.tl2chi.DecoupledPortIO =>
         connectByName(txreq, l2_chi.tx.req)

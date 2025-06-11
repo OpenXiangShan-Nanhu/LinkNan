@@ -5,7 +5,7 @@ import chisel3.util._
 import chisel3._
 import freechips.rocketchip.resources.BindingScope
 import freechips.rocketchip.util.{AsyncBundle, AsyncQueueParams, AsyncQueueSink}
-import linknan.cluster.power.controller.{PowerMode, devActiveBits}
+import linknan.cluster.power.controller.{CorePowerController, PowerMode, devActiveBits}
 import linknan.cluster.power.pchannel.{PChannel, PChannelSlv}
 import linknan.soc.LinkNanParamsKey
 import linknan.utils.connectChiChn
@@ -56,6 +56,7 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   def implicitReset = childReset
 
   val pdc = Module(new DeviceSideAsyncModule(node))
+  val cpc = Module(new CorePowerController)
   io.chi <> pdc.io.async
   pdc.io.icn.rx.debug.foreach(_ := DontCare)
 
@@ -66,12 +67,14 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   timerUpdate.bits := timerSink.io.deq.bits
   timerSink.io.deq.ready := true.B
 
-  val cpuHalt = Wire(Bool())
   io.pwrEnAck := io.pwrEnReq
   dontTouch(io.pwrEnReq)
   dontTouch(io.pwrEnAck)
   dontTouch(io.isoEn)
-  io.pchn := DontCare
+  io.pchn <> cpc.io.pchn
+  cpc.io.cpuHalt := false.B
+  cpc.io.timeout := false.B
+  cpc.io.sbIsEmpty := true.B
 
   val txreq = Wire(Decoupled(new RReqFlit))
   val txrsp = Wire(Decoupled(new RespFlit))

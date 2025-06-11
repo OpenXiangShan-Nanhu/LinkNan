@@ -73,7 +73,6 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
   lazy val module = new NanhuCoreWrapperImpl
   @instantiable
   class NanhuCoreWrapperImpl extends BaseCoreWrapperImpl(this, node) with HasZJParams {
-    private val cpc = Module(new CorePowerController)
     private val _l2 = l2cache.module
     private val _core = core.module
     _core.io.hartId := io.mhartid
@@ -81,7 +80,6 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     _core.io.msiInfo := DontCare
     _core.io.clintTime := Pipe(timerUpdate)
     _core.io.reset_vector := io.reset_vector
-    cpuHalt := _core.io.cpu_halt
     _core.io.traceCoreInterface := DontCare
     _l2.io.pfCtrlFromCore := _core.io.l2PfCtrl
     _core.io.l2_hint := _l2.io.l2_hint
