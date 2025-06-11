@@ -22,6 +22,8 @@ mkdir -p "$env_dir"
 git clone --depth=1 -b nact https://github.com/OpenXiangShan-Nanhu/nexus-am.git $am_dir
 git clone --depth=1 -b master https://github.com/OpenXiangShan-Nanhu/NEMU.git  $nemu_dir
 git clone --depth=1 -b master https://github.com/ucb-bar/berkeley-softfloat-3.git $nemu_dir/resource/softfloat/repo
+git clone --depth=1 -b master https://github.com/nanopb/nanopb.git $nemu_dir/resource/nanopb
+git clone --depth=1 -b master https://github.com/OpenXiangShan/LibCheckpoint.git $nemu_dir/resource/LibCheckpoint
 git clone --depth=1 -b main https://github.com/OpenXiangShan/LibcheckpointAlpha.git $nemu_dir/resource/gcpt_restore
 
 # 3. compile cases
