@@ -83,7 +83,7 @@ class AXI4IntrGenerator(
     if(nrRegs == 1) {
       rq.io.enq.bits.data := intrRegVec.head
     } else {
-      rq.io.enq.bits.data := intrRegVec(in.ar.bits.addr(log2Ceil(regBits * nrRegs / 8) - 1, log2Ceil(regBits / 8)))
+      rq.io.enq.bits.data := intrRegVec(in.ar.bits.addr(log2Ceil(nrIntr / 8) - 1, log2Ceil(regBits / 8)))
     }
     rq.io.enq.bits.resp := 0.U
     rq.io.enq.bits.user := in.ar.bits.user
@@ -100,7 +100,7 @@ class AXI4IntrGenerator(
     awq.io.deq.ready := bq.io.enq.ready & wq.io.deq.valid
     wq.io.deq.ready := bq.io.enq.ready & awq.io.deq.valid
 
-    private val waddr = awq.io.deq.bits.addr(log2Ceil(nrIntr / 8) - 1, 0)
+    private val waddr = awq.io.deq.bits.addr(log2Ceil(nrIntr / 8) - 1, log2Ceil(regBits / 8))
     private val wdata = wq.io.deq.bits.data
     private val wmask = VecInit(Seq.tabulate(regBits / 8)(i => Fill(8, wq.io.deq.bits.strb(i)))).asUInt
     private val wen = bq.io.enq.valid
