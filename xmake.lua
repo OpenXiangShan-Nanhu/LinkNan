@@ -15,7 +15,8 @@ task("soc" , function()
       {'g', "vcs", "k", nil, "alter assertions info to be vcs style"},
       {'r', "release", "k", nil, "export release pack"},
       {'s', "sim", "k", nil, "generate simulation top"},
-      {'m', "mbist", "k", nil, "generate simulation top"},
+      {'f', "fpga", "k", nil, "generate fpga top"},
+      {'m', "mbist", "k", nil, "enable mbist"},
       {'p', "pldm_verilog", "k", nil, "enable only basic difftest function"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
       {'Y', "legacy", "k", nil, "use XS legacy memory map"},
@@ -33,8 +34,13 @@ task("soc" , function()
   on_run(function()
     import("core.base.option")
     print(option.get("options"))
-    if option.get("sim") then table.join2(chisel_opts, {"linknan.test.runMain"}) else table.join2(chisel_opts, {"linknan.runMain"}) end
-    if option.get("sim") then table.join2(chisel_opts, {"lntest.top.SimGenerator"}) else table.join2(chisel_opts, {"linknan.generator.SocGenerator"}) end
+    if option.get("sim") then
+        table.join2(chisel_opts, {"linknan.test.runMain", "lntest.top.SimGenerator"})
+    elseif option.get("fpga") then
+        table.join2(chisel_opts, {"linknan.test.runMain", "lntest.top.FpgaGenerator"})
+    else
+        table.join2(chisel_opts, {"linknan.runMain", "linknan.generator.SocGenerator"})
+    end
     if not option.get("all_in_one") or option.get("release") then table.join2(chisel_opts, {"--split-verilog"}) end
     if option.get("block_test_l2l3") then table.join2(chisel_opts, {"--no-core"}) end
     if option.get("keep_l1") then table.join2(chisel_opts, {"--keep-l1c"}) end
