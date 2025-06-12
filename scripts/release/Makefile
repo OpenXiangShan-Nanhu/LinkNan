@@ -32,7 +32,7 @@ VCS_FLAGS += +define+STOP_COND_=1 +define+VCS +incdir+$(GEN_CSRC_DIR)
 VCS_FLAGS += -CFLAGS "$(VCS_CXXFLAGS)" -LDFLAGS "$(VCS_LDFLAGS)" -j200
 VCS_FLAGS += $(EXTRA)
 
-VCS_CXXFLAGS += -std=c++17 -static -Wall -DREF_PROXY=NemuProxy -DNUM_CORES=1
+VCS_CXXFLAGS += -std=c++17 -static -Wall -DREF_PROXY=NemuProxy -DNUM_CORES=4
 VCS_CXXFLAGS += -I$(CFG_CIR) -I$(GEN_CSRC_DIR) -I$(VCS_CSRC_DIR) -I$(SIM_CSRC_DIR)
 VCS_CXXFLAGS += -I$(PLUGIN_CHEAD_DIR) -I$(PLUGIN_CSRC_DIR) -I$(DIFFTEST_CSRC_DIR)
 VCS_LDFLAGS += -Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz -lzstd
