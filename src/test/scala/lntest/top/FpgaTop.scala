@@ -40,11 +40,11 @@ class FpgaTop(implicit val p: Parameters) extends RawModule with NocIOHelper {
   soc.io.dft.lgc_rst_n := true.B
   soc.io.jtag.foreach(_ := DontCare)
   soc.io.jtag.foreach(_.reset := true.B)
-  soc.ddrIO.filter(_.params.dataBits < 256).foreach(_ := DontCare)
+  soc.dmaIO.filter(_.params.dataBits < 256).foreach(_ := DontCare)
 
-  val ddrDrv = soc.ddrIO.map(AxiUtils.getIntnl).filter(_.params.dataBits == 256)
+  val ddrDrv = soc.ddrIO.map(AxiUtils.getIntnl)
   val cfgDrv = soc.cfgIO.map(AxiUtils.getIntnl)
-  val dmaDrv = soc.dmaIO.map(AxiUtils.getIntnl)
+  val dmaDrv = soc.dmaIO.filter(_.params.dataBits == 256).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   val hwaDrv = soc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
