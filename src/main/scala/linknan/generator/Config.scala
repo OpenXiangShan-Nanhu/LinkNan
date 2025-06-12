@@ -238,7 +238,7 @@ class FullL3Config extends Config(
 )
 
 class MediumL3Config extends Config(
-  new LLCConfig(4 * 1024 * 1024, 8)
+  new LLCConfig(4 * 1024 * 1024, 8, 16, 64, 2)
 )
 
 class SmallL3Config extends Config(
