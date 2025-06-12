@@ -19,16 +19,18 @@ class FpgaTop(implicit val p: Parameters) extends RawModule with NocIOHelper {
     val resetn = Input(Bool())
     val core_clk = Input(Vec(soc.io.cluster_clocks.size, Clock()))
     val noc_clk = Input(Clock())
-    val rtc_clk = Input(Bool())
+    val rtc_clk = Input(Clock())
     val reset_vector = Input(UInt(soc.io.default_reset_vector.getWidth.W))
     val ext_intr = Input(UInt(soc.io.ext_intr.getWidth.W))
   })
   private val _reset = (!io.resetn).asAsyncReset
   private val resetSync = withClockAndReset(io.noc_clk, _reset) { ResetGen(2, None) }
+  private val _rtc_reg = withClockAndReset(io.rtc_clk, _reset) { RegInit(false.B) }
+  _rtc_reg := ~_rtc_reg
 
   soc.io.cluster_clocks := io.core_clk
   soc.io.noc_clock := io.noc_clk
-  soc.io.rtc_clock := io.rtc_clk
+  soc.io.rtc_clock := _rtc_reg
   soc.io.ext_intr := io.ext_intr
   soc.io.default_reset_vector := io.reset_vector
   soc.io.reset := resetSync
