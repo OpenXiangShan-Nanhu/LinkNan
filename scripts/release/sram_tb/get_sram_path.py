@@ -1,7 +1,7 @@
 import re
 
 sim_result = ""
-with open('run_log_ln.txt', 'r') as file:
+with open('run_log.txt', 'r') as file:
     content = file.read()
     if 'TEST CASE PASS' in content:
         print("TEST CASE PASS")
@@ -23,6 +23,4 @@ def extract_and_append(input_file_path, output_file_path):
                 file.write(line + '\n')
         file.write(f"total {len(matches)} sram has been verified\n")
         file.write(f"{sim_result}\n")
-extract_and_append('search.log', 'run_log_ln.txt')
-
-
+extract_and_append('search.log', 'run_log.txt')
