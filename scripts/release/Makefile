@@ -70,7 +70,7 @@ simv: $(DUT_FILELIST) $(ENV_FILELIST)
 libnemu := $(NEMU_DIR)/build/riscv64-nemu-interpreter-so
 
 $(libnemu):
-	NEMU_HOME=$(NEMU_DIR) make -C $(NEMU_DIR) riscv64-nhv5-ref_defconfig
+	NEMU_HOME=$(NEMU_DIR) make -C $(NEMU_DIR) riscv64-nhv5-multi-ref_defconfig
 	NEMU_HOME=$(NEMU_DIR) make -C $(NEMU_DIR) -j
 
 RUN_BIN_DIR = $(CASES_DIR)
