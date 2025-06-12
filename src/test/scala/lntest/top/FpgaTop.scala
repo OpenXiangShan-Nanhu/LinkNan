@@ -31,7 +31,7 @@ class FpgaTop(implicit val p: Parameters) extends Module with NocIOHelper {
   soc.io.default_reset_vector := io.reset_vector
   soc.io.reset := reset
   soc.io.dft := DontCare
-  soc.io.ramctl := 0.U
+  soc.io.ramctl := DontCare
   soc.io.ci := 0.U
   soc.io.dft.lgc_rst_n := true.B
   soc.io.jtag.foreach(_ := DontCare)
