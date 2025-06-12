@@ -42,6 +42,7 @@ class FpgaTop(implicit val p: Parameters) extends Module with NocIOHelper {
   val dmaDrv = soc.dmaIO.map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   val hwaDrv = soc.hwaIO.map(AxiUtils.getIntnl)
+  runIOAutomation()
 }
 
 object FpgaGenerator extends App {
