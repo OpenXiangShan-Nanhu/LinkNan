@@ -2,17 +2,43 @@ package lntest.top
 
 import chisel3._
 import chisel3.stage.ChiselGeneratorAnnotation
-import linknan.generator.Generator
+import chisel3.util.HasBlackBoxInline
+import linknan.generator.{AddrConfig, Generator}
 import linknan.soc.{LNTop, LinkNanParamsKey}
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.DisableMonitors
 import xs.utils.{FileRegisters, ResetGen}
 import xs.utils.perf.DebugOptionsKey
 import xs.utils.stage.XsStage
-import zhujiang.{NocIOHelper, ZJParametersKey}
+import zhujiang.{NocIOHelper, ZJParametersKey, ZJRawModule}
 import zhujiang.axi.AxiUtils
 
-class FpgaTop(implicit val p: Parameters) extends RawModule with NocIOHelper {
+class VerilogMinus(width:Int) extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val a = Input(UInt(width.W))
+    val b = Input(UInt(width.W))
+    val z = Output(UInt(width.W))
+  })
+  setInline(s"VerilogMinus.sv",
+    s"""module VerilogMinus (
+       |  input  wire [${width - 1}:0] a,
+       |  input  wire [${width - 1}:0] b,
+       |  output wire [${width - 1}:0] z
+       |);
+       |  assign z = a - b;
+       |endmodule""".stripMargin)
+}
+
+object VerilogMinus {
+  def apply(a:UInt, b:UInt):UInt = {
+    val minus = Module(new VerilogMinus(a.getWidth.max(b.getWidth)))
+    minus.io.a := a
+    minus.io.b := b
+    minus.io.z
+  }
+}
+
+class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper {
   override val desiredName = "XlnFpgaTop"
   private val soc = Module(new LNTop)
   val io = IO(new Bundle {
@@ -48,6 +74,10 @@ class FpgaTop(implicit val p: Parameters) extends RawModule with NocIOHelper {
   val ccnDrv = Seq()
   val hwaDrv = soc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
+  ddrIO.zip(ddrDrv).foreach({case(a, b) =>
+    a.araddr := VerilogMinus(b.ar.bits.addr, AddrConfig.pmemRange.lower.U(raw.W))
+    a.awaddr := VerilogMinus(b.aw.bits.addr, AddrConfig.pmemRange.lower.U(raw.W))
+  })
 }
 
 object FpgaGenerator extends App {
