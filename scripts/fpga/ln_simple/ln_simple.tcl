@@ -27,6 +27,8 @@ cd [join [list [pwd] $project_name] "/"]
 
 create_bd_design $project_name
 create_bd_cell -type module -reference XlnFpgaTop ln
+set_property CONFIG.FREQ_HZ 50000000 [get_bd_intf_pins /ln/m_axi_cfg_main]
+set_property CONFIG.FREQ_HZ 50000000 [get_bd_intf_pins /ln/m_axi_mem_0]
 
 # start of u_jtag_ddr_subsystem
 create_bd_cell -type hier u_jtag_ddr_subsys
@@ -36,13 +38,21 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect u_jtag_ddr_subsys/a
 create_bd_cell -type ip -vlnv xilinx.com:ip:ila u_jtag_ddr_subsys/jtag_maxi_ila
 create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset u_jtag_ddr_subsys/rst_ddr4_200M
 create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset u_jtag_ddr_subsys/rst_sys_50M
-create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic u_jtag_ddr_subsys/logic_not_0
-create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic u_jtag_ddr_subsys/logic_not_1
+create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilvector_logic u_jtag_ddr_subsys/logic_not_0
+create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilvector_logic u_jtag_ddr_subsys/logic_not_1
 create_bd_cell -type ip -vlnv xilinx.com:ip:axi_clock_converter:2.1 u_jtag_ddr_subsys/axi_clock_converter_0
 
 set_property -dict [list CONFIG.C_DATA_DEPTH {2048} CONFIG.ALL_PROBE_SAME_MU {false}] [get_bd_cells u_jtag_ddr_subsys/jtag_maxi_ila]
-set_property -dict [list CONFIG.C_SIZE {1} CONFIG.C_OPERATION {not} CONFIG.LOGO_FILE {data/sym_notgate.png}] [get_bd_cells u_jtag_ddr_subsys/logic_not_0]
-set_property -dict [list CONFIG.C_SIZE {1}  CONFIG.C_OPERATION {not} CONFIG.LOGO_FILE {data/sym_notgate.png}] [get_bd_cells u_jtag_ddr_subsys/logic_not_1]
+
+set_property -dict [list \
+  CONFIG.C_OPERATION {not} \
+  CONFIG.C_SIZE {1} \
+] [get_bd_cells u_jtag_ddr_subsys/logic_not_0]
+
+set_property -dict [list \
+  CONFIG.C_OPERATION {not} \
+  CONFIG.C_SIZE {1} \
+] [get_bd_cells u_jtag_ddr_subsys/logic_not_1]
 
 set_property -dict [list \
   CONFIG.M_AXI_ID_WIDTH {4} \
@@ -78,7 +88,6 @@ set_property -dict [list \
   CONFIG.ADDN_UI_CLKOUT1_FREQ_HZ {50} \
   CONFIG.ADDN_UI_CLKOUT2_FREQ_HZ {25} \
   CONFIG.ADDN_UI_CLKOUT3_FREQ_HZ {10} \
-  CONFIG.ADDN_UI_CLKOUT4_FREQ_HZ {80} \
 ] [get_bd_cells u_jtag_ddr_subsys/ddr4_0]
 
 set_property -dict [list CONFIG.ACLK_ASYNC.VALUE_SRC USER] [get_bd_cells u_jtag_ddr_subsys/axi_clock_converter_0]
@@ -251,7 +260,7 @@ connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/DDR4] [get_bd_intf_ports
 
 connect_bd_net [get_bd_pins boot_addr/dout] [get_bd_pins ln/io_reset_vector]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/RTC_CLK] [get_bd_pins ln/io_rtc_clk]
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/SOC_CLK] [get_bd_pins ln/io_noc_clk]
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/SOC_CLK] [get_bd_pins ln/io_aclk]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/SOC_RESETN] [get_bd_pins ln/io_aresetn]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/SOC_RESETN] [get_bd_pins u_peri_subsys/ARESETN] -boundary_type upper
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/SOC_CLK] [get_bd_pins u_peri_subsys/ACLK] -boundary_type upper
