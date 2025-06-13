@@ -27,8 +27,6 @@ cd [join [list [pwd] $project_name] "/"]
 
 create_bd_design $project_name
 create_bd_cell -type module -reference XlnFpgaTop ln
-set_property CONFIG.FREQ_HZ 50000000 [get_bd_intf_pins /ln/m_axi_cfg_main]
-set_property CONFIG.FREQ_HZ 50000000 [get_bd_intf_pins /ln/m_axi_mem_0]
 
 # start of u_jtag_ddr_subsystem
 create_bd_cell -type hier u_jtag_ddr_subsys
@@ -40,7 +38,7 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset u_jtag_ddr_subsys/rst
 create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset u_jtag_ddr_subsys/rst_sys_50M
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilvector_logic u_jtag_ddr_subsys/logic_not_0
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilvector_logic u_jtag_ddr_subsys/logic_not_1
-create_bd_cell -type ip -vlnv xilinx.com:ip:axi_clock_converter:2.1 u_jtag_ddr_subsys/axi_clock_converter_0
+create_bd_cell -type ip -vlnv xilinx.com:ip:axi_clock_converter u_jtag_ddr_subsys/axi_clock_converter_0
 
 set_property -dict [list CONFIG.C_DATA_DEPTH {2048} CONFIG.ALL_PROBE_SAME_MU {false}] [get_bd_cells u_jtag_ddr_subsys/jtag_maxi_ila]
 
@@ -257,6 +255,10 @@ set_property CONFIG.FREQ_HZ 80000000 [get_bd_intf_ports /ddr]
 connect_bd_intf_net [get_bd_intf_pins clk_wiz_0/CLK_IN1_D] [get_bd_intf_ports core]
 set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_intf_pins clk_wiz_0/CLK_IN1_D]] [get_bd_intf_ports core]
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/DDR4] [get_bd_intf_ports DDR0]
+set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1]] [get_bd_intf_pins /ln/m_axi_cfg_main]
+set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1]]  [get_bd_intf_pins /ln/m_axi_mem_0]
+set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1]] [get_bd_pins /ln/io_aclk]
+set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout3]] [get_bd_pins /ln/io_rtc_clk]
 
 connect_bd_net [get_bd_pins boot_addr/dout] [get_bd_pins ln/io_reset_vector]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/RTC_CLK] [get_bd_pins ln/io_rtc_clk]
@@ -289,6 +291,7 @@ validate_bd_design
 save_bd_design
 close_bd_design [get_bd_designs $project_name]
 
+set_param general.maxThreads 4
 set wrp_name $project_name
 append wrp_name "_wrapper"
 set bd_file [file join [pwd] "$project_name.srcs" "sources_1" "bd" $project_name "$project_name.bd"]
@@ -300,4 +303,4 @@ update_compile_order -fileset sources_1
 generate_target all [get_files $bd_file]
 export_ip_user_files -of_objects [get_files $bd_file] -no_script -sync -force -quiet
 create_ip_run [get_files -of_objects [get_fileset sources_1] $bd_file]
-launch_runs synth_1 -jobs 8
+launch_runs impl_1 -jobs 8
