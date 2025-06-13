@@ -54,7 +54,7 @@ set_property -dict [list \
 
 set_property -dict [list \
   CONFIG.M_AXI_ID_WIDTH {4} \
-  CONFIG.M_HAS_BURST {0} \
+  CONFIG.M_HAS_BURST {1} \
   CONFIG.RD_TXN_QUEUE_LENGTH {8} \
   CONFIG.WR_TXN_QUEUE_LENGTH {8} \
 ] [get_bd_cells u_jtag_ddr_subsys/jtag_axi_0]
