@@ -291,7 +291,13 @@ validate_bd_design
 save_bd_design
 close_bd_design [get_bd_designs $project_name]
 
-set_param general.maxThreads 4
+if {$tcl_platform(platform) eq "windows"} {
+  set_param general.maxThreads 4
+  puts "Running on Windows OS, set maxThreads to 4"
+} else {
+  set_param general.maxThreads 8
+  puts "Running on Unix-Like OS, set maxThreads to 8"
+}
 set wrp_name $project_name
 append wrp_name "_wrapper"
 set bd_file [file join [pwd] "$project_name.srcs" "sources_1" "bd" $project_name "$project_name.bd"]
