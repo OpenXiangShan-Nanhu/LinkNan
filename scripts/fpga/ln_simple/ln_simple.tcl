@@ -8,10 +8,10 @@ if {[file exists $abs_prj_path] && [file isdirectory $abs_prj_path]} {
 create_project $project_name $project_name -part xcvu19p-fsva3824-2-e
 set_property simulator_language Verilog [current_project]
 
-set io_xdc [file join [pwd] "ln_ioplan.xdc"]
-set fp_xdc  [file join [pwd] "ln_floorplan.xdc"]
-set te_xdc  [file join [pwd] "ln_timing.xdc"]
-add_files -fileset constrs_1 -norecurse [list $io_xdc $fp_xdc $te_xdc]
+set io_xdc [file join [pwd] "constr" "ln_ioplan.xdc"]
+set te_xdc  [file join [pwd] "constr" "ln_timing.xdc"]
+set fp_xdc  [file join [pwd] "constr" "ln_floorplan.xdc"]
+add_files -fileset constrs_1 -norecurse [list $io_xdc $te_xdc $fp_xdc]
 
 set ln_fl [open "linknan/FullSys.f" r]
 set ln_path [pwd]
@@ -51,7 +51,7 @@ set_property -dict [list \
 
 set_property -dict [list \
   CONFIG.M_AXI_ID_WIDTH {4} \
-  CONFIG.M_HAS_BURST {1} \
+  CONFIG.M_HAS_BURST {0} \
   CONFIG.RD_TXN_QUEUE_LENGTH {8} \
   CONFIG.WR_TXN_QUEUE_LENGTH {8} \
 ] [get_bd_cells u_jtag_ddr_subsys/jtag_axi]
@@ -186,12 +186,17 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:vio vio_0
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant intr_lo
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant intr_hi
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconcat intr_cat
+create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf core_bufg
+create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf noc_bufg
 
 create_bd_port -dir O uart0_sout
 create_bd_port -dir I uart0_sin
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddr4_rtl:1.0 DDR0
 create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 ddr
 create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 core
+
+set_property CONFIG.C_BUF_TYPE {BUFG} [get_bd_cells core_bufg]
+set_property CONFIG.C_BUF_TYPE {BUFG} [get_bd_cells noc_bufg]
 
 set_property -dict [list \
   CONFIG.CONST_VAL {0x80000000} \
@@ -257,13 +262,16 @@ set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins u_jtag_dd
 set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1]]  [get_bd_intf_pins /ln/m_axi_mem_0]
 set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1]] [get_bd_pins /ln/io_aclk]
 
+connect_bd_net [get_bd_pins clk_wiz_0/core_clk] [get_bd_pins core_bufg/BUFG_I]
+connect_bd_net [get_bd_pins core_bufg/BUFG_O] [get_bd_pins ln/io_core_clk_0]
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/SOC_CLK] [get_bd_pins noc_bufg/BUFG_I]
+connect_bd_net [get_bd_pins noc_bufg/BUFG_O] [get_bd_pins ln/io_aclk]
+connect_bd_net [get_bd_pins noc_bufg/BUFG_O] [get_bd_pins u_peri_subsys/ACLK]
+
 connect_bd_net [get_bd_pins boot_addr/dout] [get_bd_pins ln/io_reset_vector]
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/SOC_CLK] [get_bd_pins ln/io_aclk]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/peri_aresetn] [get_bd_pins u_peri_subsys/ARESETN]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/cpu_aresetn] [get_bd_pins ln/io_aresetn]
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/SOC_CLK] [get_bd_pins u_peri_subsys/ACLK]
 connect_bd_net [get_bd_pins clk_wiz_0/core_clk] [get_bd_pins vio_0/clk]
-connect_bd_net [get_bd_pins clk_wiz_0/core_clk] [get_bd_pins ln/io_core_clk_0]
 connect_bd_net [get_bd_pins clk_wiz_0/rtc_clk] [get_bd_pins ln/io_rtc_clk]
 connect_bd_intf_net [get_bd_intf_pins ln/m_axi_cfg_main] -boundary_type upper [get_bd_intf_pins u_peri_subsys/S_AXI_CFG]
 connect_bd_intf_net [get_bd_intf_pins ln/m_axi_mem_0] -boundary_type upper [get_bd_intf_pins u_jtag_ddr_subsys/S_AXI_MEM]
@@ -308,13 +316,8 @@ export_ip_user_files -of_objects [get_files $bd_file] -no_script -sync -force -q
 create_ip_run [get_files -of_objects [get_fileset sources_1] $bd_file]
 
 set_property STEPS.SYNTH_DESIGN.ARGS.GATED_CLOCK_CONVERSION on [get_runs ln_simple_ln_0_synth_1]
-set_property STEPS.SYNTH_DESIGN.ARGS.MAX_URAM 0 [get_runs ln_simple_ln_0_synth_1]
-set_property STEPS.SYNTH_DESIGN.ARGS.BUFG 16 [get_runs ln_simple_ln_0_synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.KEEP_EQUIVALENT_REGISTERS true [get_runs ln_simple_ln_0_synth_1]
 
-create_run impl_2 -parent_run synth_1 -flow {Vivado Implementation 2024} -strategy Congestion_SpreadLogic_medium
-create_run impl_3 -parent_run synth_1 -flow {Vivado Implementation 2024} -strategy Performance_Explore
+launch_runs synth_1 -job 8
 
-launch_runs impl_1 -jobs 8
-launch_runs impl_2 -jobs 8
-launch_runs impl_3 -jobs 8
+wait_on_runs synth_1
