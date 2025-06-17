@@ -319,5 +319,6 @@ set_property STEPS.SYNTH_DESIGN.ARGS.GATED_CLOCK_CONVERSION on [get_runs ln_simp
 set_property STEPS.SYNTH_DESIGN.ARGS.KEEP_EQUIVALENT_REGISTERS true [get_runs ln_simple_ln_0_synth_1]
 
 launch_runs synth_1 -job 8
-
 wait_on_runs synth_1
+
+set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
