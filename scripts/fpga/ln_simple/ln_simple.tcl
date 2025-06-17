@@ -41,7 +41,7 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:ddr4 u_jtag_ddr_subsys/ddr4_0
 create_bd_cell -type ip -vlnv xilinx.com:ip:jtag_axi u_jtag_ddr_subsys/jtag_axi
 create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect u_jtag_ddr_subsys/axi_interconnect_0
 create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset u_jtag_ddr_subsys/rst_ddr4_200M
-create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset u_jtag_ddr_subsys/rst_sys_50M
+create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset u_jtag_ddr_subsys/rst_sys_100M
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilvector_logic u_jtag_ddr_subsys/logic_not
 
 set_property -dict [list \
@@ -80,18 +80,16 @@ set_property -dict [list \
   CONFIG.C0.DDR4_CasWriteLatency {11} \
   CONFIG.C0.DDR4_AxiDataWidth {64} \
   CONFIG.C0.DDR4_AxiAddressWidth {33} \
-  CONFIG.ADDN_UI_CLKOUT1_FREQ_HZ {50} \
+  CONFIG.ADDN_UI_CLKOUT1_FREQ_HZ {100} \
 ] [get_bd_cells u_jtag_ddr_subsys/ddr4_0]
 
 # u_jtag_ddr_subsys ports
 create_bd_pin -dir O u_jtag_ddr_subsys/calib_complete
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/calib_complete] [get_bd_pins u_jtag_ddr_subsys/ddr4_0/c0_init_calib_complete]
-create_bd_pin -dir O -from 0 -to 0 u_jtag_ddr_subsys/peri_aresetn
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/peri_aresetn] [get_bd_pins u_jtag_ddr_subsys/rst_sys_50M/interconnect_aresetn]
-create_bd_pin -dir O -from 0 -to 0 u_jtag_ddr_subsys/cpu_aresetn
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/cpu_aresetn] [get_bd_pins u_jtag_ddr_subsys/rst_sys_50M/peripheral_aresetn]
+create_bd_pin -dir O -from 0 -to 0 u_jtag_ddr_subsys/soc_aresetn
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/soc_aresetn] [get_bd_pins u_jtag_ddr_subsys/rst_sys_100M/peripheral_aresetn]
 create_bd_pin -dir I u_jtag_ddr_subsys/soc_rstn
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/soc_rstn] [get_bd_pins u_jtag_ddr_subsys/rst_sys_50M/ext_reset_in]
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/soc_rstn] [get_bd_pins u_jtag_ddr_subsys/rst_sys_100M/ext_reset_in]
 create_bd_pin -dir I u_jtag_ddr_subsys/ddr_rstn
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr_rstn] [get_bd_pins u_jtag_ddr_subsys/logic_not/Op1]
 create_bd_pin -dir O u_jtag_ddr_subsys/SOC_CLK
@@ -102,6 +100,10 @@ create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 u_j
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/OSC_SYS_CLK] [get_bd_intf_pins u_jtag_ddr_subsys/ddr4_0/C0_SYS_CLK]
 create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:ddr4_rtl:1.0 u_jtag_ddr_subsys/DDR4
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/DDR4] [get_bd_intf_pins u_jtag_ddr_subsys/ddr4_0/C0_DDR4]
+create_bd_pin -dir I u_jtag_ddr_subsys/S_AXI_MEM_ACLK
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ACLK] [get_bd_pins u_jtag_ddr_subsys/axi_interconnect_0/S01_ACLK]
+create_bd_pin -dir I u_jtag_ddr_subsys/S_AXI_MEM_ARSTN
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ARSTN] [get_bd_pins u_jtag_ddr_subsys/axi_interconnect_0/S01_ARESETN]
 
 # u_jtag_ddr_subsys connections
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/axi_interconnect_0/M00_AXI] [get_bd_intf_pins u_jtag_ddr_subsys/ddr4_0/C0_DDR4_S_AXI]
@@ -114,8 +116,7 @@ connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr4_0/c0_ddr4_ui_clk] [get_bd_pin
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr4_0/c0_ddr4_ui_clk] [get_bd_pins u_jtag_ddr_subsys/axi_interconnect_0/ACLK]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr4_0/c0_ddr4_ui_clk] [get_bd_pins u_jtag_ddr_subsys/axi_interconnect_0/M00_ACLK]
 
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1] [get_bd_pins u_jtag_ddr_subsys/rst_sys_50M/slowest_sync_clk]
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1] [get_bd_pins u_jtag_ddr_subsys/axi_interconnect_0/S01_ACLK]
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1] [get_bd_pins u_jtag_ddr_subsys/rst_sys_100M/slowest_sync_clk]
 
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr4_0/c0_ddr4_ui_clk_sync_rst] [get_bd_pins u_jtag_ddr_subsys/rst_ddr4_200M/ext_reset_in]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/rst_ddr4_200M/interconnect_aresetn] [get_bd_pins u_jtag_ddr_subsys/axi_interconnect_0/M00_ARESETN]
@@ -124,9 +125,7 @@ connect_bd_net [get_bd_pins u_jtag_ddr_subsys/rst_ddr4_200M/interconnect_aresetn
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/rst_ddr4_200M/peripheral_aresetn] [get_bd_pins u_jtag_ddr_subsys/ddr4_0/c0_ddr4_aresetn]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/rst_ddr4_200M/peripheral_aresetn] [get_bd_pins u_jtag_ddr_subsys/jtag_axi/aresetn]
 
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/rst_sys_50M/peripheral_aresetn] [get_bd_pins u_jtag_ddr_subsys/axi_interconnect_0/S01_ARESETN]
-
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr4_0/c0_init_calib_complete] [get_bd_pins u_jtag_ddr_subsys/rst_sys_50M/dcm_locked]
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr4_0/c0_init_calib_complete] [get_bd_pins u_jtag_ddr_subsys/rst_sys_100M/dcm_locked]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ddr4_0/c0_init_calib_complete] [get_bd_pins u_jtag_ddr_subsys/rst_ddr4_200M/dcm_locked]
 
 regenerate_bd_layout -hierarchy [get_bd_cells u_jtag_ddr_subsys]
@@ -181,22 +180,20 @@ regenerate_bd_layout -hierarchy [get_bd_cells u_peri_subsys]
 # end of u_peri_subsys
 
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant boot_addr
-create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz clk_wiz_0
+create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz in_mmcm
+create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz core_pll
+create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz noc_pll
 create_bd_cell -type ip -vlnv xilinx.com:ip:vio vio_0
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant intr_lo
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant intr_hi
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconcat intr_cat
-create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf core_bufg
-create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf noc_bufg
+create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset noc_reset_gen
 
 create_bd_port -dir O uart0_sout
 create_bd_port -dir I uart0_sin
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddr4_rtl:1.0 DDR0
 create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 ddr
 create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 core
-
-set_property CONFIG.C_BUF_TYPE {BUFG} [get_bd_cells core_bufg]
-set_property CONFIG.C_BUF_TYPE {BUFG} [get_bd_cells noc_bufg]
 
 set_property -dict [list \
   CONFIG.CONST_VAL {0x80000000} \
@@ -225,54 +222,107 @@ set_property -dict [list \
   CONFIG.NUM_PORTS {3} \
 ] [get_bd_cells intr_cat]
 
-set_property -dict [list CONFIG.PRIM_IN_FREQ.VALUE_SRC USER] [get_bd_cells clk_wiz_0]
+set_property -dict [list CONFIG.PRIM_IN_FREQ.VALUE_SRC USER] [get_bd_cells in_mmcm]
 set_property -dict [list \
   CONFIG.CLKIN1_JITTER_PS {200.0} \
-  CONFIG.CLKOUT1_DRIVES {BUFG} \
-  CONFIG.CLKOUT1_JITTER {146.190} \
-  CONFIG.CLKOUT1_MATCHED_ROUTING {false} \
+  CONFIG.CLKOUT1_DRIVES {No_buffer} \
+  CONFIG.CLKOUT1_JITTER {139.127} \
   CONFIG.CLKOUT1_PHASE_ERROR {154.678} \
-  CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {80} \
+  CONFIG.CLKOUT2_DRIVES {No_buffer} \
   CONFIG.CLKOUT2_JITTER {265.122} \
   CONFIG.CLKOUT2_PHASE_ERROR {154.678} \
-  CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {10} \
+  CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {10.000} \
   CONFIG.CLKOUT2_USED {true} \
   CONFIG.CLK_OUT1_PORT {core_clk} \
   CONFIG.CLK_OUT2_PORT {rtc_clk} \
-  CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
+  CONFIG.FEEDBACK_SOURCE {FDBK_ONCHIP} \
   CONFIG.MMCM_CLKFBOUT_MULT_F {24.000} \
   CONFIG.MMCM_CLKIN1_PERIOD {20.000} \
   CONFIG.MMCM_CLKIN2_PERIOD {10.0} \
-  CONFIG.MMCM_CLKOUT0_DIVIDE_F {15.000} \
   CONFIG.MMCM_CLKOUT1_DIVIDE {120} \
   CONFIG.NUM_OUT_CLKS {2} \
-  CONFIG.PRIM_IN_FREQ {50.000} \
-  CONFIG.PRIM_SOURCE {Differential_clock_capable_pin} \
-  CONFIG.OPTIMIZE_CLOCKING_STRUCTURE_EN {true} \
+  CONFIG.PRIM_IN_FREQ {50} \
   CONFIG.USE_LOCKED {false} \
   CONFIG.USE_RESET {false} \
-] [get_bd_cells clk_wiz_0]
+  CONFIG.PRIM_SOURCE {Differential_clock_capable_pin} \
+] [get_bd_cells in_mmcm]
+
+set_property -dict [list \
+  CONFIG.CLKOUT1_DRIVES {BUFG} \
+  CONFIG.CLKOUT1_JITTER {151.652} \
+  CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
+  CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {80} \
+  CONFIG.CLKOUT2_DRIVES {Buffer} \
+  CONFIG.CLKOUT3_DRIVES {Buffer} \
+  CONFIG.CLKOUT4_DRIVES {Buffer} \
+  CONFIG.CLKOUT5_DRIVES {Buffer} \
+  CONFIG.CLKOUT6_DRIVES {Buffer} \
+  CONFIG.CLKOUT7_DRIVES {Buffer} \
+  CONFIG.CLK_OUT1_PORT {core_clk} \
+  CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
+  CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
+  CONFIG.MMCM_CLKFBOUT_MULT_F {8} \
+  CONFIG.MMCM_CLKOUT0_DIVIDE_F {10} \
+  CONFIG.MMCM_COMPENSATION {AUTO} \
+  CONFIG.OPTIMIZE_CLOCKING_STRUCTURE_EN {true} \
+  CONFIG.PRIMITIVE {PLL} \
+  CONFIG.USE_FREQ_SYNTH {true} \
+  CONFIG.USE_LOCKED {false} \
+  CONFIG.USE_RESET {false} \
+  CONFIG.PRIM_SOURCE {No_buffer} \
+] [get_bd_cells core_pll]
+
+set_property -dict [list \
+  CONFIG.CLKOUT1_DRIVES {BUFG} \
+  CONFIG.CLKOUT1_JITTER {167.017} \
+  CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
+  CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {50} \
+  CONFIG.CLKOUT2_DRIVES {Buffer} \
+  CONFIG.CLKOUT3_DRIVES {Buffer} \
+  CONFIG.CLKOUT4_DRIVES {Buffer} \
+  CONFIG.CLKOUT5_DRIVES {Buffer} \
+  CONFIG.CLKOUT6_DRIVES {Buffer} \
+  CONFIG.CLKOUT7_DRIVES {Buffer} \
+  CONFIG.CLK_OUT1_PORT {noc_clk} \
+  CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
+  CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
+  CONFIG.MMCM_CLKFBOUT_MULT_F {8} \
+  CONFIG.MMCM_CLKOUT0_DIVIDE_F {16} \
+  CONFIG.MMCM_COMPENSATION {AUTO} \
+  CONFIG.OPTIMIZE_CLOCKING_STRUCTURE_EN {true} \
+  CONFIG.PRIMITIVE {PLL} \
+  CONFIG.PRIM_SOURCE {Global_buffer} \
+  CONFIG.USE_LOCKED {true} \
+  CONFIG.USE_RESET {false} \
+] [get_bd_cells noc_pll]
 
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/OSC_SYS_CLK] [get_bd_intf_ports ddr]
 set_property CONFIG.FREQ_HZ 80000000 [get_bd_intf_ports /ddr]
-connect_bd_intf_net [get_bd_intf_pins clk_wiz_0/CLK_IN1_D] [get_bd_intf_ports core]
-set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_intf_pins clk_wiz_0/CLK_IN1_D]] [get_bd_intf_ports core]
+connect_bd_intf_net [get_bd_intf_pins in_mmcm/CLK_IN1_D] [get_bd_intf_ports core]
+set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_intf_pins in_mmcm/CLK_IN1_D]] [get_bd_intf_ports core]
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/DDR4] [get_bd_intf_ports DDR0]
-set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1]] [get_bd_intf_pins /ln/m_axi_cfg_main]
-set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1]]  [get_bd_intf_pins /ln/m_axi_mem_0]
-set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins u_jtag_ddr_subsys/ddr4_0/addn_ui_clkout1]] [get_bd_pins /ln/io_aclk]
+set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins noc_pll/noc_clk]] [get_bd_intf_pins ln/m_axi_cfg_main]
+set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins noc_pll/noc_clk]]  [get_bd_intf_pins ln/m_axi_mem_0]
+set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins noc_pll/noc_clk]] [get_bd_pins ln/io_aclk]
 
-connect_bd_net [get_bd_pins clk_wiz_0/core_clk] [get_bd_pins core_bufg/BUFG_I]
-connect_bd_net [get_bd_pins core_bufg/BUFG_O] [get_bd_pins ln/io_core_clk_0]
-connect_bd_net [get_bd_pins core_bufg/BUFG_O] [get_bd_pins vio_0/clk]
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/SOC_CLK] [get_bd_pins noc_bufg/BUFG_I]
-connect_bd_net [get_bd_pins noc_bufg/BUFG_O] [get_bd_pins ln/io_aclk]
-connect_bd_net [get_bd_pins noc_bufg/BUFG_O] [get_bd_pins u_peri_subsys/ACLK]
+connect_bd_intf_net [get_bd_intf_ports core] [get_bd_intf_pins in_mmcm/CLK_IN1_D]
+connect_bd_net [get_bd_pins in_mmcm/core_clk] [get_bd_pins core_pll/clk_in1]
+connect_bd_net [get_bd_pins in_mmcm/rtc_clk] [get_bd_pins ln/io_rtc_clk]
+connect_bd_net [get_bd_pins core_pll/core_clk] [get_bd_pins ln/io_core_clk_0]
+connect_bd_net [get_bd_pins core_pll/core_clk] [get_bd_pins vio_0/clk]
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/SOC_CLK] [get_bd_pins noc_pll/clk_in1]
+connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins ln/io_aclk]
+connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins u_peri_subsys/ACLK]
+connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ACLK]
+
+connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins noc_reset_gen/slowest_sync_clk]
+connect_bd_net [get_bd_pins noc_pll/locked] [get_bd_pins noc_reset_gen/dcm_locked]
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/soc_aresetn] [get_bd_pins noc_reset_gen/ext_reset_in]
+connect_bd_net [get_bd_pins noc_reset_gen/peripheral_aresetn] [get_bd_pins u_peri_subsys/ARESETN]
+connect_bd_net [get_bd_pins noc_reset_gen/peripheral_aresetn] [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ARSTN]
+connect_bd_net [get_bd_pins noc_reset_gen/interconnect_aresetn] [get_bd_pins ln/io_aresetn]
 
 connect_bd_net [get_bd_pins boot_addr/dout] [get_bd_pins ln/io_reset_vector]
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/peri_aresetn] [get_bd_pins u_peri_subsys/ARESETN]
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/cpu_aresetn] [get_bd_pins ln/io_aresetn]
-connect_bd_net [get_bd_pins clk_wiz_0/rtc_clk] [get_bd_pins ln/io_rtc_clk]
 connect_bd_intf_net [get_bd_intf_pins ln/m_axi_cfg_main] -boundary_type upper [get_bd_intf_pins u_peri_subsys/S_AXI_CFG]
 connect_bd_intf_net [get_bd_intf_pins ln/m_axi_mem_0] -boundary_type upper [get_bd_intf_pins u_jtag_ddr_subsys/S_AXI_MEM]
 connect_bd_net [get_bd_ports uart0_sin] [get_bd_pins u_peri_subsys/uart0_sin]
@@ -322,3 +372,7 @@ launch_runs synth_1 -job 8
 wait_on_runs synth_1
 
 set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
+launch_runs impl_1 -job 8
+wait_on_runs impl_1
+
+exit
