@@ -33,7 +33,8 @@ set_false_path -to [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/reqToOn*/D]
 set_false_path -from [get_pins ln_simple_i/ln/inst/soc/cc_*/tile/cpc/pSlv/pdenied*/C]
 set_false_path -from [get_pins ln_simple_i/ln/inst/soc/cc_*/tile/cpc/pSlv/paccept*/C]
 set_false_path -from [get_pins ln_simple_i/ln/inst/soc/cc_*/tile/cpc/pSlv/pactive*/C]
-set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/cc_0/hub/clusterPeriCx/cpu_pwr_ctl_0/pcu/devMst/preq*/C] 12.500
-set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/cc_0/hub/clusterPeriCx/cpu_pwr_ctl_0/pcu/devMst/pstate*/C] 12.500
-
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/preq*/C] 12.500
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/pstate*/C] 12.500
+set_false_path -from [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_boot_ctl_*/addrReg*/C]
+set_false_path -from [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcsm/ctrl/ctrlState_fnEn*/C]
 
