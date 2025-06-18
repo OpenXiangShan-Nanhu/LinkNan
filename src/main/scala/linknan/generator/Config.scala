@@ -173,21 +173,24 @@ class FpgaNocConfig(socket: String, ddrBuf:Int) extends Config((site, here, up) 
   case ZJParametersKey => ZJParameters(
     hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
-      NodeParam(nodeType = NodeType.RH, axiDevParams = Some(AxiDeviceParams(0, 16, "east", "main", Some(AxiParams(idBits = 13))))),
-      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8,  "east", "main")), defaultHni = true),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
+      NodeParam(nodeType = NodeType.RH, axiDevParams = Some(AxiDeviceParams(0, 16, "east", "main", Some(AxiParams(idBits = 13))))),
+      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8,  "east", "main")), defaultHni = true),
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
       NodeParam(nodeType = NodeType.P),
-
       NodeParam(nodeType = NodeType.P),
-
       NodeParam(nodeType = NodeType.CC, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
       NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(ddrBuf, 32, "west", "0"))),
       NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "west"))),
-
-      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 1),
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1)
     )
   )
 })
