@@ -61,8 +61,8 @@ class PwrCtlTlIntf(tlParams:TilelinkParams) extends BaseTLULPeripheral(tlParams)
   stateWire.pcsmMode := ctl.pcsmMode
   stateWire.devMode := ctl.devMode
   stateWire.active := ctl.active
-  private val irqMaskReg = RegInit(Fill(32, true.B).asTypeOf(new IntrMaskBundle))
-  private val irqPendingReg = RegInit(Fill(32, false.B).asTypeOf(new IntrMaskBundle))
+  private val irqMaskReg = RegInit(Fill(3, true.B).asTypeOf(new IntrMaskBundle))
+  private val irqPendingReg = RegInit(0.U.asTypeOf(new IntrMaskBundle))
 
   val regSeq = Seq(
     ("PWPR", policyReg, policyReg, 0x0, Some(policyReg.writeMask), Some(policyReg.readMask)),
@@ -71,6 +71,10 @@ class PwrCtlTlIntf(tlParams:TilelinkParams) extends BaseTLULPeripheral(tlParams)
     ("IPR", irqPendingReg, irqPendingReg, 0xc, Some(irqPendingReg.writeMask), Some(irqPendingReg.readMask))
   )
   private val wmap = genWriteMap()
+  policyReg.rsvd0 := 0.U
+  policyReg.rsvd1 := 0.U
+  irqMaskReg.rsvd := 0.U
+  irqPendingReg.rsvd := 0.U
 
   ctl.powerPolicy := policyReg.powerPolicy
   ctl.dynamicEn := policyReg.dynamicEn
