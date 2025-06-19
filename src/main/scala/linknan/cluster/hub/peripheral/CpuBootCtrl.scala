@@ -18,7 +18,8 @@ class CpuBootCtrl(tlParams: TilelinkParams)(implicit p: Parameters) extends Base
     ("addr", addrReg, addrWire, 0x0, None, None),
   )
   private val writeMap = genWriteMap()
-  when(reset.asBool) {
+  private val resetReg = RegNext(false.B, true.B)
+  when(resetReg) {
     addrReg := io.defaultBootAddr
   }.elsewhen(writeMap("addr")) {
     addrReg := addrWire
