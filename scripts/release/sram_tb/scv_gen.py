@@ -625,6 +625,8 @@ with open(f"sram_test_tb.sv", "w", encoding="utf-8") as file:
         if i == len(input_signals)-1:
             if "reset" in input_signals[i]:
                 file.write(f"    .{input_signals[i]}(reset)\n")
+            elif "clk_on" in input_signals[i]:
+                file.write(f"    .{input_signals[i]}(1'b1)\n")
             elif "clock" in input_signals[i]:
                 file.write(f"    .{input_signals[i]}(clk)\n")
             else:
@@ -632,6 +634,8 @@ with open(f"sram_test_tb.sv", "w", encoding="utf-8") as file:
         else:
             if "reset" in input_signals[i]:
                 file.write(f"    .{input_signals[i]}(reset),\n")
+            elif "clk_on" in input_signals[i]:
+                file.write(f"    .{input_signals[i]}(1'b1),\n")
             elif "clock" in input_signals[i]:
                 file.write(f"    .{input_signals[i]}(clk),\n")
             else:
@@ -647,7 +651,9 @@ with open(f"sram_test_tb.sv", "w", encoding="utf-8") as file:
                     file.write(f"    force {module_path_array[i][j]}.{unit_top_input_array[i][k]} = clk;\n")
                 if "reset" == unit_top_input_array[i][k]:
                     file.write(f"    force {module_path_array[i][j]}.{unit_top_input_array[i][k]} = reset;\n")
-                if "dft" in unit_top_input_array[i][k] or "dfx" in unit_top_input_array[i][k]:
+                if "clk_on" in unit_top_input_array[i][k]:
+                    file.write(f"    force {module_path_array[i][j]}.{unit_top_input_array[i][k]} = 1'b1;\n")
+                elif "dft" in unit_top_input_array[i][k] or "dfx" in unit_top_input_array[i][k]:
                     file.write(f"    force {module_path_array[i][j]}.{unit_top_input_array[i][k]} = 'd0;\n")
             file.write(f"    force dut_inst.{mbist_interface_array[i][j]}.mbist_array = mbist_array_{i};\n")
             file.write(f"    force dut_inst.{mbist_interface_array[i][j]}.mbist_req = mbist_req_{i};\n")
