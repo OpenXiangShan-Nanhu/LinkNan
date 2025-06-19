@@ -359,7 +359,7 @@ generate_target all [get_files $bd_file]
 export_ip_user_files -of_objects [get_files $bd_file] -no_script -sync -force -quiet
 create_ip_run [get_files -of_objects [get_fileset sources_1] $bd_file]
 
-set_property STEPS.SYNTH_DESIGN.ARGS.KEEP_EQUIVALENT_REGISTERS true [get_runs ln_simple_ln_0_synth_1]
+set_property strategy Flow_PerfOptimized_high [get_runs ln_simple_ln_0_synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY none [get_runs ln_simple_ln_0_synth_1]
 
 launch_runs synth_1 -job 8

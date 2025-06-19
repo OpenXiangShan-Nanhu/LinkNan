@@ -9,6 +9,11 @@ set_multicycle_path -from [get_pins {ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hn
 set_multicycle_path -from [get_pins {ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/ram/rreqReg*[0]/C}] 2
 set_multicycle_path -from [get_pins {ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/ram/activeReg*[0]/C}] 2
 
+set_multicycle_path -to [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hnx/directory/llcs_*/metaArray/dataReg*/D] 2
+set_multicycle_path -to [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hnx/directory/llcs_*/tagArray/dataReg*/D] 2
+set_multicycle_path -to [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hnx/directory/sfs_*/metaArray/dataReg*/D] 2
+set_multicycle_path -to [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hnx/directory/sfs_*/tagArray/dataReg*/D] 2
+
 # Core Async
 set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/cc_*/tile/pdc/async_src_*/mem*/C] 25.000
 set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/cc_*/tile/pdc/async_src_*/widx_gray*/C] 12.500
