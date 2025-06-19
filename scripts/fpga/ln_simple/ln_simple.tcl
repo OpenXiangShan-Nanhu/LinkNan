@@ -365,6 +365,7 @@ set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY none [get_runs ln_simple_
 launch_runs synth_1 -job 8
 wait_on_runs synth_1
 
+set_property strategy Congestion_SpreadLogic_high [get_runs impl_1]
 launch_runs impl_1 -job 8
 wait_on_runs impl_1
 
