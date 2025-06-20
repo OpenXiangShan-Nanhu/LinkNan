@@ -174,19 +174,20 @@ class PowerController(tlParams:TilelinkParams) extends Module {
   private val upgrade = nextModeReg > currentMode
   private val fsmNext = WireInit(fsm)
   private val holdCnt = Reg(UInt(3.W))
-  when(modeUpdateReg && !io.deactivate) {
+  private val start = modeUpdateReg && !io.deactivate
+  when(start) {
     holdCnt := Fill(holdCnt.getWidth, true.B)
   }.elsewhen(holdCnt.orR) {
     holdCnt := holdCnt - 1.U
   }
 
   assert(PopCount(fsm) === 1.U, cf"Illegal state $fsm%x!")
-  when(modeUpdateReg && !io.deactivate || !fsm(idleBit)) {
+  when(fsmNext =/= fsm) {
     fsm := fsmNext
   }
   switch(fsm) {
     is(sIdle) {
-      fsmNext := Mux(upgrade, sUpHold, sDnHold)
+      fsmNext := Mux(start, Mux(upgrade, sUpHold, sDnHold), fsm)
     }
 
     is(sUpHold) {

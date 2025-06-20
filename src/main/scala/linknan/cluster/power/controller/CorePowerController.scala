@@ -37,8 +37,9 @@ class CoreStateController extends Module {
   private val fsm = RegInit(sIdle)
 
   private val fsmNext = WireInit(fsm)
-  fsm := fsmNext
-
+  when(fsm =/= fsmNext) {
+    fsm := fsmNext
+  }
   switch(fsm) {
     is(sIdle) {
       fsmNext := Mux(io.fence, sFlushSb, Mux(io.flush, sL2Flush, sIdle))

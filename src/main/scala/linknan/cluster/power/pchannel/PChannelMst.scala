@@ -58,7 +58,9 @@ class PChannelMst(N:Int, M:Int, tinit:Int = 64, preTs:Int = 127, postTs:Int = 12
   io.resp.valid := fsm === sAccept || fsm === sDenied
   io.resp.bits := paccept
 
-  fsm := fsmNext
+  when(fsm =/= fsmNext) {
+    fsm := fsmNext
+  }
   switch(fsm) {
     is(sReset) {
       fsmNext := Mux(utilCnt === 0.U, sStable0, fsm)

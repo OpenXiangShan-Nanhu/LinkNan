@@ -62,10 +62,16 @@ class PcsmCtrlDriver(isoDelay:Int = 16, clkEnDelay:Int = 64, rstDelay:Int = 16) 
   private val pwrResp = Some(RegNextN(io.ctrl.pwrResp, 2)).get
   dontTouch(fsmNext)
 
-  private val doPwr = fsm(upPwrBit) | fsm(dnPwrBit)
-  private val doIso = fsm(upSigBit) | fsm(dnSigBit)
-  private val doClk = fsm(upCkBit)  | fsm(dnCkBit)
-  private val doRst = fsm(upFnBit)  | fsm(dnFnBit)
+  private def chkCond(bit:Int):Bool = !fsm(bit) && fsmNext(bit)
+
+  private val pwrCondBitSeq = Seq(upPwrBit, dnPwrBit)
+  private val isoCondBitSeq = Seq(upSigBit, dnSigBit)
+  private val clkCondBitSeq = Seq(upCkBit, dnCkBit)
+  private val rstCondBitSeq = Seq(upFnBit, dnFnBit)
+  private val doPwr = Cat(pwrCondBitSeq.map(chkCond)).orR
+  private val doIso = Cat(isoCondBitSeq.map(chkCond)).orR
+  private val doClk = Cat(clkCondBitSeq.map(chkCond)).orR
+  private val doRst = Cat(rstCondBitSeq.map(chkCond)).orR
   ctrlState.pwrEn := Mux(doPwr, reqCtrl.pwrEn, ctrlState.pwrEn)
   ctrlState.sigEn := Mux(doIso, reqCtrl.sigEn, ctrlState.sigEn)
   ctrlState.ckEn := Mux(doClk, reqCtrl.ckEn, ctrlState.ckEn)
@@ -76,8 +82,8 @@ class PcsmCtrlDriver(isoDelay:Int = 16, clkEnDelay:Int = 64, rstDelay:Int = 16) 
   io.ctrl.clkEn := ctrlState.ckEn
   io.ctrl.reset := !ctrlState.fnEn
 
-  private val cntLoadCondSeq = Seq(upCkBit, upSigBit, upFnBit, dnFnBit, dnSigBit, dnCkBit)
-  private val cntLoadCond = cntLoadCondSeq.map(c => !fsm(c) && fsmNext(c)).reduce(_ || _)
+  private val cntLoadCondSeq = isoCondBitSeq ++ clkCondBitSeq ++ rstCondBitSeq
+  private val cntLoadCond = Cat(cntLoadCondSeq.map(chkCond)).orR
 
   when(cntLoadCond) {
     cnt := MuxCase(0.U, Seq(
@@ -100,12 +106,12 @@ class PcsmCtrlDriver(isoDelay:Int = 16, clkEnDelay:Int = 64, rstDelay:Int = 16) 
   private val fnDone = Mux(fnNotChange, true.B, cnt === 0.U)
 
   assert(PopCount(fsm) === 1.U, cf"Illegal state $fsm%x!")
-  when(reqValid || !fsm(idleBit)) {
+  when(fsmNext =/= fsm) {
     fsm := fsmNext
   }
   switch(fsm) {
     is(sIdle) {
-      fsmNext := Mux(reqUp, sUpPwr, sDnFn)
+      fsmNext := Mux(reqValid, Mux(reqUp, sUpPwr, sDnFn), fsm)
     }
     is(sUpPwr) {
       fsmNext := Mux(pwrDone, sUpSig, fsm)
