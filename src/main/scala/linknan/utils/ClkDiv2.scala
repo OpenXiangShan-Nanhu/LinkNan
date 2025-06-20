@@ -18,7 +18,7 @@ class ClkDiv2 extends BlackBox with HasBlackBoxInline {
        |reg div;
        |`ifndef SYNTHESIS
        |  initial div = 1'b1;
-       |  initial out = 1'b1;
+       |  initial out = 1'b0;
        |`endif
        |
        |always @ (posedge clock) div <= ~div;
