@@ -5,7 +5,7 @@ import chisel3.util.Cat
 import linknan.cluster.hub.interconnect.ClusterIcnBundle
 import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import linknan.soc.device.DevicesWrapper
-import linknan.utils.ClkDiv2
+import linknan.utils.{BitSynchronizer, ClkDiv2}
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.ResetGen
 import xs.utils.sram.SramCtrlBundle
@@ -108,8 +108,9 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   implicitClock := crg.io.out_clk_full
   implicitReset := withReset(io.reset){ResetGen(dft = Some(io.dft.toResetDftBundle))}
 
+  private val rtcSync = BitSynchronizer(io.rtc_clock)
   private val rtcEn = RegNext(!noc.io.onReset)
-  private val rtcClockGated = io.rtc_clock & rtcEn
+  private val rtcClockGated = rtcSync & rtcEn
   devWrp.io.ext.intr := io.ext_intr
   devWrp.io.ci := io.ci
   devWrp.io.debug.systemjtag.foreach(_ <> io.jtag.get)
