@@ -5,6 +5,7 @@ import chisel3.util.Cat
 import linknan.cluster.hub.interconnect.ClusterIcnBundle
 import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import linknan.soc.device.DevicesWrapper
+import linknan.utils.ClkDiv2
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.ResetGen
 import xs.utils.sram.SramCtrlBundle
@@ -15,6 +16,18 @@ import zhujiang._
 class AxiNto1XBar(mst: Seq[AxiParams])(implicit val p: Parameters) extends BaseAxiXbar(mst) with HasZJParams {
   val slvMatchersSeq = Seq((_: UInt) => true.B)
   initialize()
+}
+
+class LnCrg extends Module {
+  val io = IO(new Bundle {
+    val in_clk = Input(Clock())
+    val out_clk_full = Output(Clock())
+    val out_clk_div2 = Output(Clock())
+  })
+  private val clk_div_2 = Module(new ClkDiv2)
+  clk_div_2.io.clock := io.in_clk
+  io.out_clk_full := io.in_clk
+  io.out_clk_div2 := clk_div_2.io.out
 }
 
 class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
@@ -89,8 +102,10 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val ramctl = Input(new SramCtrlBundle)
   })
   val cluster = noc.ccnIO.map(ccn => IO(new ClusterIcnBundle(ccn.node)))
+  private val crg = Module(new LnCrg)
+  crg.io.in_clk := io.noc_clock
   cluster.foreach(c => dontTouch(c))
-  implicitClock := io.noc_clock
+  implicitClock := crg.io.out_clk_full
   implicitReset := withReset(io.reset){ResetGen(dft = Some(io.dft.toResetDftBundle))}
 
   private val rtcEn = RegNext(!noc.io.onReset)
@@ -102,7 +117,8 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   devWrp.io.debug.dmactiveAck := devWrp.io.debug.dmactive
   devWrp.io.debug.clock := DontCare
   devWrp.io.debug.reset := DontCare
-  devWrp.clock := io.noc_clock
+  devWrp.full_clock := crg.io.out_clk_full
+  devWrp.div2_clock := crg.io.out_clk_div2
   devWrp.reset := io.reset
   io.ndreset := devWrp.io.debug.ndreset
   noc.io.ci := io.ci
@@ -114,7 +130,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val node = ext.socket.node
     val clusterId = node.clusterId
     ext.cpu_clock := io.cluster_clocks(clusterId)
-    ext.noc_clock := io.noc_clock
+    ext.noc_clock := crg.io.out_clk_full
     ext.dft.from(io.dft)
     ext.dft.core <> io.dft.core(clusterId)
     ext.ramctl := io.ramctl

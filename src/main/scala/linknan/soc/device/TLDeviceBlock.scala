@@ -10,8 +10,8 @@ import freechips.rocketchip.resources.BindingScope
 import org.chipsalliance.diplomacy.lazymodule._
 import freechips.rocketchip.interrupts._
 import freechips.rocketchip.tile.MaxHartIdBits
-import freechips.rocketchip.tilelink._
-import freechips.rocketchip.util.{FastToSlow, SlowToFast}
+import freechips.rocketchip.tilelink.{TLWidthWidget, _}
+import freechips.rocketchip.util.AsyncQueueParams
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.dft.BaseTestBundle
@@ -28,19 +28,20 @@ class TLDeviceBlockIO(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) ext
 }
 
 class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) extends LazyModule with BindingScope {
-  val rationalSinkNode = TLRationalCrossingSink(FastToSlow)
-  val rationalSourceNode = TLRationalCrossingSource()
+  private val tlAsyncSink = LazyModule(new TLAsyncCrossingSink(AsyncQueueParams(1)))
+  private val tlAsyncSrc = LazyModule(new TLAsyncCrossingSource())
+  val asyncSinkNode = tlAsyncSink.node
+  val aysncSourceNode = tlAsyncSrc.node
 
   private val xbar = LazyModule(new TLXbar)
   private val plic = LazyModule(new TLPLIC(PLICParams(baseAddress = p(LinkNanParamsKey).plicBase), 8))
   private val debug = LazyModule(new DebugModule(coreNum))
-  private val sbaXBar = LazyModule(new TLXbar)
 
   private val intSourceNode = IntSourceNode(IntSourcePortSimple(extIntrNum, ports = 1, sources = 1))
   private val debugIntSink = IntSinkNode(IntSinkPortSimple(coreNum, 1))
   private val plicIntSink = IntSinkNode(IntSinkPortSimple(2 * coreNum, 1))
 
-  xbar.node :=* TLBuffer() :=* rationalSinkNode
+  xbar.node :=* TLBuffer() :=* asyncSinkNode
   plic.node :*= xbar.node
   debug.debug.node :*= xbar.node
   plic.intnode := IntBuffer(3, cdc = true) := intSourceNode
@@ -48,8 +49,7 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
   debugIntSink :*= IntBuffer(3, cdc = true) :*= debug.debug.dmOuter.dmOuter.intnode
   plicIntSink :*= IntBuffer(3, cdc = true) :*= plic.intnode
 
-  sbaXBar.node :=* TLBuffer() :=* TLWidthWidget(1) :=* debug.debug.dmInner.dmInner.sb2tlOpt.get.node
-  rationalSourceNode :=* TLBuffer() :=* sbaXBar.node
+  aysncSourceNode :=* TLBuffer() :=* debug.debug.dmInner.dmInner.sb2tlOpt.get.node
 
   lazy val module = new Impl
 
@@ -119,51 +119,36 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
     beatBytes = sbaDataBits / 8
   )
   private val sbaNode = TLManagerNode(Seq(sbaParameters))
+  private val sbaAsyncSink = LazyModule(new TLAsyncCrossingSink(AsyncQueueParams(1)))
+  private val cfgAsyncSrc = LazyModule(new TLAsyncCrossingSource())
 
   private val inner = LazyModule(new TLDeviceBlockInner(coreNum, extIntrNum)(innerP))
-  inner.rationalSinkNode :=* TLRationalCrossingSource() :=* clientNode
-  sbaNode :=* TLRationalCrossingSink(SlowToFast) :=* inner.rationalSourceNode
+  inner.asyncSinkNode :=* cfgAsyncSrc.node :=* clientNode
+  sbaNode :*= TLWidthWidget(1) :=*  sbaAsyncSink.node :=* inner.aysncSourceNode
 
   lazy val module = new Impl
-  class Impl extends LazyModuleImp(this) {
+  class Impl extends LazyRawModuleImp(this) with ImplicitClock with ImplicitReset {
+    override def provideImplicitClockToLazyChildren = true
     val tlm = clientNode.makeIOs()
     val sba = sbaNode.makeIOs()
     val dfx = IO(new BaseTestBundle)
     val dev = IO(new TLDeviceBlockIO(coreNum, extIntrNum)(innerP))
+    val full_clock = IO(Input(Clock()))
+    val div2_clock = IO(Input(Clock()))
+    val reset = IO(Input(AsyncReset()))
 
-    private val cg = Module(new ClockGate)
-    private val ff = Module(new ClkDiv2Reg)
+    val implicitClock = full_clock
+    val implicitReset = reset
+    childClock := full_clock
+    childReset := reset
+
     private val rstSync = Module(new ResetGen(2))
-    ff.io.clock := clock
-    cg.io.E := ff.io.out
-    cg.io.CK := clock
-    cg.io.TE := false.B
     rstSync.dft := dfx.toResetDftBundle
     rstSync.reset := reset
 
-    inner.module.clock := cg.io.Q
+    inner.module.clock := div2_clock
     inner.module.reset := rstSync.o_reset
     inner.module.dfx := dfx
     inner.module.io <> dev
   }
-}
-
-class ClkDiv2Reg extends BlackBox with HasBlackBoxInline {
-  override val desiredName = xs.utils.GlobalData.prefix + "ClkDiv2Reg"
-  val io = IO(new Bundle {
-    val clock = Input(Clock())
-    val out = Bool()
-  })
-  setInline(s"$desiredName.sv",
-    s"""
-       |module $desiredName (
-       |  input wire clock,
-       |  output reg out
-       |);
-       |`ifndef SYNTHESIS
-       |  initial out = 1'b1;
-       |`endif
-       |
-       |always @ (posedge clock) out <= ~out;
-       |endmodule""".stripMargin)
 }

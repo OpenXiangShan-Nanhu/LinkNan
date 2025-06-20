@@ -58,9 +58,10 @@ class AxiCfgXBar(icnAxiParams: AxiParams)(implicit val p: Parameters) extends Ba
 
 class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Parameters) extends ZJRawModule
   with ImplicitClock with ImplicitReset {
-  val clock = IO(Input(Clock()))
+  val full_clock = IO(Input(Clock()))
+  val div2_clock = IO(Input(Clock()))
   val reset = IO(Input(AsyncReset()))
-  val implicitClock = clock
+  val implicitClock = full_clock
   val implicitReset = Wire(AsyncReset())
 
   private val coreNum = zjParams.island.filter(_.nodeType == NodeType.CC).map(_.cpuNum).sum
@@ -102,7 +103,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
     val dft = new BaseTestBundle
   })
   private val resetGen = Module(new ResetGen)
-  resetGen.clock := clock
+  resetGen.clock := full_clock
   resetGen.dft := io.dft.toResetDftBundle
   implicitReset := resetGen.o_reset
   resetGen.reset := reset
@@ -118,6 +119,9 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
   io.mst.aw.bits.addr := AclintAddrRemapper(mstAxi.aw.bits.addr)
   io.mst.ar.bits.addr := AclintAddrRemapper(mstAxi.ar.bits.addr)
 
+  pb.full_clock := full_clock
+  pb.div2_clock := div2_clock
+  pb.reset := reset
   pb.tlm.foreach(tlm => {
     connectByName(tlm.a, axi2tl.io.tl.a)
     connectByName(axi2tl.io.tl.d, tlm.d)
