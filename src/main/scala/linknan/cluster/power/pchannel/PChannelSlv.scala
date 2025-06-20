@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import PchannelState._
 import linknan.cluster.power.controller.PowerMode
-import xs.utils.RegNextN
+import linknan.utils.AsyncBusSink
 
 class PChannelSlv(N:Int, M:Int) extends Module {
   val io = IO(new Bundle {
@@ -19,10 +19,15 @@ class PChannelSlv(N:Int, M:Int) extends Module {
   private val fsmNext = WireInit(fsm)
   private val rstCnt = RegInit(7.U(3.W))
   private val pactive = RegNext(io.active, 0.U)
-  private val preq = Some(RegNextN(io.p.req, 2)).get
-  private val pstate = RegEnable(io.p.state, preq | fsm === sReset)
   private val paccept = RegNext(fsm === sAccept && resetDone)
   private val pdenied = RegNext(fsm === sDenied && resetDone)
+
+  private val asyncSink = Module(new AsyncBusSink(UInt(io.p.state.getWidth.W)))
+  asyncSink.io.in.valid := io.p.req
+  asyncSink.io.in.bits := io.p.state
+  asyncSink.io.en := fsm === sReset
+  private val preq = asyncSink.io.out.valid
+  private val pstate = asyncSink.io.out.bits
 
   io.p.active := pactive
   io.p.accept := paccept

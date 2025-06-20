@@ -1,12 +1,12 @@
-# Misc timing exception
+# Top timing exception
 create_generated_clock -name dev_clk -divide_by 2 \
 -source [get_pins ln_simple_i/ln/inst/soc/uncore/crg/clk_div_2/out*/C] \
 [get_pins ln_simple_i/ln/inst/soc/uncore/crg/clk_div_2/out*/Q]
 
 set_false_path -from [get_pins ln_simple_i/ln/inst/_rtc_reg*/C]
-set_multicycle_path -from [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/cg/active*/C] 2
 
-# LLC data ram input MCP
+# LLC timing expcetions
+set_multicycle_path -from [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/cg/active*/C] 2
 set_multicycle_path -from [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/addr*/C] 2
 set_multicycle_path -from [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/data_*/C] 2
 set_multicycle_path -from [get_pins {ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/ram/wreqReg*[0]/C}] 2
@@ -45,14 +45,15 @@ set_false_path -to [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/io_cpu_meip*/D]
 set_false_path -to [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/io_cpu_seip*/D]
 # set_false_path -to [get_pins $cc_path/hub/io_cpu_dbip*/D]
 
+set_false_path -to [get_pins {ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_daclint_*/rtcSampler*[0]/D}]
 set_false_path -to [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/reqToOn*/D]
 
 # PPU Timing exception
 set_false_path -from [get_pins ln_simple_i/ln/inst/soc/cc_*/tile/cpc/pSlv/pdenied*/C]
 set_false_path -from [get_pins ln_simple_i/ln/inst/soc/cc_*/tile/cpc/pSlv/paccept*/C]
 set_false_path -from [get_pins ln_simple_i/ln/inst/soc/cc_*/tile/cpc/pSlv/pactive*/C]
-set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/preq*/C] 12.500
-set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/pstate*/C] 12.500
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/asyncSrc/src_v*/C] 12.500
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/asyncSrc/src_d*/C] 25.000
 set_false_path -from [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_boot_ctl_*/addrReg*/C]
 set_false_path -from [get_pins ln_simple_i/ln/inst/soc/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcsm/ctrl/ctrlState_fnEn*/C]
 

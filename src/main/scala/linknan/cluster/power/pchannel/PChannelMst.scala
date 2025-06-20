@@ -3,6 +3,7 @@ package linknan.cluster.power.pchannel
 import chisel3._
 import chisel3.util._
 import PchannelState._
+import linknan.utils.AsyncBusSource
 import xs.utils.RegNextN
 
 class PChannelMst(N:Int, M:Int, tinit:Int = 64, preTs:Int = 127, postTs:Int = 127) extends Module {
@@ -23,8 +24,11 @@ class PChannelMst(N:Int, M:Int, tinit:Int = 64, preTs:Int = 127, postTs:Int = 12
   private val paccept = Some(RegNextN(io.p.accept, 2)).get
   private val pdenied = Some(RegNextN(io.p.deny, 2)).get
 
-  io.p.state := pstate
-  io.p.req := preq
+  private val asyncSrc = Module(new AsyncBusSource(UInt(pstate.getWidth.W)))
+  asyncSrc.io.in.valid := preq
+  asyncSrc.io.in.bits := pstate
+  io.p.req := asyncSrc.io.out.valid
+  io.p.state := asyncSrc.io.out.bits
   io.active := pactive
 
   io.req.ready := fsm === sStable0 && utilCnt === 0.U
@@ -34,7 +38,8 @@ class PChannelMst(N:Int, M:Int, tinit:Int = 64, preTs:Int = 127, postTs:Int = 12
     preq := false.B
   }
 
-  when(reset.asBool) {
+  private val _reset = RegNext(false.B, true.B)
+  when(_reset) {
     pstate := io.defaultPState
   }.elsewhen(io.req.fire) {
     pstate := io.req.bits
