@@ -83,7 +83,7 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
 
   private val ddrBufOuts = soc.ddrIO.map(bufferMstAxi(_, 32))
   private val cfgBufOuts = soc.cfgIO.map(bufferMstAxi(_, 2))
-  private val dmaBufIns = soc.dmaIO.map(bufferSlvAxi(_, 2))
+  private val dmaBufIns = soc.dmaIO.filter(_.params.dataBits >= 256).map(bufferSlvAxi(_, 2))
 
   val ddrDrv = ddrBufOuts
   val cfgDrv = cfgBufOuts
