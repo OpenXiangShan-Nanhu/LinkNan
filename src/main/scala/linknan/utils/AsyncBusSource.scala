@@ -7,9 +7,10 @@ class AsyncBusSource[T <: Data](gen: T) extends Module {
   val io = IO(new Bundle {
     val in = Input(Valid(gen))
     val out = Output(Valid(gen))
+    val en = Input(Bool())
   })
   private val src_v = RegNext(io.in.valid, false.B)
-  private val src_d = RegEnable(io.in.bits, io.in.valid)
+  private val src_d = RegEnable(io.in.bits, io.in.valid | io.en)
   io.out.valid := src_v
   io.out.bits := src_d
 }

@@ -23,10 +23,12 @@ class PChannelMst(N:Int, M:Int, tinit:Int = 64, preTs:Int = 127, postTs:Int = 12
   private val preq = RegInit(false.B)
   private val paccept = Some(RegNextN(io.p.accept, 2)).get
   private val pdenied = Some(RegNextN(io.p.deny, 2)).get
+  private val _reset = RegNext(false.B, true.B)
 
   private val asyncSrc = Module(new AsyncBusSource(UInt(pstate.getWidth.W)))
   asyncSrc.io.in.valid := preq
   asyncSrc.io.in.bits := pstate
+  asyncSrc.io.en := _reset
   io.p.req := asyncSrc.io.out.valid
   io.p.state := asyncSrc.io.out.bits
   io.active := pactive
@@ -38,7 +40,7 @@ class PChannelMst(N:Int, M:Int, tinit:Int = 64, preTs:Int = 127, postTs:Int = 12
     preq := false.B
   }
 
-  private val _reset = RegNext(false.B, true.B)
+
   when(_reset) {
     pstate := io.defaultPState
   }.elsewhen(io.req.fire) {
