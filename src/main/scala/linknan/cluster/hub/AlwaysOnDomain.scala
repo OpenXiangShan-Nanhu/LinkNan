@@ -47,9 +47,10 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   clusterPeriCx.io.cluster.pllLock := pll.io.lock
   clusterPeriCx.io.cluster.rtc := io.icn.misc.rtc
   pll.io.in_clock := io.icn.cpu_clock
+  private val clkEnSync = withClock(pll.io.cpu_clock) { RegNext(cpuCtl.pcsm.clkEn, false.B) }
   coreCg.io.CK := pll.io.cpu_clock
   coreCg.io.TE := io.icn.dft.core.clk_on | io.icn.dft.cgen
-  coreCg.io.E := cpuCtl.pcsm.clkEn & !io.icn.dft.core.clk_off
+  coreCg.io.E := clkEnSync & !io.icn.dft.core.clk_off
 
   cpuCtl.defaultBootAddr := io.icn.misc.defaultBootAddr
   if(p(LinkNanParamsKey).removeCore) {
