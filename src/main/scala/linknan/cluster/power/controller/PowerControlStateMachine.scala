@@ -60,16 +60,16 @@ class PcsmCtrlDriver(isoDelay:Int = 16, clkEnDelay:Int = 64, rstDelay:Int = 16) 
   private val ctrlState = RegInit(0.U.asTypeOf(new PcsmCtrlVec))
   private val cnt = Reg(UInt(log2Ceil(maxDelay + 1).W))
   private val pwrResp = Some(RegNextN(io.ctrl.pwrResp, 2)).get
+  dontTouch(fsmNext)
 
-  private val doPwr = (fsmNext(upPwrBit) & !fsm(upPwrBit)) | (fsmNext(dnPwrBit) & !fsm(dnPwrBit))
-  private val doIso = (fsmNext(upSigBit) & !fsm(upSigBit)) | (fsmNext(dnSigBit) & !fsm(dnSigBit))
-  private val doClk = (fsmNext(upCkBit) & !fsm(upCkBit)) | (fsmNext(dnCkBit) & !fsm(dnCkBit))
-  private val doRst = (fsmNext(upFnBit) & !fsm(upFnBit)) | (fsmNext(dnFnBit) & !fsm(dnFnBit))
-  private val running = !fsm(idleBit)
-  ctrlState.pwrEn := Mux(doPwr & running, reqCtrl.pwrEn, ctrlState.pwrEn)
-  ctrlState.sigEn := Mux(doIso & running, reqCtrl.sigEn, ctrlState.sigEn)
-  ctrlState.ckEn := Mux(doClk & running, reqCtrl.ckEn, ctrlState.ckEn)
-  ctrlState.fnEn := Mux(doRst & running, reqCtrl.fnEn, ctrlState.fnEn)
+  private val doPwr = fsm(upPwrBit) | fsm(dnPwrBit)
+  private val doIso = fsm(upSigBit) | fsm(dnSigBit)
+  private val doClk = fsm(upCkBit)  | fsm(dnCkBit)
+  private val doRst = fsm(upFnBit)  | fsm(dnFnBit)
+  ctrlState.pwrEn := Mux(doPwr, reqCtrl.pwrEn, ctrlState.pwrEn)
+  ctrlState.sigEn := Mux(doIso, reqCtrl.sigEn, ctrlState.sigEn)
+  ctrlState.ckEn := Mux(doClk, reqCtrl.ckEn, ctrlState.ckEn)
+  ctrlState.fnEn := Mux(doRst, reqCtrl.fnEn, ctrlState.fnEn)
 
   io.ctrl.pwrReq := ctrlState.pwrEn
   io.ctrl.isoEn := !ctrlState.sigEn
@@ -100,7 +100,7 @@ class PcsmCtrlDriver(isoDelay:Int = 16, clkEnDelay:Int = 64, rstDelay:Int = 16) 
   private val fnDone = Mux(fnNotChange, true.B, cnt === 0.U)
 
   assert(PopCount(fsm) === 1.U, cf"Illegal state $fsm%x!")
-  when(reqValid || running) {
+  when(reqValid || !fsm(idleBit)) {
     fsm := fsmNext
   }
   switch(fsm) {
