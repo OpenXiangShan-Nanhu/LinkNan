@@ -48,7 +48,7 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   clusterPeriCx.io.cluster.rtc := io.icn.misc.rtc
   pll.io.in_clock := io.icn.cpu_clock
   coreCg.io.CK := pll.io.cpu_clock
-  coreCg.io.TE := Mux(io.icn.dft.mode, io.icn.dft.core.clk_on, io.icn.dft.cgen)
+  coreCg.io.TE := io.icn.dft.core.clk_on | io.icn.dft.cgen
   coreCg.io.E := cpuCtl.pcsm.clkEn & !io.icn.dft.core.clk_off
 
   cpuCtl.defaultBootAddr := io.icn.misc.defaultBootAddr
@@ -66,7 +66,7 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   cpuDev.reset := (resetSync.asBool || cpuCtl.pcsm.reset).asAsyncReset
   cpuDev.pchn <> cpuCtl.pchn
   cpuCtl.pchn.active := Cat(reqToOn, false.B, false.B) | RegNext(cpuDev.pchn.active)
-  cpuDev.pwrEnReq := cpuCtl.pcsm.pwrReq | io.icn.dft.core.pwr_req.getOrElse(false.B)
+  cpuDev.pwrEnReq := Mux(io.icn.dft.mode, io.icn.dft.core.pwr_req.getOrElse(false.B), cpuCtl.pcsm.pwrReq)
   cpuCtl.pcsm.pwrResp := cpuDev.pwrEnAck
   io.icn.dft.core.pwr_ack.foreach(_ := cpuDev.pwrEnAck)
   cpuDev.isoEn := Mux(io.icn.dft.mode, io.icn.dft.core.iso_on.getOrElse(false.B), cpuCtl.pcsm.isoEn)
