@@ -67,7 +67,7 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   timerUpdate.bits := timerSink.io.deq.bits
   timerSink.io.deq.ready := true.B
 
-  io.pwrEnAck := io.pwrEnReq
+  io.pwrEnAck := true.B
   dontTouch(io.pwrEnReq)
   dontTouch(io.pwrEnAck)
   dontTouch(io.isoEn)
