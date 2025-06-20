@@ -1,4 +1,8 @@
 # Misc timing exception
+create_generated_clock -name dev_clk -divide_by 2 \
+-source [get_pins ln_simple_i/ln/inst/soc/uncore/crg/clk_div_2/out*/C] \
+[get_pins ln_simple_i/ln/inst/soc/uncore/crg/clk_div_2/out*/Q]
+
 set_false_path -from [get_pins ln_simple_i/ln/inst/_rtc_reg*/C]
 set_multicycle_path -from [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/cg/active*/C] 2
 
