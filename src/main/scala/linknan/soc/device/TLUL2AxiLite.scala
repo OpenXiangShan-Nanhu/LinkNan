@@ -2,6 +2,7 @@ package linknan.soc.device
 
 import chisel3._
 import chisel3.util._
+import linknan.generator.AddrConfig.pmemRange
 import xs.utils.ResetRRArbiter
 import zhujiang.axi._
 import zhujiang.tilelink._
@@ -47,12 +48,14 @@ class TLUL2AxiLite(axiParams: AxiParams) extends Module {
   aw.bits.id := io.tl.a.bits.source
   aw.bits.addr := io.tl.a.bits.address
   aw.bits.size := io.tl.a.bits.size
+  aw.bits.cache := Mux(io.tl.a.bits.address < pmemRange.lower.U, "b0000".U, "b0010".U)
 
   ar.valid := io.tl.a.valid && get
   ar.bits := DontCare
   ar.bits.id := io.tl.a.bits.source
   ar.bits.addr := io.tl.a.bits.address
   ar.bits.size := io.tl.a.bits.size
+  ar.bits.cache := Mux(io.tl.a.bits.address < pmemRange.lower.U, "b0000".U, "b0010".U)
 
   w.valid := io.tl.a.valid && (pf || pp) && aw.ready
   w.bits := DontCare
