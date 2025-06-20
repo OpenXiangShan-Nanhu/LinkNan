@@ -5,6 +5,22 @@ create_generated_clock -name dev_clk -divide_by 2 \
 
 set_false_path -from [get_pins ln_simple_i/ln/inst/_rtc_reg*/C]
 
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/cfgAsyncSrc/nodeOut_a_source/mem*/C] 40.000
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/cfgAsyncSrc/nodeOut_a_source/widx_gray*/C] 20.000
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/inner/tlAsyncSink/nodeIn_a_sink/ridx_gray*/C] 20.000
+
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/sbaAsyncSink/nodeIn_d_source/mem*/C] 40.000
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/sbaAsyncSink/nodeIn_d_source/widx_gray*/C] 20.000
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/inner/tlAsyncSrc/nodeOut_d_sink/ridx_gray*/C] 20.000
+
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/inner/tlAsyncSrc/nodeOut_a_source/mem*/C] 40.000
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/inner/tlAsyncSrc/nodeOut_a_source/widx_gray*/C] 20.000
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/sbaAsyncSink/nodeIn_a_sink/ridx_gray*/C] 20.000
+
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/inner/tlAsyncSink/nodeIn_d_source/mem*/C] 40.000
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/inner/tlAsyncSink/nodeIn_d_source/widx_gray*/C] 20.000
+set_max_delay -from [get_pins ln_simple_i/ln/inst/soc/uncore/devWrp/tlDevBlock/cfgAsyncSrc/nodeOut_d_sink/ridx_gray*/C] 20.000
+
 # LLC timing expcetions
 set_multicycle_path -from [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/cg/active*/C] 2
 set_multicycle_path -from [get_pins ln_simple_i/ln/inst/soc/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/addr*/C] 2
