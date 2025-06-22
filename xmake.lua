@@ -48,7 +48,7 @@ task("soc" , function()
     if option.get("legacy") then table.join2(chisel_opts, {"--legacy"}) end
     if not option.get("clean_difftest") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--basic-difftest"}) end
     if not option.get("clean_difftest") and not option.get("pldm_verilog") then table.join2(chisel_opts, {"--enable-difftest"}) end
-    if not option.get("enable_perf") then table.join2(chisel_opts, {"--fpga-platform"}) end
+    if not option.get("enable_perf") or option.get("release") then table.join2(chisel_opts, {"--fpga-platform"}) end
     if option.get("lua_scoreboard") then table.join2(chisel_opts, {"--lua-scoreboard"}) end
     if option.get("hardware_assertion") then table.join2(chisel_opts, {"--enable-hardware-assertion"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
