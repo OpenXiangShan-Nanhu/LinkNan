@@ -3,6 +3,7 @@ package linknan.generator
 import chisel3.util.log2Ceil
 import coupledL2.prefetch.PrefetchReceiverParams
 import freechips.rocketchip.diplomacy.{AddressRange, AddressSet}
+import freechips.rocketchip.util.AsyncQueueParams
 import linknan.soc.{LinkNanParams, LinkNanParamsKey}
 import org.chipsalliance.cde.config.{Config, _}
 import xiangshan.backend.fu.{MemoryRange, PMAConfigEntry}
@@ -171,6 +172,7 @@ class ExtremeNocConfig(socket: String) extends Config((site, here, up) => {
 
 class FpgaNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
+    asyncParams = AsyncQueueParams(narrow = true),
     hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.P),
@@ -197,6 +199,7 @@ class FpgaNocConfig(socket: String) extends Config((site, here, up) => {
 
 class SmallFpgaNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
+    asyncParams = AsyncQueueParams(narrow = true),
     hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.CC, socket = socket),
