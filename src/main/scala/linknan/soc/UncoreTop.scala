@@ -65,8 +65,8 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   private val dmaXBar = Module(new AxiNto1XBar(dmaXBarParams))
   private val cfgWidthAdapter = Module(new AxiWidthAdapter(extCfgSlvP, extCfgSlvP.copy(dataBits = 64), 16))
 
-  private val extSlvCfgBuf = Module(new AxiBufferChain(extCfgSlvP.copy(dataBits = 64), 2))
-  private val extMstCfgBuf = Module(new AxiBufferChain(devWrp.io.ext.cfg.params, 2))
+  private val extSlvCfgBuf = Module(new AxiBufferChain(extCfgSlvP.copy(dataBits = 64), 3))
+  private val extMstCfgBuf = Module(new AxiBufferChain(devWrp.io.ext.cfg.params, 3))
 
   devWrp.io.slv <> cfgPort
   extMstCfgBuf.io.in <> devWrp.io.ext.cfg
