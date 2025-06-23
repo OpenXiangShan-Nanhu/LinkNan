@@ -3,7 +3,7 @@ package linknan.cluster.power.controller
 import chisel3._
 import chisel3.util._
 import linknan.cluster.power.pchannel._
-import zhujiang.tilelink.{BaseTLULPeripheral, TLULBundle, TilelinkParams}
+import zhujiang.tilelink.{AOpcode, BaseTLULPeripheral, TLULBundle, TilelinkParams}
 
 class PolicyBundle extends Bundle {
   val rsvd1 = UInt((24 - 1).W)
@@ -141,8 +141,9 @@ class PowerController(tlParams:TilelinkParams) extends Module {
   }
 
   tlSlv.tls <> io.tls
-  tlSlv.tls.a.valid := io.tls.a.valid & fsm(idleBit)
-  io.tls.a.ready := tlSlv.tls.a.ready & fsm(idleBit)
+  private val allowTlReq = fsm(idleBit) || io.tls.a.bits.opcode === AOpcode.Get && io.tls.a.valid
+  tlSlv.tls.a.valid := io.tls.a.valid & allowTlReq
+  io.tls.a.ready := tlSlv.tls.a.ready & allowTlReq
   io.intr := tlSlv.ext.intr
   tlSlv.ext.powerOnState := io.powerOnState
   io.pcsm.state := pcsmMst.io.p.state
