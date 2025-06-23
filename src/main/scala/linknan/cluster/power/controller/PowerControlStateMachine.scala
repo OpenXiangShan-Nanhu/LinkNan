@@ -179,7 +179,7 @@ abstract class PowerControlStateMachine extends Module {
 class CorePcsm extends PowerControlStateMachine {
   final override def PwrEnMode:UInt = PowerMode.OFF
   final override def ClkEnMode = PowerMode.RET
-  final override def SigEnMode = PowerMode.RET
+  final override def SigEnMode = PowerMode.OFF
   final override def FnEnMode = PowerMode.OFF
 }
 
