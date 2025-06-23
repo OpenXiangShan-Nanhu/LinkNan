@@ -7,18 +7,19 @@ import coupledL2.tl2chi.TL2CHICoupledL2
 import freechips.rocketchip.diplomacy.{IdRange, TransferSizes}
 import freechips.rocketchip.tilelink.{BankBinder, TLBuffer, TLClientNode, TLMasterParameters, TLMasterPortParameters, TLXbar}
 import linknan.cluster.{BlockTestIO, BlockTestIOParams}
-import linknan.utils.{connectByName, connectChiChn}
+import linknan.utils.connectByName
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.bundlebridge.BundleBridgeSource
 import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import xiangshan.{HasXSParameter, XSCoreParamsKey}
 import xijiang.Node
-import xs.utils.cache.common.{AliasField, IsKeywordField, L2ParamKey, PrefetchField, PrefetchRecv, VaddrField}
+import xs.utils.cache.common._
+import xs.utils.cache.{MemBackTypeMMField, MemPageTypeNCField}
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import xs.utils.tl.ReqSourceField
 import zhujiang.HasZJParams
 import zhujiang.chi.FlitHelper.{connIcn, hwaConn}
-import zhujiang.chi.{DataFlit, RReqFlit, RespFlit, RingFlit, SnoopFlit}
+import zhujiang.chi.RingFlit
 
 class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper with HasXSParameter {
   private val coreP = p(XSCoreParamsKey)
@@ -57,7 +58,8 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
     clients = Seq(TLMasterParameters.v1(
       "uncache",
       sourceId = IdRange(0, 1 << mmioSourceBits)
-    ))
+    )),
+    requestFields = Seq(MemBackTypeMMField(), MemPageTypeNCField())
   )))
 
 
