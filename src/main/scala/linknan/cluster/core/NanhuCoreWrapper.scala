@@ -8,7 +8,7 @@ import freechips.rocketchip.devices.debug.DebugModuleKey
 import freechips.rocketchip.interrupts.{IntSourceNode, IntSourcePortSimple}
 import freechips.rocketchip.tilelink.{BankBinder, TLBuffer, TLXbar}
 import linknan.soc.LinkNanParamsKey
-import linknan.utils.{connectByName, connectChiChn}
+import linknan.utils.{BitSynchronizer, connectByName, connectChiChn}
 import linknan.cluster.power.controller.CorePowerController
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.bundlebridge.BundleBridgeSource
@@ -103,7 +103,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     cpc.io.sbIsEmpty := _core.io.power.sbIsEmpty
     cpc.io.pchn <> io.pchn
     _l2.io.l2Flush.foreach(_ := cpc.io.l2Flush)
-    cpc.io.l2FlushDone := _l2.io.l2FlushDone.getOrElse(true.B)
+    cpc.io.l2FlushDone := BitSynchronizer(_l2.io.l2FlushDone.getOrElse(true.B), 16) && pdc.io.empty
     _l2.io_cpu_halt.foreach(_ := _core.io.cpu_halt)
 
     _l2.io.l2_tlb_req.resp.valid := _core.io.l2_tlb_req.resp.valid
