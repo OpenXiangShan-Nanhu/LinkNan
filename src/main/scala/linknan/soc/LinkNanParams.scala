@@ -93,5 +93,5 @@ case class LinkNanParams(
     }
     assert(hit, descStr)(s)
   }
-  lazy val coreTimerAsyncParams = AsyncQueueParams(depth = 1, sync = 2)
+  lazy val coreTimerAsyncParams = AsyncQueueParams(depth = 1, sync = 3)
 }
