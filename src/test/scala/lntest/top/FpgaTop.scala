@@ -68,7 +68,7 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
   soc.io.dft.lgc_rst_n := true.B
   soc.io.jtag.foreach(_ := DontCare)
   soc.io.jtag.foreach(_.reset := true.B)
-  soc.dmaIO.filter(_.params.dataBits < 256).foreach(_ := DontCare)
+  soc.dmaIO.foreach(_ := DontCare)
 
   private def bufferMstAxi(in:ExtAxiBundle, depth:Int):AxiBundle = {
     val bufChains = Module(new AxiBufferChain(in.params, depth))
@@ -83,11 +83,10 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
 
   private val ddrBufOuts = soc.ddrIO.map(bufferMstAxi(_, 32))
   private val cfgBufOuts = soc.cfgIO.map(bufferMstAxi(_, 2))
-  private val dmaBufIns = soc.dmaIO.filter(_.params.dataBits >= 256).map(bufferSlvAxi(_, 2))
 
   val ddrDrv = ddrBufOuts
   val cfgDrv = cfgBufOuts
-  val dmaDrv = dmaBufIns
+  val dmaDrv = Seq()
   val ccnDrv = Seq()
   val hwaDrv = soc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()

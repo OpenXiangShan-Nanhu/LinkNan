@@ -17,6 +17,10 @@ class AxiNto1XBar(mst: Seq[AxiParams])(implicit val p: Parameters) extends BaseA
   val slvMatchersSeq = Seq((_: UInt) => true.B)
   initialize()
 }
+class Axi1toNXBar(mst: AxiParams, slvM:Seq[UInt => Bool])(implicit val p: Parameters) extends BaseAxiXbar(Seq(mst)) with HasZJParams {
+  val slvMatchersSeq = slvM
+  initialize()
+}
 
 class LnCrg extends Module {
   val io = IO(new Bundle {
@@ -39,50 +43,23 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
 
   require(noc.cfgIO.count(_.params.attr.contains("main")) == 1)
   require(noc.dmaIO.count(_.params.attr.contains("main")) == 1)
-
-  private val pciePort = if(noc.cfgIO.count(_.params.attr.contains("pcie")) > 0) {
-    require(noc.cfgIO.count(_.params.attr.contains("pcie")) == 1)
-    require(noc.ddrIO.count(_.params.attr.contains("pcie")) == 1)
-    val cfg = noc.cfgIO.filter(_.params.attr.contains("pcie")).head
-    val dat = noc.ddrIO.filter(_.params.attr.contains("pcie")).head
-    val pcieAxiBridge = Module(new PCIeAxiBridge(cfg.params, dat.params))
-    pcieAxiBridge.io.cfg <> cfg
-    pcieAxiBridge.io.dat <> dat
-    Some(pcieAxiBridge.io.out)
-  } else {
-    None
-  }
-
   private val cfgPort = noc.cfgIO.filter(_.params.attr.contains("main")).head
   private val dmaPort = noc.dmaIO.filter(_.params.attr.contains("main")).head
+  private val ucPort = if(noc.ddrIO.exists(_.params.attr.contains("uc"))) Some(noc.ddrIO.filter(_.params.attr.contains("uc")).head) else None
 
-  private val dmaXBarP = dmaPort.params
-  private val dbgWrpSlvP = dmaXBarP.copy(attr = "debug", idBits = dmaXBarP.idBits - 1)
-  private val extCfgSlvP = dmaXBarP.copy(attr = "cfg", idBits = dmaXBarP.idBits - 1)
-  private val dmaXBarParams = Seq(dbgWrpSlvP, extCfgSlvP)
-
-  private val devWrp = Module(new DevicesWrapper(cfgPort.params, dbgWrpSlvP))
-  private val dmaXBar = Module(new AxiNto1XBar(dmaXBarParams))
-  private val cfgWidthAdapter = Module(new AxiWidthAdapter(extCfgSlvP, extCfgSlvP.copy(dataBits = 64), 16))
-
-  private val extSlvCfgBuf = Module(new AxiBufferChain(extCfgSlvP.copy(dataBits = 64), 3))
-  private val extMstCfgBuf = Module(new AxiBufferChain(devWrp.io.ext.cfg.params, 3))
+  private val sAxiFabric = Module(new SlvAxiFabric(dmaPort.params))
+  private val devWrp = Module(new DevicesWrapper(cfgPort.params, sAxiFabric.s_axi.sba.params))
+  private val maxiFabric = Module(new MstAxiFabric(devWrp.io.ext.cfg.params, ucPort.map(_.params)))
 
   devWrp.io.slv <> cfgPort
-  extMstCfgBuf.io.in <> devWrp.io.ext.cfg
-  cfgWidthAdapter.io.mst <> extSlvCfgBuf.io.out
+  maxiFabric.s_axi.cfg <> devWrp.io.ext.cfg
+  maxiFabric.s_axi.uc.foreach(_ <> ucPort.get)
+  sAxiFabric.s_axi.sba <> devWrp.io.mst
+  dmaPort <> sAxiFabric.m_axi.dma
 
-  dmaXBar.io.upstream(0) <> devWrp.io.mst
-  dmaXBar.io.upstream(1) <> cfgWidthAdapter.io.slv
-  dmaPort <> dmaXBar.io.downstream.head
-
-  dmaXBar.io.upstream(1).aw.bits.addr := AclintAddrRemapper(cfgWidthAdapter.io.slv.aw.bits.addr)
-  dmaXBar.io.upstream(1).ar.bits.addr := AclintAddrRemapper(cfgWidthAdapter.io.slv.ar.bits.addr)
-  dontTouch(dmaXBar.io.upstream(1))
-
-  val ddrDrv = noc.ddrIO.filterNot(axi => axi.params.attr.contains("pcie")).map(AxiUtils.getIntnl) ++ pciePort
-  val cfgDrv = Seq(extMstCfgBuf.io.out) ++ noc.cfgIO.filterNot(axi => axi.params.attr.contains("main") || axi.params.attr.contains("pcie")).map(AxiUtils.getIntnl)
-  val dmaDrv = Seq(extSlvCfgBuf.io.in) ++ noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl)
+  val ddrDrv = noc.ddrIO.filterNot(axi => axi.params.attr.contains("uc")).map(AxiUtils.getIntnl) ++ maxiFabric.m_axi.uc
+  val cfgDrv = noc.cfgIO.filterNot(axi => axi.params.attr.contains("main") || axi.params.attr.contains("pcie")).map(AxiUtils.getIntnl) :+ maxiFabric.m_axi.cfg
+  val dmaDrv = noc.dmaIO.filterNot(_.params.attr.contains("main")).map(AxiUtils.getIntnl) ++ Seq(sAxiFabric.s_axi.cfg, sAxiFabric.s_axi.dat)
   val ccnDrv = Seq()
   val hwaDrv = noc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
