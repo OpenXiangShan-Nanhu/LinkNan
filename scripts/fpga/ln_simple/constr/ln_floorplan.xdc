@@ -1,6 +1,15 @@
 create_pblock pblock_peri
 add_cells_to_pblock [get_pblocks pblock_peri] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/devWrp ln_simple_i/ln/inst/soc/uncore/dmaXBar ln_simple_i/ln/inst/soc/uncore/extMstCfgBuf ln_simple_i/ln/inst/soc/uncore/extSlvCfgBuf ln_simple_i/ln/inst/soc/uncore/noc/iowrp_east ln_simple_i/u_peri_subsys]]
 resize_pblock [get_pblocks pblock_peri] -add {CLOCKREGION_X8Y10:CLOCKREGION_X8Y14}
+create_pblock pblock_ddr
+add_cells_to_pblock [get_pblocks pblock_ddr] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/iowrp_west ln_simple_i/u_jtag_ddr_subsys]]
+resize_pblock [get_pblocks pblock_ddr] -add {CLOCKREGION_X0Y11:CLOCKREGION_X1Y14}
+create_pblock pblock_cc
+add_cells_to_pblock [get_pblocks pblock_cc] [get_cells -quiet [list ln_simple_i/ln/inst/soc/cc_0]]
+resize_pblock [get_pblocks pblock_cc] -add {SLR0:SLR1}
+create_pblock pblock_vio
+add_cells_to_pblock [get_pblocks pblock_vio] [get_cells -quiet [list ln_simple_i/vio_0]]
+resize_pblock [get_pblocks pblock_vio] -add {CLOCKREGION_X0Y10:CLOCKREGION_X1Y10}
 
 create_pblock pblock_hnf_0
 add_cells_to_pblock [get_pblocks pblock_hnf_0] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/hnf_0]]
@@ -14,9 +23,6 @@ resize_pblock [get_pblocks pblock_hnf_2] -add {CLOCKREGION_X2Y13:CLOCKREGION_X7Y
 create_pblock pblock_hnf_3
 add_cells_to_pblock [get_pblocks pblock_hnf_3] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/hnf_3]]
 resize_pblock [get_pblocks pblock_hnf_3] -add {CLOCKREGION_X2Y11:CLOCKREGION_X7Y12}
-create_pblock pblock_tile
-add_cells_to_pblock [get_pblocks pblock_tile] [get_cells -quiet [list ln_simple_i/ln/inst/soc/cc_0/tile]]
-resize_pblock [get_pblocks pblock_tile] -add {SLR0:SLR1}
 
 create_pblock pblock_rs_0x0
 add_cells_to_pblock [get_pblocks pblock_rs_0x0] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_pip_id_0x0 ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_pip_id_0x0_reset_resetSync]]
@@ -48,6 +54,13 @@ resize_pblock [get_pblocks pblock_rs_0x40] -add {CLOCKREGION_X6Y11:CLOCKREGION_X
 create_pblock pblock_rs_0x48
 add_cells_to_pblock [get_pblocks pblock_rs_0x48] [get_cells -quiet [list ln_simple_i/in_mmcm ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_pip_id_0x48 ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_pip_id_0x48_reset_resetSync]]
 resize_pblock [get_pblocks pblock_rs_0x48] -add {CLOCKREGION_X6Y10:CLOCKREGION_X7Y10}
+create_pblock pblock_rs_0x50
+add_cells_to_pblock [get_pblocks pblock_rs_0x50] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_ccn_0_id_0x50 ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_ccn_0_id_0x50_reset_resetSync]]
+add_cells_to_pblock [get_pblocks pblock_rs_0x50] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/ccn_0_0x50 ln_simple_i/ln/inst/soc/uncore/noc/dev_reset_cc_0_rst_sync]]
+resize_pblock [get_pblocks pblock_rs_0x50] -add {CLOCKREGION_X4Y10:CLOCKREGION_X5Y10}
+create_pblock pblock_rs_0x58
+add_cells_to_pblock [get_pblocks pblock_rs_0x58] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_pip_id_0x58 ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_pip_id_0x58_reset_resetSync]]
+resize_pblock [get_pblocks pblock_rs_0x58] -add {CLOCKREGION_X2Y10:CLOCKREGION_X3Y10}
 create_pblock pblock_rs_0x60
 add_cells_to_pblock [get_pblocks pblock_rs_0x60] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_hnf_3_id_0x60 ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_hnf_3_id_0x60_reset_resetSync]]
 resize_pblock [get_pblocks pblock_rs_0x60] -add {CLOCKREGION_X2Y11:CLOCKREGION_X3Y11}
@@ -71,28 +84,6 @@ create_pblock pblock_core_pll
 add_cells_to_pblock [get_pblocks pblock_core_pll] [get_cells -quiet [list ln_simple_i/core_pll]]
 resize_pblock [get_pblocks pblock_core_pll] -add {CLOCKREGION_X7Y7:CLOCKREGION_X7Y7}
 
-
-create_pblock pblock_vio
-add_cells_to_pblock [get_pblocks pblock_vio] [get_cells -quiet [list ln_simple_i/vio_0]]
-resize_pblock [get_pblocks pblock_vio] -add {CLOCKREGION_X0Y10:CLOCKREGION_X1Y10}
-
-
-create_pblock pblock_hub
-add_cells_to_pblock [get_pblocks pblock_hub] [get_cells -quiet [list ln_simple_i/ln/inst/soc/cc_0/hub ln_simple_i/ln/inst/soc/uncore/noc/ccn_0_0x50 ln_simple_i/ln/inst/soc/uncore/noc/dev_reset_cc_0_rst_sync]]
-resize_pblock [get_pblocks pblock_hub] -add {CLOCKREGION_X4Y10:CLOCKREGION_X5Y10}
-create_pblock pblock_rs_0x50
-add_cells_to_pblock [get_pblocks pblock_rs_0x50] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_ccn_0_id_0x50 ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_ccn_0_id_0x50_reset_resetSync]]
-resize_pblock [get_pblocks pblock_rs_0x50] -add {SLICE_X199Y630:SLICE_X296Y659}
-resize_pblock [get_pblocks pblock_rs_0x50] -add {DSP48E2_X4Y252:DSP48E2_X4Y263}
-resize_pblock [get_pblocks pblock_rs_0x50] -add {RAMB18_X4Y252:RAMB18_X5Y263}
-resize_pblock [get_pblocks pblock_rs_0x50] -add {RAMB36_X4Y126:RAMB36_X5Y131}
-resize_pblock [get_pblocks pblock_rs_0x50] -add {URAM288_X0Y168:URAM288_X0Y175}
-create_pblock pblock_rs_0x58
-add_cells_to_pblock [get_pblocks pblock_rs_0x58] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_pip_id_0x58 ln_simple_i/ln/inst/soc/uncore/noc/ring/ring_stop_pip_id_0x58_reset_resetSync]]
-resize_pblock [get_pblocks pblock_rs_0x58] -add {CLOCKREGION_X2Y10:CLOCKREGION_X3Y10}
-create_pblock pblock_ddr
-add_cells_to_pblock [get_pblocks pblock_ddr] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/iowrp_west ln_simple_i/u_jtag_ddr_subsys]]
-resize_pblock [get_pblocks pblock_ddr] -add {CLOCKREGION_X0Y11:CLOCKREGION_X1Y14}
 set_property C_CLK_INPUT_FREQ_HZ 300000000 [get_debug_cores dbg_hub]
 set_property C_ENABLE_CLK_DIVIDER false [get_debug_cores dbg_hub]
 set_property C_USER_SCAN_CHAIN 1 [get_debug_cores dbg_hub]

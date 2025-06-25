@@ -9,9 +9,16 @@ create_project $project_name $project_name -part xcvu19p-fsva3824-2-e
 set_property simulator_language Verilog [current_project]
 
 set io_xdc [file join [pwd] "constr" "ln_ioplan.xdc"]
-set te_xdc  [file join [pwd] "constr" "ln_timing.xdc"]
-set fp_xdc  [file join [pwd] "constr" "ln_floorplan.xdc"]
-add_files -fileset constrs_1 -norecurse [list $io_xdc $te_xdc $fp_xdc]
+set fp_xdc [file join [pwd] "constr" "ln_floorplan.xdc"]
+set ooc_xdc [file join [pwd] "constr" "ln_ooc.xdc"]
+set te_tcl [file join [pwd] "constr" "ln_timing.tcl"]
+create_fileset -constrset ln_occ_constr
+add_files -fileset constrs_1 -norecurse [list $io_xdc $fp_xdc]
+add_files -fileset ln_occ_constr -norecurse $ooc_xdc
+set_property USED_IN_SYNTHESIS 0 [get_files $io_xdc]
+set_property USED_IN_SYNTHESIS 0 [get_files $fp_xdc]
+set_property USED_IN_IMPLEMENTATION 0 [get_files $ooc_xdc]
+add_files -fileset utils_1 -norecurse [list $te_tcl]
 
 set ln_fl [open "linknan/FullSys.f" r]
 set ln_path [pwd]
@@ -267,11 +274,37 @@ set_property -dict [list \
   CONFIG.USE_SAFE_CLOCK_STARTUP {true} \
 ] [get_bd_cells core_pll]
 
+# 50 MHz NoC Clk
+# set_property -dict [list \
+#   CONFIG.CLKOUT1_DRIVES {BUFG} \
+#   CONFIG.CLKOUT1_JITTER {167.017} \
+#   CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
+#   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {50} \
+#   CONFIG.CLKOUT2_DRIVES {Buffer} \
+#   CONFIG.CLKOUT3_DRIVES {Buffer} \
+#   CONFIG.CLKOUT4_DRIVES {Buffer} \
+#   CONFIG.CLKOUT5_DRIVES {Buffer} \
+#   CONFIG.CLKOUT6_DRIVES {Buffer} \
+#   CONFIG.CLKOUT7_DRIVES {Buffer} \
+#   CONFIG.CLK_OUT1_PORT {noc_clk} \
+#   CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
+#   CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
+#   CONFIG.MMCM_CLKFBOUT_MULT_F {8} \
+#   CONFIG.MMCM_CLKOUT0_DIVIDE_F {16} \
+#   CONFIG.MMCM_COMPENSATION {AUTO} \
+#   CONFIG.OPTIMIZE_CLOCKING_STRUCTURE_EN {true} \
+#   CONFIG.PRIMITIVE {PLL} \
+#   CONFIG.PRIM_SOURCE {Global_buffer} \
+#   CONFIG.USE_LOCKED {true} \
+#   CONFIG.USE_RESET {false} \
+# ] [get_bd_cells noc_pll]
+
+# 100 MHz NoC Clk
 set_property -dict [list \
   CONFIG.CLKOUT1_DRIVES {BUFG} \
-  CONFIG.CLKOUT1_JITTER {167.017} \
+  CONFIG.CLKOUT1_JITTER {144.719} \
   CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
-  CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {50} \
+  CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {100} \
   CONFIG.CLKOUT2_DRIVES {Buffer} \
   CONFIG.CLKOUT3_DRIVES {Buffer} \
   CONFIG.CLKOUT4_DRIVES {Buffer} \
@@ -282,12 +315,11 @@ set_property -dict [list \
   CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
   CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
   CONFIG.MMCM_CLKFBOUT_MULT_F {8} \
-  CONFIG.MMCM_CLKOUT0_DIVIDE_F {16} \
+  CONFIG.MMCM_CLKOUT0_DIVIDE_F {8} \
   CONFIG.MMCM_COMPENSATION {AUTO} \
   CONFIG.OPTIMIZE_CLOCKING_STRUCTURE_EN {true} \
   CONFIG.PRIMITIVE {PLL} \
   CONFIG.PRIM_SOURCE {Global_buffer} \
-  CONFIG.USE_LOCKED {true} \
   CONFIG.USE_RESET {false} \
 ] [get_bd_cells noc_pll]
 
@@ -360,13 +392,15 @@ export_ip_user_files -of_objects [get_files $bd_file] -no_script -sync -force -q
 create_ip_run [get_files -of_objects [get_fileset sources_1] $bd_file]
 
 set_property strategy Flow_PerfOptimized_high [get_runs ln_simple_ln_0_synth_1]
-set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY none [get_runs ln_simple_ln_0_synth_1]
+set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
 
-launch_runs synth_1 -job 8
-wait_on_runs synth_1
+set_property CONSTRSET ln_occ_constr [get_runs ln_simple_ln_0_synth_1]
+set_property STEPS.INIT_DESIGN.TCL.POST [get_files $te_tcl -of [get_fileset utils_1]] [get_runs impl_1]
 
-set_property strategy Congestion_SpreadLogic_high [get_runs impl_1]
-launch_runs impl_1 -job 8
-wait_on_runs impl_1
+# launch_runs synth_1 -job 8
+# wait_on_runs synth_1
 
-exit
+# launch_runs impl_1 -job 8
+# wait_on_runs impl_1
+
+# exit
