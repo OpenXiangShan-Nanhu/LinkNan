@@ -126,6 +126,7 @@ class ReducedNocConfig(socket: String) extends Config((site, here, up) => {
 class MinimalNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     hnxBankOff = AddrConfig.interleaveOffset,
+    asyncParams = AsyncQueueParams(narrow = true),
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
       NodeParam(nodeType = NodeType.CC, socket = socket),
