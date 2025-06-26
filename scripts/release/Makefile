@@ -77,7 +77,8 @@ RUN_BIN_DIR = $(CASES_DIR)
 RUN_BIN  ?= dhrystone.bin
 RUN_OPTS += -fgp=num_threads:4,num_fsdb_threads:4
 RUN_OPTS += -assert finish_maxfail=30 -assert global_finish_maxfail=10000
-RUN_OPTS += +dump-wave=fsdb +workload=$(RUN_BIN_DIR)/$(RUN_BIN) +diff=$(libnemu)
+RUN_OPTS += +dump-wave=fsdb +workload=$(RUN_BIN_DIR)/$(RUN_BIN)
+RUN_OPTS += $(if $(filter 0,$(DIFF)),+no-diff,+diff=$(libnemu))
 
 run: $(libnemu)
 	@mkdir -p $(SIM_DIR)/$(RUN_BIN)

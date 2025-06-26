@@ -13,7 +13,8 @@ am_dir="$release_dir"/nexus-am
 case_dir="$release_dir"/cases
 env_dir="$release_dir"/env
 
-# 1. create release dir
+# 1. backup and create release dir
+[ -d "$linknan_dir/build" ] && mv $linknan_dir/build "$linknan_dir"/build.bak
 [ -d "$release_dir" ] && rm -rf "$release_dir"
 mkdir -p "$release_dir"
 mkdir -p "$env_dir"
