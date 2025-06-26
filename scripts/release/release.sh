@@ -1,6 +1,11 @@
 #!/bin/bash
 set -ex
 
+if [ $# -gt 1 ] || { [ $# -eq 1 ] && [ "$1" != "single" ]; }; then
+    echo "Error: Invalid arguments. Usage: $0 [single]" >&2
+    exit 1
+fi
+
 data=`date +"%Y%m%d"`
 commit=`git rev-parse --short HEAD`
 
@@ -34,7 +39,11 @@ find "$am_dir/cases" -name Makefile -execdir make ARCH=riscv64-ln -j \;
 find "$am_dir/cases" -name '*.bin'  -exec cp {} "$case_dir" \;
 
 # 4. generate soc package and env
-xmake soc -sgrmA -x bosc_
+if [ "$1" = "single" ]; then
+  xmake soc -sgrmA -x bosc_ -N small -L medium
+else
+  xmake soc -sgrmA -x bosc_
+fi
 cd "$package_dir"/software && dtc -I dts -O dtb -o LNSim.dtb LNSim.dts
 cd "$linknan_dir"
 mv "$package_dir"/generated-src "$package_dir"/sim "$env_dir"
@@ -44,6 +53,10 @@ cp -r "$linknan_dir"/scripts/release/Makefile "$release_dir"
 cp -r "$linknan_dir"/scripts/release/sram_tb.mk "$release_dir"
 cp -r "$linknan_dir"/dependencies/difftest "$env_dir"
 cp -r "$linknan_dir"/scripts/release/sram_tb "$env_dir"
+if [ "$1" = "single" ]; then
+  sed -i 's/riscv64-nhv5-multi-ref_defconfig/riscv64-nhv5-ref_defconfig/' "$release_dir"/Makefile
+  sed -i 's/-DNUM_CORES=4//' "$release_dir"/Makefile
+fi
 
 # 5. tar and archive
 tar -zcvf "release_${data}_${commit}.tar.gz" "release_${data}_${commit}"
