@@ -155,7 +155,7 @@ class ExtremeNocConfig(socket: String) extends Config((site, here, up) => {
 
       NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 32, "default", "mem_0"))),
       NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 32, "default", "mem_1"))),
-      NodeParam(nodeType = NodeType.RH, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main", Some(AxiParams(idBits = 14))))),
+      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main", Some(AxiParams(idBits = 14))))),
       NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8, "default", "main")), defaultHni = true),
 
       NodeParam(nodeType = NodeType.CC, socket = socket),
@@ -212,7 +212,7 @@ class SmallFpgaNocConfig(socket: String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.P),
 
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.RH, axiDevParams = Some(AxiDeviceParams(0, 16, "east", "main", Some(AxiParams(idBits = 14))))),
+      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 16, "east", "main", Some(AxiParams(idBits = 14))))),
       NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8,  "east", "main")), defaultHni = true),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
       NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "misc"))),
