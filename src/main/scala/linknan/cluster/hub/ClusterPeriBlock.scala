@@ -12,7 +12,7 @@ import linknan.cluster.power.controller.{PcsmCtrlIO, PowerControllerTop, PowerMo
 import linknan.cluster.power.pchannel.PChannel
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
-import zhujiang.ZJBundle
+import zhujiang.{ZJBundle, ZJParametersKey}
 import zhujiang.tilelink.{TLULBundle, TilelinkParams}
 
 class ImsicBundle(implicit p:Parameters) extends Bundle {
@@ -123,7 +123,17 @@ class ClusterPeriBlock(tlParams: Seq[TilelinkParams], coreNum:Int)(implicit p:Pa
 
   cpuDevConn(cpuBootCtlSeq.map(e => (e._1, e._2.tls)), "cpu_boot_ctl_")
   cpuDevConn(cpuPwrCtlSeq.map(e => (e._1, e._2.io.tls)), "cpu_pwr_ctl_")
-  cpuDevConn(cpuDaclintSeq.map(e => (e._1, e._2.tls)), "cpu_daclint_")
+  for((i, tls) <- cpuDaclintSeq.map(e => (e._1, e._2.tls))) {
+    val zlo = log2Ceil(8)
+    val zhi = log2Ceil(p(ZJParametersKey).dataBits / 8)
+    val zb = zhi - zlo
+    val tlm = downstreams.filter(_._1.name == s"cpu_daclint_$i").map(_._2).head
+    tls <> tlm
+    val ma = tlm.a.bits.address
+    val mahi = ma(ma.getWidth - 1, zhi)
+    val malo = ma(zlo - 1, 0)
+    tls.a.bits.address := Cat(mahi, 0.U(zb.W), malo)
+  }
 
   pllCtl.tls <> downstreams.filter(_._1.name == s"pll").map(_._2).head
 

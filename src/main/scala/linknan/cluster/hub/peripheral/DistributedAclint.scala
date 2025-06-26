@@ -31,36 +31,14 @@ class DistributedAclint(tlParams: TilelinkParams)(implicit val p: Parameters) ex
   timerUpdate.bits := mtime
   io.timerUpdate := Pipe(timerUpdate)
 
-  private val mtimeWrVec = WireInit(VecInit(Seq.fill(dw / 64)(mtime)))
-  private val mtcmpWrVec = WireInit(VecInit(Seq.fill(dw / 64)(mtimecmp)))
-  private val msipWrVec = WireInit(VecInit(Seq.fill(dw / 32)(msip)))
-  private val ssipWrVec = WireInit(VecInit(Seq.fill(dw / 32)(ssip)))
-
-  private var base = 0x0
-  private def genRegSeq(reg:UInt, regWrVec:Vec[UInt], name:String, wmask:Option[UInt], rmask:Option[UInt]): Seq[(String, UInt, UInt, Int, Option[UInt], Option[UInt])] = {
-    regWrVec.zipWithIndex.map({case(w, i) =>
-      base = base + w.getWidth / 8
-      (s"${name}_$i", reg, w, base - w.getWidth / 8, wmask, rmask)
-    })
-  }
-  private val mtimeSeq = genRegSeq(mtime, mtimeWrVec, "mtime", None, None)
-  private val mtcmpSeq = genRegSeq(mtimecmp, mtcmpWrVec, "mtcmp", None, None)
-  private val msipSeq = genRegSeq(msip, msipWrVec, "msip", Some(1.U(32.W)), Some(1.U(32.W)))
-  private val ssipSeq = genRegSeq(ssip, ssipWrVec, "ssip", Some(1.U(32.W)), Some(1.U(32.W)))
-
-  val regSeq = mtimeSeq ++ mtcmpSeq ++ msipSeq ++ ssipSeq
-  private val updateMap = genWriteMap()
-
-  private def genWrite(reg:UInt, regSeq:Seq[(String, UInt, UInt, Int, Option[UInt], Option[UInt])]):Unit = {
-    val updSeq = regSeq.map(m => (updateMap(m._1), m._3))
-    when(Cat(updSeq.map(_._1)).orR) {
-      reg := Mux1H(updSeq)
-    }
-  }
-  genWrite(mtime, mtimeSeq)
-  genWrite(mtimecmp, mtcmpSeq)
-  genWrite(msip, msipSeq)
-  genWrite(ssip, ssipSeq)
+  private val off = dw / 8
+  val regSeq = Seq(
+    ("mtime", mtime,    mtime,    off * 0, None,            None),
+    ("mtcmp", mtimecmp, mtimecmp, off * 1, None,            None),
+    ("msip",  msip,     msip,     off * 2, Some(1.U(32.W)), Some(1.U(32.W))),
+    ("ssip",  ssip,     ssip,     off * 3, Some(1.U(32.W)), Some(1.U(32.W))),
+  )
+  private val writeMap = genWriteMap()
 
   io.msip := RegNext(msip(0))
   io.ssip := RegNext(ssip(0))
