@@ -1,12 +1,15 @@
 # Clocks
+
 set ln_path ln_simple_i/ln/inst/soc
+
+create_generated_clock -name dev_clk -divide_by 2 \
+-source [get_pins $ln_path/uncore/crg/clk_div_2/out*/C] \
+[get_pins $ln_path/uncore/crg/clk_div_2/out*/Q]
 
 set noc_clk_period [get_property PERIOD [get_clocks noc_clk_ln_simple_noc_pll_0]]
 set cpu_clk_period [get_property PERIOD [get_clocks core_clk_ln_simple_core_pll_0]]
-set min_clk_period [expr {min($noc_clk_period, $cpu_clk_period)}]
-
-create_clock -name dev_clk -period [expr $noc_clk_period *2] [get_pins $ln_path/uncore/crg/clk_div_2/out*/Q]
 set dev_clk_period [get_property PERIOD [get_clocks dev_clk]]
+set min_clk_period [expr {min($noc_clk_period, $cpu_clk_period)}]
 
 set_clock_groups -name async_ln -asynchronous \
 -group [get_clocks noc_clk_ln_simple_noc_pll_0] \
@@ -14,14 +17,40 @@ set_clock_groups -name async_ln -asynchronous \
 -group [get_clocks dev_clk]
 
 # LLC timing expcetions
-# set_multicycle_path -setup -from [get_pins $ln_path/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/addr*/C] 2
-# set_multicycle_path -hold  -from [get_pins $ln_path/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/addr*/C] 1
-# set_multicycle_path -setup -from [get_pins $ln_path/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/data_*/C] 2
-# set_multicycle_path -hold  -from [get_pins $ln_path/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/data_*/C] 1
-# set_multicycle_path -setup -from [get_pins {$ln_path/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/ram/wreqReg*[0]/C}] 2
-# set_multicycle_path -hold  -from [get_pins {$ln_path/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/ram/wreqReg*[0]/C}] 1
-# set_multicycle_path -setup -from [get_pins {$ln_path/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/ram/rreqReg*[0]/C}] 2
-# set_multicycle_path -hold  -from [get_pins {$ln_path/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array/ram/rreqReg*[0]/C}] 1
+set hnx          $ln_path/uncore/noc/hnf_*/hnx
+set hnx_dat      $hnx/dataBlock/dataStorage_*/array
+set hnx_llc_tag  $hnx/directory/llcs*/tagArray
+set hnx_llc_meta $hnx/directory/llcs*/metaArray
+set hnx_sf_tag   $hnx/directory/sfs*/tagArray
+set hnx_sf_meta  $hnx/directory/sfs*/metaArray
+
+# LLC data ram is implemeted with URAM, s2h1l2
+set_multicycle_path -setup -from [get_pins $hnx_dat/addr*/C]  -to [get_pins $hnx_dat/ram/array/mem/*mem_reg*/ADDR*] 2
+set_multicycle_path -hold  -from [get_pins $hnx_dat/addr*/C]  -to [get_pins $hnx_dat/ram/array/mem/*mem_reg*/ADDR*] 1
+set_multicycle_path -setup -from [get_pins $hnx_dat/data_*/C] -to [get_pins $hnx_dat/ram/array/mem/*mem_reg*/DIN*]  2
+set_multicycle_path -hold  -from [get_pins $hnx_dat/data_*/C] -to [get_pins $hnx_dat/ram/array/mem/*mem_reg*/DIN*]  1
+set_multicycle_path -setup -from [get_pins $hnx_dat/ram/wreqReg*[0]/C] 2
+set_multicycle_path -hold  -from [get_pins $hnx_dat/ram/wreqReg*[0]/C] 1
+set_multicycle_path -setup -from [get_pins $hnx_dat/ram/rreqReg*[0]/C] 2
+set_multicycle_path -hold  -from [get_pins $hnx_dat/ram/rreqReg*[0]/C] 1
+set_multicycle_path -setup -from [get_pins $hnx_dat/ram/array/mem/*mem_reg*/CLK] -to [get_pins $hnx_dat/dataReg*/D] 2
+set_multicycle_path -hold  -from [get_pins $hnx_dat/ram/array/mem/*mem_reg*/CLK] -to [get_pins $hnx_dat/dataReg*/D] 1
+
+# LLC tag ram is implemeted with BRAM, s1h0l2
+set_multicycle_path -setup -from [get_pins $hnx_llc_tag/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_llc_tag/dataReg*/D] 2
+set_multicycle_path -hold  -from [get_pins $hnx_llc_tag/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_llc_tag/dataReg*/D] 1
+
+# LLC meta ram is implemeted with BRAM, s1h0l2
+set_multicycle_path -setup -from [get_pins $hnx_llc_meta/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_llc_meta/dataReg*/D] 2
+set_multicycle_path -hold  -from [get_pins $hnx_llc_meta/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_llc_meta/dataReg*/D] 1
+
+# SF tag ram is implemeted with BRAM, s1h0l2
+set_multicycle_path -setup -from [get_pins $hnx_sf_tag/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_sf_tag/dataReg*/D] 2
+set_multicycle_path -hold  -from [get_pins $hnx_sf_tag/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_sf_tag/dataReg*/D] 1
+
+# SF meta ram is implemeted with LUTRAM, s1h0l2
+set_multicycle_path -setup -from [get_pins $hnx_sf_meta/ram/array/mem/rdata*/C] -to [get_pins $hnx_sf_meta/dataReg*/D] 2
+set_multicycle_path -hold  -from [get_pins $hnx_sf_meta/ram/array/mem/rdata*/C] -to [get_pins $hnx_sf_meta/dataReg*/D] 1
 
 # Device Wrapper Async Constraints
 set tl_dev_wrp $ln_path/uncore/devWrp/tlDevBlock
