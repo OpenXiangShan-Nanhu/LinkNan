@@ -40,7 +40,7 @@ find "$am_dir/cases" -name '*.bin'  -exec cp {} "$case_dir" \;
 
 # 4. generate soc package and env
 if [ "$1" = "single" ]; then
-  xmake soc -sgrmA -x bosc_ -N small -L medium
+  xmake soc -sgrmAY -x bosc_ -N small -L medium
 else
   xmake soc -sgrmA -x bosc_
 fi
