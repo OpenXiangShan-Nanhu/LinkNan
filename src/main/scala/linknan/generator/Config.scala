@@ -198,26 +198,28 @@ class FpgaNocConfig(socket: String) extends Config((site, here, up) => {
   )
 })
 
-class SmallFpgaNocConfig(socket: String) extends Config((site, here, up) => {
+class FpgaQuadNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     asyncParams = AsyncQueueParams(narrow = true),
     hnxBankOff = AddrConfig.interleaveOffset,
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.CC, socket = socket),
-
       NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "west", "mem_0"))),
-      NodeParam(nodeType = NodeType.P),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
-
-      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.CC, socket = socket),
 
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 16, "east", "main", Some(AxiParams(idBits = 14))))),
+      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 16, "east", "main", Some(AxiParams(idBits = 13))))),
       NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8,  "east", "main")), defaultHni = true),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
-      NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "misc"))),
+
+      NodeParam(nodeType = NodeType.CC, socket = socket),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.CC, socket = socket),
+
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "west", "mem_0"))),
+      NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "west"))),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
     )
   )
 })
@@ -331,8 +333,8 @@ object ConfigGenerater {
       case "full" => new FullNocConfig(socket)
       case "medium" => new ReducedNocConfig(socket)
       case "small" => new MinimalNocConfig(socket)
-      case "fpga" => new FpgaNocConfig(socket)
-      case "fpga_s" => new SmallFpgaNocConfig(socket)
+      case "fpga_1" => new FpgaNocConfig(socket)
+      case "fpga_4" => new FpgaQuadNocConfig(socket)
       case "extreme" => new ExtremeNocConfig(socket)
       case _ =>
         require(requirement = false, s"not supported noc config: $noc")
