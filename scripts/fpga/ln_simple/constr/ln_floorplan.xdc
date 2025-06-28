@@ -1,9 +1,9 @@
 create_pblock pblock_peri
-add_cells_to_pblock [get_pblocks pblock_peri] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/devWrp ln_simple_i/ln/inst/soc/uncore/dmaXBar ln_simple_i/ln/inst/soc/uncore/extMstCfgBuf ln_simple_i/ln/inst/soc/uncore/extSlvCfgBuf ln_simple_i/ln/inst/soc/uncore/noc/iowrp_east ln_simple_i/u_peri_subsys]]
+add_cells_to_pblock [get_pblocks pblock_peri] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/devWrp ln_simple_i/ln/inst/soc/uncore/noc/iowrp_east ln_simple_i/ln/inst/cfgBufOuts_bufChains ln_simple_i/u_peri_subsys]]
 resize_pblock [get_pblocks pblock_peri] -add {CLOCKREGION_X8Y10:CLOCKREGION_X8Y14}
 create_pblock pblock_ddr
-add_cells_to_pblock [get_pblocks pblock_ddr] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/iowrp_west ln_simple_i/u_jtag_ddr_subsys]]
-resize_pblock [get_pblocks pblock_ddr] -add {CLOCKREGION_X0Y11:CLOCKREGION_X1Y14}
+add_cells_to_pblock [get_pblocks pblock_ddr] [get_cells -quiet [list ln_simple_i/ln/inst/soc/uncore/noc/iowrp_west ln_simple_i/ln/inst/ddrBufOuts_bufChains ln_simple_i/u_jtag_ddr_subsys]]
+resize_pblock [get_pblocks pblock_ddr] -add {CLOCKREGION_X0Y10:CLOCKREGION_X1Y14}
 create_pblock pblock_cc
 add_cells_to_pblock [get_pblocks pblock_cc] [get_cells -quiet [list ln_simple_i/ln/inst/soc/cc_0]]
 resize_pblock [get_pblocks pblock_cc] -add {SLR0:SLR1}

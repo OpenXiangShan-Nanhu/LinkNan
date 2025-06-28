@@ -13,6 +13,7 @@ set min_clk_period [expr {min($noc_clk_period, $cpu_clk_period)}]
 
 set_clock_groups -name async_ln -asynchronous \
 -group [get_clocks noc_clk_ln_simple_noc_pll_0] \
+-group [get_clocks peri_clk_ln_simple_noc_pll_0] \
 -group [get_clocks core_clk_ln_simple_core_pll_0] \
 -group [get_clocks dev_clk]
 

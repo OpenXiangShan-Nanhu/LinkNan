@@ -93,6 +93,11 @@ set_property ASYNC_REG TRUE [get_cells $ln_path/cc_*/hub/clusterPeriCx/cpu_pwr_c
 
 # Keep Hierarchy
 set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/uncore/noc/hnf_*]
+set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/uncore/noc/iowrp_west]
+set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/uncore/noc/iowrp_east]
+set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/cfgBufOuts_bufChains]
+set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/ddrBufOuts_bufChains]
+set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/uncore/devWrp]
 set_property KEEP_HIERARCHY TRUE [get_cells $hnx_dat]
 set_property KEEP_HIERARCHY TRUE [get_cells $hnx_llc_tag]
 set_property KEEP_HIERARCHY TRUE [get_cells $hnx_llc_meta]

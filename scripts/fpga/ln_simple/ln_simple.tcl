@@ -145,8 +145,10 @@ create_bd_pin -dir O u_peri_subsys/uart0_sout
 connect_bd_net [get_bd_pins u_peri_subsys/uart0_sout] [get_bd_pins u_peri_subsys/axi_uart16550_0/sout]
 create_bd_pin -dir I u_peri_subsys/uart0_sin
 connect_bd_net [get_bd_pins u_peri_subsys/uart0_sin] [get_bd_pins u_peri_subsys/axi_uart16550_0/sin]
-create_bd_pin -dir I u_peri_subsys/ACLK
-connect_bd_net [get_bd_pins u_peri_subsys/ACLK] [get_bd_pins u_peri_subsys/reset_sync/slowest_sync_clk]
+create_bd_pin -dir I u_peri_subsys/ACLK_NOC
+connect_bd_net [get_bd_pins u_peri_subsys/ACLK_NOC] [get_bd_pins u_peri_subsys/axi_interconnect_0/ACLK]
+create_bd_pin -dir I u_peri_subsys/ACLK_PERI
+connect_bd_net [get_bd_pins u_peri_subsys/ACLK_PERI] [get_bd_pins u_peri_subsys/axi_uart16550_0/s_axi_aclk]
 create_bd_pin -dir I u_peri_subsys/ARESETN
 connect_bd_net [get_bd_pins u_peri_subsys/ARESETN] [get_bd_pins u_peri_subsys/reset_sync/ext_reset_in]
 create_bd_pin -dir O u_peri_subsys/uart0_intc
@@ -162,10 +164,9 @@ connect_bd_net [get_bd_pins u_peri_subsys/xlconstant_1/dout] [get_bd_pins u_peri
 connect_bd_net [get_bd_pins u_peri_subsys/xlconstant_1/dout] [get_bd_pins u_peri_subsys/axi_uart16550_0/rin]
 
 connect_bd_intf_net [get_bd_intf_pins u_peri_subsys/axi_interconnect_0/M00_AXI] [get_bd_intf_pins u_peri_subsys/axi_uart16550_0/S_AXI]
-connect_bd_net [get_bd_pins u_peri_subsys/ACLK] [get_bd_pins u_peri_subsys/axi_uart16550_0/s_axi_aclk]
-connect_bd_net [get_bd_pins u_peri_subsys/ACLK] [get_bd_pins u_peri_subsys/axi_interconnect_0/M00_ACLK]
-connect_bd_net [get_bd_pins u_peri_subsys/ACLK] [get_bd_pins u_peri_subsys/axi_interconnect_0/S00_ACLK]
-connect_bd_net [get_bd_pins u_peri_subsys/ACLK] [get_bd_pins u_peri_subsys/axi_interconnect_0/ACLK]
+connect_bd_net [get_bd_pins u_peri_subsys/ACLK_PERI] [get_bd_pins u_peri_subsys/reset_sync/slowest_sync_clk]
+connect_bd_net [get_bd_pins u_peri_subsys/ACLK_PERI] [get_bd_pins u_peri_subsys/axi_interconnect_0/M00_ACLK]
+connect_bd_net [get_bd_pins u_peri_subsys/ACLK_NOC] [get_bd_pins u_peri_subsys/axi_interconnect_0/S00_ACLK]
 
 connect_bd_net [get_bd_pins u_peri_subsys/reset_sync/peripheral_aresetn] [get_bd_pins u_peri_subsys/axi_uart16550_0/s_axi_aresetn]
 connect_bd_net [get_bd_pins u_peri_subsys/reset_sync/interconnect_aresetn] [get_bd_pins u_peri_subsys/axi_interconnect_0/M00_ARESETN]
@@ -276,18 +277,25 @@ set_property -dict [list \
 
 set_property -dict [list \
   CONFIG.CLKOUT1_DRIVES {BUFG} \
-  CONFIG.CLKOUT2_DRIVES {Buffer} \
+  CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
+  CONFIG.CLKOUT2_DRIVES {BUFG} \
+  CONFIG.CLKOUT2_JITTER {167.017} \
+  CONFIG.CLKOUT2_PHASE_ERROR {114.212} \
+  CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {50} \
+  CONFIG.CLKOUT2_USED {true} \
   CONFIG.CLKOUT3_DRIVES {Buffer} \
   CONFIG.CLKOUT4_DRIVES {Buffer} \
   CONFIG.CLKOUT5_DRIVES {Buffer} \
   CONFIG.CLKOUT6_DRIVES {Buffer} \
   CONFIG.CLKOUT7_DRIVES {Buffer} \
   CONFIG.CLK_OUT1_PORT {noc_clk} \
+  CONFIG.CLK_OUT2_PORT {peri_clk} \
   CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
   CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
   CONFIG.MMCM_CLKFBOUT_MULT_F {8} \
+  CONFIG.MMCM_CLKOUT1_DIVIDE {16} \
   CONFIG.MMCM_COMPENSATION {AUTO} \
-  CONFIG.OPTIMIZE_CLOCKING_STRUCTURE_EN {true} \
+  CONFIG.NUM_OUT_CLKS {2} \
   CONFIG.PRIMITIVE {PLL} \
   CONFIG.PRIM_SOURCE {Global_buffer} \
   CONFIG.USE_RESET {false} \
@@ -297,7 +305,6 @@ set_property -dict [list \
 # 50 MHz 
 # set_property -dict [list \
 #   CONFIG.CLKOUT1_JITTER {167.017} \
-#   CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
 #   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {50} \
 #   CONFIG.MMCM_CLKOUT0_DIVIDE_F {16} \
 # ] [get_bd_cells noc_pll]
@@ -305,7 +312,6 @@ set_property -dict [list \
 # 80 MHz
 # set_property -dict [list \
 #   CONFIG.CLKOUT1_JITTER {151.652} \
-#   CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
 #   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {80} \
 #   CONFIG.MMCM_CLKOUT0_DIVIDE_F {10} \
 # ] [get_bd_cells noc_pll]
@@ -313,7 +319,6 @@ set_property -dict [list \
 # 100 MHz
 set_property -dict [list \
   CONFIG.CLKOUT1_JITTER {144.719} \
-  CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {100} \
   CONFIG.MMCM_CLKOUT0_DIVIDE_F {8} \
 ] [get_bd_cells noc_pll]
@@ -334,8 +339,9 @@ connect_bd_net [get_bd_pins in_mmcm/rtc_clk] [get_bd_pins ln/io_rtc_clk]
 connect_bd_net [get_bd_pins core_pll/core_clk] [get_bd_pins ln/io_core_clk_0]
 connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins vio_0/clk]
 connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins ln/io_aclk]
-connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins u_peri_subsys/ACLK]
+connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins u_peri_subsys/ACLK_NOC]
 connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ACLK]
+connect_bd_net [get_bd_pins noc_pll/peri_clk] [get_bd_pins u_peri_subsys/ACLK_PERI]
 
 connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins noc_reset_gen/slowest_sync_clk]
 connect_bd_net [get_bd_pins noc_pll/locked] [get_bd_pins noc_reset_gen/dcm_locked]
@@ -390,12 +396,12 @@ set_property strategy Flow_PerfOptimized_high [get_runs ln_simple_ln_0_synth_1]
 set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
 
 set_property CONSTRSET ln_occ_constr [get_runs ln_simple_ln_0_synth_1]
-set_property STEPS.INIT_DESIGN.TCL.POST [get_files $te_tcl -of [get_fileset utils_1]] [get_runs impl_1]
+set_property STEPS.INIT_DESIGN.TCL.POST [get_files $te_tcl -of [get_fileset utils_1]] [get_runs impl_*]
 
-# launch_runs synth_1 -job 8
+launch_runs synth_1 -job 8
 # wait_on_runs synth_1
 
-# launch_runs impl_1 -job 8
+launch_runs impl_1 -job 8
 # wait_on_runs impl_1
 
 # exit
