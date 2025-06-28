@@ -13,7 +13,7 @@ object Generator {
     FirtoolOption("-O=release"),
     FirtoolOption("--disable-annotation-unknown"),
     FirtoolOption("--strip-debug-info"),
-    FirtoolOption("--lower-memories"),
+//    FirtoolOption("--lower-memories"),
     FirtoolOption("--disable-all-randomization"),
     FirtoolOption("--add-vivado-ram-address-conflict-synthesis-bug-workaround"),
     FirtoolOption("--lowering-options=noAlwaysComb," +
