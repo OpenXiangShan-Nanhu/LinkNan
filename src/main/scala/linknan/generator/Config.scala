@@ -207,19 +207,19 @@ class FpgaQuadNocConfig(socket: String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.CC, socket = socket),
 
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
       NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 16, "east", "main", Some(AxiParams(idBits = 13))))),
       NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8,  "east", "main")), defaultHni = true),
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
+      NodeParam(nodeType = NodeType.P),
 
       NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.CC, socket = socket),
 
-      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "west", "mem_0"))),
       NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "west"))),
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "west", "mem_0"))),
     )
   )
 })
@@ -301,6 +301,10 @@ class SmallL3Config extends Config(
   new LLCConfig(2 * 1024 * 1024, 8, 8, 64, 2)
 )
 
+class QuadCoreL3Config extends Config(
+  new LLCConfig(1 * 1024 * 1024, 8, 8, 32, 2)
+)
+
 // use extreme l3 config require the number of HNF no more than 4 in NoC
 class ExtremeL3Config extends Config(
   new LLCConfig(64 * 16, 4, 4, 16, 1)
@@ -325,6 +329,7 @@ object ConfigGenerater {
       case "full" => new FullL3Config
       case "medium" => new MediumL3Config
       case "small" => new SmallL3Config
+      case "fpga_4" => new QuadCoreL3Config
       case "extreme" => new ExtremeL3Config
       case _ =>
         require(requirement = false, s"not supported l3 config: $l3")
