@@ -12,7 +12,8 @@ commit=`git rev-parse --short HEAD`
 linknan_dir=$(pwd)
 package_dir="$linknan_dir"/Release-LinkNan-$(LC_TIME=en_US.UTF-8 date +"%b-%d-%Y")
 
-release_dir="$linknan_dir"/release_${data}_${commit}
+suffix=$([ "$1" = "single" ] && echo "_single" || echo "")
+release_dir="$linknan_dir"/release_${data}_${commit}${suffix}
 nemu_dir="$release_dir"/NEMU
 am_dir="$release_dir"/nexus-am
 case_dir="$release_dir"/cases
@@ -59,5 +60,5 @@ if [ "$1" = "single" ]; then
 fi
 
 # 5. tar and archive
-tar -zcvf "release_${data}_${commit}.tar.gz" "release_${data}_${commit}"
+tar -zcvf "release_${data}_${commit}${suffix}.tar.gz" "release_${data}_${commit}${suffix}"
 [ -d "/nfs/share/home/nact-release" ] && cp "$release_dir.tar.gz" /nfs/share/home/nact-release
