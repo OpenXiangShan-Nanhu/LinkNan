@@ -19,7 +19,7 @@ class MinimalNanhuConfig extends Config((site, here, up) => {
     RobSize = 48,         //96
     RabSize = 96,         //96
     intPreg = IntPregParams(
-      numEntries = 48,    //128
+      numEntries = 64,    //128
       numRead = None,
       numWrite = None,
     ),
