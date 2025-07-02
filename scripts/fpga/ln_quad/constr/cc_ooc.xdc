@@ -8,6 +8,11 @@ set_clock_groups -name async_core_noc -asynchronous \
 set hub_pdc */hub/pdc
 set tile_pdc */tile/pdc
 
+set tx_src   $tile_pdc/async_src_*
+set tx_sink  $hub_pdc/async_sink_*
+set rx_src   $hub_pdc/async_src_*
+set rx_sink  $tile_pdc/async_sink_*
+
 set timer_src  */hub/timerSource
 set timer_sink */tile/timerSink
 
