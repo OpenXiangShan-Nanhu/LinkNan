@@ -13,28 +13,31 @@ import xs.utils.stage.XsStage
 import zhujiang.{NocIOHelper, ZJParametersKey, ZJRawModule}
 import zhujiang.axi.{AxiBufferChain, AxiBundle, AxiUtils, ExtAxiBundle}
 
-class VerilogMinus(width:Int) extends BlackBox with HasBlackBoxInline {
+class VerilogAddrRemapper(width:Int) extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
     val a = Input(UInt(width.W))
     val b = Input(UInt(width.W))
+    val c = Input(UInt(width.W))
     val z = Output(UInt(width.W))
   })
   setInline(s"VerilogMinus.sv",
     s"""module VerilogMinus (
        |  input  wire [${width - 1}:0] a,
        |  input  wire [${width - 1}:0] b,
+       |  input  wire [${width - 1}:0] c,
        |  output wire [${width - 1}:0] z
        |);
-       |  assign z = a - b;
+       |  assign z = a - b + c;
        |endmodule""".stripMargin)
 }
 
-object VerilogMinus {
-  def apply(a:UInt, b:UInt):UInt = {
-    val minus = Module(new VerilogMinus(a.getWidth.max(b.getWidth)))
-    minus.io.a := a
-    minus.io.b := b
-    minus.io.z
+object VerilogAddrRemapper {
+  def apply(a:UInt, b:UInt, c:UInt):UInt = {
+    val rmp = Module(new VerilogAddrRemapper(a.getWidth.max(b.getWidth)))
+    rmp.io.a := a
+    rmp.io.b := b
+    rmp.io.c := c
+    rmp.io.z
   }
 }
 
@@ -46,7 +49,8 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
     val aclk = Input(Clock())
     val core_clk = Input(Vec(soc.io.cluster_clocks.size, Clock()))
     val rtc_clk = Input(Clock())
-    val reset_vector = Input(UInt(soc.io.default_reset_vector.getWidth.W))
+    val reset_vector = Input(UInt(raw.W))
+    val ddr_offset = Input(UInt(raw.W))
     val ext_intr = Input(UInt(soc.io.ext_intr.getWidth.W))
   })
   private val _reset = (!io.aresetn).asAsyncReset
@@ -91,8 +95,8 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
   val hwaDrv = soc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
   ddrIO.zip(ddrDrv).foreach({case(a, b) =>
-    a.araddr := VerilogMinus(b.ar.bits.addr, AddrConfig.pmemRange.lower.U(raw.W))
-    a.awaddr := VerilogMinus(b.aw.bits.addr, AddrConfig.pmemRange.lower.U(raw.W))
+    a.araddr := VerilogAddrRemapper(b.ar.bits.addr, AddrConfig.pmemRange.lower.U(raw.W), io.ddr_offset)
+    a.awaddr := VerilogAddrRemapper(b.aw.bits.addr, AddrConfig.pmemRange.lower.U(raw.W), io.ddr_offset)
   })
 }
 
