@@ -80,7 +80,7 @@ task("soc" , function()
 
     local harden_table = {"LNTop", "NanhuCoreWrapper"}
     local rel_opts = {}
-    if option.get("fpga") then harden_table = {"XlnFpgaTop", "CpuCluster", "UncoreTop"} end
+    if option.get("fpga") then harden_table = {"XlnFpgaTop", "CpuCluster"} end
     if option.get("prefix") ~= "" then table.join2(rel_opts, {"-x", option.get("prefix")}) end
     if option.get("sim") then table.join2(rel_opts, {"-s", "SimTop"}) end
     local rel_scr_path = { path.join("scripts", "linknan", "release.py") }
