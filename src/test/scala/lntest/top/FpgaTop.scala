@@ -20,8 +20,8 @@ class VerilogAddrRemapper(width:Int) extends BlackBox with HasBlackBoxInline {
     val c = Input(UInt(width.W))
     val z = Output(UInt(width.W))
   })
-  setInline(s"VerilogMinus.sv",
-    s"""module VerilogMinus (
+  setInline(s"VerilogAddrRemapper.sv",
+    s"""module VerilogAddrRemapper (
        |  input  wire [${width - 1}:0] a,
        |  input  wire [${width - 1}:0] b,
        |  input  wire [${width - 1}:0] c,
