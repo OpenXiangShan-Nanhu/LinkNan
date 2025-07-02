@@ -65,12 +65,16 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   val io = IO(new Bundle(){
     val simFinal = Option.when(p(DebugOptionsKey).EnableLuaScoreBoard)(Input(Bool()))
   })
-  soc.hwaIO.foreach(_ := DontCare)
   val ddrDrv = Seq()
   val cfgDrv = Seq(cfgPort)
   val dmaDrv = soc.dmaIO.map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
-  val hwaDrv = None
+  val hwaDrv = if(doBlockTest) {
+    soc.hwaIO.map(AxiUtils.getIntnl)
+  } else {
+    soc.hwaIO.foreach(_ := DontCare)
+    None
+  }
 
   private def connByName(sink:ReadyValidIO[Bundle], src:ReadyValidIO[Bundle]):Unit = {
     sink.valid := src.valid
@@ -87,6 +91,7 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
     soc.io.ext_intr := 0.U
     runIOAutomation()
     dmaIO.foreach(InfoGen.addSaxi)
+    hwaIO.foreach(InfoGen.addSaxi)
     cfgIO.foreach(InfoGen.addMaxi)
   } else {
     dmaDrv.foreach(_ := DontCare)
