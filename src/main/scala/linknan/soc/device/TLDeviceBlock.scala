@@ -49,7 +49,7 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
   debugIntSink :*= IntBuffer(3, cdc = true) :*= debug.debug.dmOuter.dmOuter.intnode
   plicIntSink :*= IntBuffer(3, cdc = true) :*= plic.intnode
 
-  aysncSourceNode :=* TLBuffer() :=* debug.debug.dmInner.dmInner.sb2tlOpt.get.node
+  aysncSourceNode :*= TLBuffer() :*= TLWidthWidget(1) :*=  debug.debug.dmInner.dmInner.sb2tlOpt.get.node
 
   lazy val module = new Impl
 
@@ -124,7 +124,7 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
 
   private val inner = LazyModule(new TLDeviceBlockInner(coreNum, extIntrNum)(innerP))
   inner.asyncSinkNode :=* cfgAsyncSrc.node :=* clientNode
-  sbaNode :*= TLWidthWidget(1) :=*  sbaAsyncSink.node :=* inner.aysncSourceNode
+  sbaNode :*= sbaAsyncSink.node :*= inner.aysncSourceNode
 
   lazy val module = new Impl
   class Impl extends LazyRawModuleImp(this) with ImplicitClock with ImplicitReset {
