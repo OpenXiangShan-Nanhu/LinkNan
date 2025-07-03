@@ -1,21 +1,21 @@
 package linknan.soc.device
 
-import aia.TLAPLIC
 import chisel3._
 import chisel3.util._
+import freechips.rocketchip.amba.axi4.{AXI4Buffer, AXI4Deinterleaver, AXI4SlaveNode, AXI4SlaveParameters, AXI4SlavePortParameters, AXI4UserYanker}
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
-import freechips.rocketchip.diplomacy.{AddressSet, IdRange, TransferSizes}
-import freechips.rocketchip.resources.BindingScope
-import org.chipsalliance.diplomacy.lazymodule._
+import freechips.rocketchip.diplomacy.{AddressSet, IdRange, RegionType, TransferSizes}
 import freechips.rocketchip.interrupts._
+import freechips.rocketchip.resources.BindingScope
 import freechips.rocketchip.tile.MaxHartIdBits
 import freechips.rocketchip.tilelink.{TLWidthWidget, _}
 import freechips.rocketchip.util.AsyncQueueParams
 import linknan.soc.LinkNanParamsKey
 import org.chipsalliance.cde.config.Parameters
+import org.chipsalliance.diplomacy.lazymodule._
 import xs.utils.dft.BaseTestBundle
-import xs.utils.{ClockGate, IntBuffer, ResetGen}
+import xs.utils.{IntBuffer, ResetGen}
 import zhujiang.ZJParametersKey
 
 class TLDeviceBlockIO(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) extends Bundle {
@@ -91,7 +91,7 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
   }
 }
 
-class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int, sbaDataBits: Int)(implicit p: Parameters) extends LazyModule with BindingScope {
+class TLDeviceBlock(coreNum: Int, extIntrNum: Int, cfgIdBits: Int, cfgDataBits: Int, sbaIdBits:Int, sbaDataBits: Int)(implicit p: Parameters) extends LazyModule with BindingScope {
   private val innerP = p.alterPartial({
     case DebugModuleKey => Some(p(LinkNanParamsKey).debugParams)
     case MaxHartIdBits => log2Ceil(coreNum)
@@ -101,7 +101,7 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
   private val clientParameters = TLMasterPortParameters.v1(
     clients = Seq(TLMasterParameters.v1(
       "riscv-device-block",
-      sourceId = IdRange(0, 1 << idBits),
+      sourceId = IdRange(0, 1 << cfgIdBits),
       supportsProbe = TransferSizes(1, cfgDataBits / 8),
       supportsGet = TransferSizes(1, cfgDataBits / 8),
       supportsPutFull = TransferSizes(1, cfgDataBits / 8),
@@ -109,22 +109,27 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, idBits: Int, cfgDataBits: Int
     ))
   )
   private val clientNode = TLClientNode(Seq(clientParameters))
-  private val sbaParameters = TLSlavePortParameters.v1(
-    managers = Seq(TLSlaveParameters.v1(
+  private val sbaNode = AXI4SlaveNode(Seq(AXI4SlavePortParameters(
+    Seq(AXI4SlaveParameters(
       address = Seq(AddressSet(0L, (0x1L << p(ZJParametersKey).requestAddrBits) - 1)),
-      supportsGet = TransferSizes(1, sbaDataBits / 8),
-      supportsPutFull = TransferSizes(1, sbaDataBits / 8),
-      supportsPutPartial = TransferSizes(1, sbaDataBits / 8),
+      regionType = RegionType.UNCACHED,
+      supportsWrite = TransferSizes(1, sbaDataBits / 8),
+      supportsRead = TransferSizes(1, sbaDataBits / 8),
+      interleavedId = Some(0)
     )),
     beatBytes = sbaDataBits / 8
-  )
-  private val sbaNode = TLManagerNode(Seq(sbaParameters))
+  )))
   private val sbaAsyncSink = LazyModule(new TLAsyncCrossingSink(AsyncQueueParams(1)))
   private val cfgAsyncSrc = LazyModule(new TLAsyncCrossingSource())
 
   private val inner = LazyModule(new TLDeviceBlockInner(coreNum, extIntrNum)(innerP))
   inner.asyncSinkNode :=* cfgAsyncSrc.node :=* clientNode
-  sbaNode :*= TLWidthWidget(1) :=*  sbaAsyncSink.node :=* inner.aysncSourceNode
+  sbaNode :*= AXI4Buffer() :*= AXI4UserYanker() :*=
+  AXI4Deinterleaver(8) :*= AXI4Buffer() :*=
+  TLToAXI4() :*= TLBuffer() :*=
+  TLWidthWidget(1) :=*
+  sbaAsyncSink.node :=*
+  inner.aysncSourceNode
 
   lazy val module = new Impl
   class Impl extends LazyRawModuleImp(this) with ImplicitClock with ImplicitReset {

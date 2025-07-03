@@ -3,15 +3,15 @@ package linknan.soc.device
 import chisel3._
 import chisel3.util.Cat
 import linknan.cluster.hub.peripheral.AclintAddrRemapper
-import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
-import zhujiang.axi._
-import org.chipsalliance.diplomacy.lazymodule._
 import linknan.soc.LinkNanParamsKey
 import linknan.utils.connectByName
 import org.chipsalliance.cde.config.Parameters
+import org.chipsalliance.diplomacy.lazymodule._
+import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
 import xijiang.NodeType
 import xs.utils.ResetGen
 import xs.utils.dft.BaseTestBundle
+import zhujiang.axi._
 import zhujiang.{HasZJParams, ZJRawModule}
 
 class ShiftSync[T <: Data](gen:T, sync:Int = 3) extends Module {
@@ -70,13 +70,13 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
 
   private val cfgXBar = Module(new AxiCfgXBar(cfgParams))
   private val axi2tl = Module(new AxiLite2TLUL(cfgXBar.io.downstream.head.params))
-  private val tl2axi = Module(new TLUL2AxiLite(dmaParams))
 
   private val tlDevBlock = LazyModule(new TLDeviceBlock(
     coreNum,
     extIntrNum,
     axi2tl.io.tl.params.sourceBits,
     axi2tl.io.tl.params.dataBits,
+    extDmaParams.idBits,
     extDmaParams.dataBits
   )(p.alterPartial {
     case MonitorsEnabled => false
@@ -114,10 +114,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
   axi2tl.io.axi <> cfgXBar.io.downstream.head
   io.ext.cfg <> AxiBuffer(cfgXBar.io.downstream.last)
 
-  private val mstAxi = AxiBuffer(tl2axi.io.axi, name = Some("mst_port_buf"))
-  io.mst <> mstAxi
-  io.mst.aw.bits.addr := AclintAddrRemapper(mstAxi.aw.bits.addr)
-  io.mst.ar.bits.addr := AclintAddrRemapper(mstAxi.ar.bits.addr)
+  
 
   pb.full_clock := full_clock
   pb.div2_clock := div2_clock
@@ -128,8 +125,13 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
   })
 
   pb.sba.foreach(sba => {
-    connectByName(tl2axi.io.tl.a, sba.a)
-    connectByName(sba.d, tl2axi.io.tl.d)
+    connectByName(io.mst.aw, sba.aw)
+    connectByName(io.mst.ar, sba.ar)
+    connectByName(io.mst.w, sba.w)
+    connectByName(sba.b, io.mst.b)
+    connectByName(sba.r, io.mst.r)
+    io.mst.aw.bits.addr := AclintAddrRemapper(sba.aw.bits.addr)
+    io.mst.ar.bits.addr := AclintAddrRemapper(sba.ar.bits.addr)
   })
   pb.dfx := io.dft
   io.cpu.meip := ShiftSync(pb.dev.meip)
