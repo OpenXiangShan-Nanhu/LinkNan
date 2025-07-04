@@ -32,6 +32,11 @@ object ArgParser {
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDifftest = true)
           }), tail)
 
+        case "--no-tfb" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case ZJParametersKey => up(ZJParametersKey).copy(tfbParams = None)
+          }), tail)
+
         case "--legacy" :: tail =>
           parse(config.alter((site, here, up) => {
             case LinkNanParamsKey => up(LinkNanParamsKey).copy(

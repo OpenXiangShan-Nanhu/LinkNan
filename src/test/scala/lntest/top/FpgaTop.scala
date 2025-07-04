@@ -107,7 +107,6 @@ object FpgaGenerator extends App {
   (new XsStage).execute(firrtlOpts, Generator.firtoolOpts ++ Seq(
     ChiselGeneratorAnnotation(() => {
       DisableMonitors(p => new FpgaTop()(p))(config.alter((site, here, up) => {
-        case ZJParametersKey => config(ZJParametersKey).copy(tfbParams = None)
         case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDifftest = false)
       }))
     })

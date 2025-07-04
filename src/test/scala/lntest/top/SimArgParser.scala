@@ -33,7 +33,10 @@ object SimArgParser {
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnablePerfDebug = false)
             case PerfCounterOptionsKey =>up(PerfCounterOptionsKey).copy(enablePerfPrint = false)
           }), tail)
-
+        case "--no-tfb" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case ZJParametersKey => up(ZJParametersKey).copy(tfbParams = None)
+          }), tail)
         case "--fpga-platform" :: tail =>
           parse(config.alter((site, here, up) => {
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnablePerfDebug = false, FPGAPlatform = true)
