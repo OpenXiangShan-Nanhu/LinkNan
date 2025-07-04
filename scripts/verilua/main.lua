@@ -455,7 +455,6 @@ local function init_components()
 
         local chi_rxrsp = ([[
             | valid
-            | ready
             | bits_TgtID => tgtID
             | bits_SrcID => srcID
             | bits_TxnID => txnID
@@ -464,6 +463,20 @@ local function init_components()
             | bits_FwdState => fwdState
             | bits_DBID => dbID
         ]]):abdl { hier = dj_hier, prefix = "io_lan_rx_resp_", name = "chi_rxrsp for hnf_mon" }
+
+        -- llc_rxchi_rxrsprsp.ready is optional, so when chi_rxrsp.ready is not exist, we need to add a fake ready signal
+        local vpiml = require "vpiml"
+        local dj_rxrsp_ready_hierpath = dj_hier .. ".io_lan_rx_resp_ready"
+        local ret = vpiml.vpiml_handle_by_name_safe(dj_rxrsp_ready_hierpath)
+        if ret == -1 then
+            chi_rxrsp.ready = (""):fake_chdl({
+                get = function (self)
+                    return 1
+                end
+            })
+        else
+            chi_rxrsp.ready = dj_rxrsp_ready_hierpath:chdl()
+        end
 
         local chi_rxdat = ([[
             | valid
