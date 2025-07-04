@@ -25,7 +25,7 @@ NOVAS = $(NOVAS_HOME)/share/PLI/VCS/LINUX64
 EXTRA += +define+CONSIDER_FSDB -P $(NOVAS)/novas.tab $(NOVAS)/pli.a
 endif
 
-VCS_FLAGS += -full64 +v2k -timescale=1ns/1ns -sverilog -debug_access+all +lint=TFIPC-L
+VCS_FLAGS += -full64 +v2k -timescale=100ps/10ps -sverilog -debug_access+all +lint=TFIPC-L
 VCS_FLAGS += -l vcs.log -top tb_top -fgp -lca -kdb +nospecify +notimingcheck -no_save -xprop
 VCS_FLAGS += +define+DIFFTEST +define+ASSERT_VERBOSE_COND_=1 +define+PRINTF_COND_=1
 VCS_FLAGS += +define+STOP_COND_=1 +define+VCS +incdir+$(GEN_CSRC_DIR)
