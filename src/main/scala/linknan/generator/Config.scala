@@ -189,7 +189,7 @@ class FpgaNocConfig(socket: String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "west", "mem_0"))),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(32, 32, "west", "mem_0"))),
       NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "west"))),
       NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 1),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
@@ -209,7 +209,7 @@ class FpgaQuadNocConfig(socket: String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
       NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "mem"))),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "mem", "mem_0"))),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(32, 32, "mem", "mem_0"))),
       NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.P),
 
