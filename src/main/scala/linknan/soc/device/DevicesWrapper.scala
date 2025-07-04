@@ -3,6 +3,7 @@ package linknan.soc.device
 import chisel3._
 import chisel3.util.Cat
 import linknan.cluster.hub.peripheral.AclintAddrRemapper
+import linknan.generator.AddrConfig
 import linknan.soc.LinkNanParamsKey
 import linknan.utils.connectByName
 import org.chipsalliance.cde.config.Parameters
@@ -132,6 +133,8 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
     connectByName(sba.r, io.mst.r)
     io.mst.aw.bits.addr := AclintAddrRemapper(sba.aw.bits.addr)
     io.mst.ar.bits.addr := AclintAddrRemapper(sba.ar.bits.addr)
+    io.mst.aw.bits.cache := Mux(sba.aw.bits.addr < AddrConfig.pmemRange.lower.U(raw.W), "b0000".U, "b0010".U)
+    io.mst.ar.bits.cache := Mux(sba.ar.bits.addr < AddrConfig.pmemRange.lower.U(raw.W), "b0000".U, "b0010".U)
   })
   pb.dfx := io.dft
   io.cpu.meip := ShiftSync(pb.dev.meip)
