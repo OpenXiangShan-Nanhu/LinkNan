@@ -171,7 +171,38 @@ class ExtremeNocConfig(socket: String) extends Config((site, here, up) => {
   )
 })
 
-class FpgaNocConfig(socket: String) extends Config((site, here, up) => {
+class FpgaInnoSingleNocConfig(socket: String) extends Config((site, here, up) => {
+  case ZJParametersKey => ZJParameters(
+    hnxBankOff = AddrConfig.interleaveOffset,
+    nodeParams = Seq(
+      NodeParam(nodeType = NodeType.CC, socket = socket),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(4, 32, "north", "mem_0")), addrSets = AddrConfig.mem0),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(4, 32, "north", "mem_1")), addrSets = AddrConfig.mem1),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.P),
+
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 0),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 64, "south", "main", Some(AxiParams(idBits = 14))))),
+      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(1, 8,  "south", "main")), defaultHni = true),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "south", "uc")), addrSets = AddrConfig.mem_uc),
+      NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(5, 32, "south", "hwa"))),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 0),
+      NodeParam(nodeType = NodeType.P),
+      NodeParam(nodeType = NodeType.P),
+    )
+  )
+})
+
+class FpgaBoscSingleNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     asyncParams = AsyncQueueParams(narrow = true),
     hnxBankOff = AddrConfig.interleaveOffset,
@@ -198,7 +229,7 @@ class FpgaNocConfig(socket: String) extends Config((site, here, up) => {
   )
 })
 
-class FpgaQuadNocConfig(socket: String) extends Config((site, here, up) => {
+class FpgaBoscQuadNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     asyncParams = AsyncQueueParams(narrow = true),
     hnxBankOff = AddrConfig.interleaveOffset,
@@ -341,8 +372,9 @@ object ConfigGenerater {
       case "full" => new FullNocConfig(socket)
       case "medium" => new ReducedNocConfig(socket)
       case "small" => new MinimalNocConfig(socket)
-      case "fpga_1" => new FpgaNocConfig(socket)
-      case "fpga_4" => new FpgaQuadNocConfig(socket)
+      case "fpga_inno_1" => new FpgaInnoSingleNocConfig(socket)
+      case "fpga_bosc_1" => new FpgaBoscSingleNocConfig(socket)
+      case "fpga_bosc_4" => new FpgaBoscQuadNocConfig(socket)
       case "extreme" => new ExtremeNocConfig(socket)
       case _ =>
         require(requirement = false, s"not supported noc config: $noc")

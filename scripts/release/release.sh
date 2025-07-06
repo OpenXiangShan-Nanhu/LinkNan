@@ -1,8 +1,8 @@
 #!/bin/bash
 set -ex
 
-if [ $# -gt 1 ] || { [ $# -eq 1 ] && [ "$1" != "single" ]; }; then
-    echo "Error: Invalid arguments. Usage: $0 [single]" >&2
+if [ $# -gt 1 ] || { [ $# -eq 1 ] && [ "$1" != "fpga_bosc_1" ] && [ "$1" != "fpga_inno_1" ]; }; then
+    echo "Error: Invalid arguments. Usage: $0 [fpga_bosc_1|fpga_inno_1]" >&2
     exit 1
 fi
 
@@ -12,7 +12,7 @@ commit=`git rev-parse --short HEAD`
 linknan_dir=$(pwd)
 package_dir="$linknan_dir"/Release-LinkNan-$(LC_TIME=en_US.UTF-8 date +"%b-%d-%Y")
 
-suffix=$([ "$1" = "single" ] && echo "_single" || echo "")
+suffix=$([ -n "$1" ] && echo "_$1" || echo "")
 release_dir="$linknan_dir"/release_${data}_${commit}${suffix}
 nemu_dir="$release_dir"/NEMU
 am_dir="$release_dir"/nexus-am
@@ -40,8 +40,10 @@ find "$am_dir/cases" -name Makefile -execdir make ARCH=riscv64-ln -j \;
 find "$am_dir/cases" -name '*.bin'  -exec cp {} "$case_dir" \;
 
 # 4. generate soc package and env
-if [ "$1" = "single" ]; then
-  xmake soc -sgrmzAY -x bosc_ -N fpga_1 -L medium
+if [ "$1" = "fpga_bosc_1" ]; then
+  xmake soc -sgrmzAY -x bosc_ -N fpga_bosc_1 -L medium
+elif [ "$1" = "fpga_inno_1" ]; then
+  xmake soc -sgrmzA -x bosc_ -N fpga_inno_1 -L medium
 else
   xmake soc -sgrmzA -x bosc_
 fi
@@ -54,7 +56,7 @@ cp -r "$linknan_dir"/scripts/release/Makefile "$release_dir"
 cp -r "$linknan_dir"/scripts/release/sram_tb.mk "$release_dir"
 cp -r "$linknan_dir"/dependencies/difftest "$env_dir"
 cp -r "$linknan_dir"/scripts/release/sram_tb "$env_dir"
-if [ "$1" = "single" ]; then
+if [ "$1" = "fpga_bosc_1" ]; then
   sed -i 's/riscv64-nhv5-multi-ref_defconfig/riscv64-nhv5-ref_defconfig/' "$release_dir"/Makefile
   sed -i 's/-DNUM_CORES=4//' "$release_dir"/Makefile
 fi
