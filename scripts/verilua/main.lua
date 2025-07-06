@@ -472,6 +472,9 @@ local function init_components()
             chi_rxrsp.ready = (""):fake_chdl({
                 get = function (self)
                     return 1
+                end,
+                is = function (self, value)
+                    return true
                 end
             })
         else
