@@ -1,10 +1,8 @@
 package linknan.soc
 
 import chisel3._
-import chisel3.experimental.hierarchy.{Definition, Instance}
 import chisel3.util.{log2Ceil, log2Up}
 import coupledL2.tl2chi.{CHIAddrWidthKey, CHIIssue, DecoupledCHI, Issue}
-import xs.utils.cache.{EnableCHI, L1Param, L2Param}
 import freechips.rocketchip.tile.MaxHartIdBits
 import linknan.cluster.{BlockTestIO, CpuCluster}
 import org.chipsalliance.cde.config.{Config, Parameters}
@@ -14,6 +12,7 @@ import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
 import xiangshan.{PMParameKey, XLen, XSCoreParameters, XSCoreParamsKey}
 import xijiang.NodeType
 import xs.utils.cache.common.{BankBitsKey, L2ParamKey}
+import xs.utils.cache.{EnableCHI, L1Param, L2Param}
 import xs.utils.debug.HardwareAssertionKey
 import xs.utils.dft.{BaseTestBundle, PowerDomainTestBundle}
 import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
@@ -119,14 +118,13 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   })
   private val ccnNodes = uncore.cluster.map(_.socket)
   private val ccGen = LazyModule(new CpuCluster(ccnNodes.head.node)(clusterP))
-  private val ccDef = Definition(ccGen.module)
 
   val core = Option.when(p(LinkNanParamsKey).removeCore)(IO(Vec(uncore.cluster.size, new BlockTestIO(ccGen.btIoParams.get))))
   val ccns = uncore.cluster.map(_.socket.node)
 
   for(ccn <- uncore.cluster) {
     val clusterId = ccn.socket.node.clusterId
-    val cc = Instance(ccDef)
+    val cc = Module(ccGen.module)
     cc.icn <> ccn
     ccn.socket.c2cClock.foreach(_ := io.noc_clock)
     cc.icn.socket.c2cClock.foreach(_ := io.noc_clock)
