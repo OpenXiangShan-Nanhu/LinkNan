@@ -132,6 +132,9 @@ function simv_comp(num_cores)
   vcs_flags = vcs_flags .. " -fgp -lca -kdb +nospecify +notimingcheck -no_save"
   vcs_flags = vcs_flags .. " +define+PRINTF_COND=1 +define+VCS"
   vcs_flags = vcs_flags .. " +define+CONSIDER_FSDB +define+SIM_TOP_MODULE_NAME=tb_top.sim"
+  if option.get("bypass_clockgate") then
+        vcs_flags = vcs_flags .. "  +define+BYPASS_CLOCKGATE"
+  end
   if not option.get("no_fsdb") then
     novas = path.join(os.getenv("VERDI_HOME"), "share", "PLI", "VCS", "LINUX64")
     vcs_flags = vcs_flags .. " -P " .. path.join(novas, "novas.tab")

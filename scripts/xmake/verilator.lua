@@ -147,6 +147,9 @@ function emu_comp(num_cores)
   verilator_flags = verilator_flags .. " +define+RANDOMIZE_GARBAGE_ASSIGN +define+RANDOMIZE_DELAY=0"
   verilator_flags = verilator_flags .. " -Wno-UNOPTTHREADS -Wno-STMTDLY -Wno-WIDTH --no-timing"
   verilator_flags = verilator_flags .. " --output-split 50000 -output-split-cfuncs 50000 --inline-mult 5000"
+  if option.get("bypass_clockgate") then
+      verilator_flags = verilator_flags .. "  +define+BYPASS_CLOCKGATE"
+  end
   if option.get("threads") then
     verilator_flags = verilator_flags .. " --threads " .. option.get("threads") .. " --threads-dpi all"
   end
