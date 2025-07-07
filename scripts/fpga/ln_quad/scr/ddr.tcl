@@ -3,20 +3,20 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc u_jtag_ddr_subsys/axi_noc
 create_bd_cell -type ip -vlnv xilinx.com:ip:ps_wizard u_jtag_ddr_subsys/ps
 
 set_property -dict [list \
-  CONFIG.PS_PMC_CONFIG(PMC_USE_PMC_AXI_NOC0) {1} \
-  CONFIG.PS_PMC_CONFIG(PS_SLR_ID) {0} \
+  CONFIG.PS_PMC_CONFIG_2(PMC_USE_PMC_AXI_NOC0) {1} \
+  CONFIG.PS_PMC_CONFIG_2(PS_SLR_ID) {2} \
 ] [get_bd_cells u_jtag_ddr_subsys/ps]
 
 set_property -dict [list \
   CONFIG.MC_CHAN_REGION0 {DDR_LOW1} \
-  CONFIG.MC_INPUTCLK0_PERIOD {10000} \
+  CONFIG.MC_INPUTCLK0_PERIOD {5000} \
   CONFIG.MC_MEMORY_DEVICETYPE {SODIMMs} \
   CONFIG.MC_MEMORY_SPEEDGRADE {DDR4-2400T(17-17-17)} \
   CONFIG.MC_MEMORY_TIMEPERIOD0 {1250} \
   CONFIG.MC_PRE_DEF_ADDR_MAP_SEL {ROW_COLUMN_BANK} \
   CONFIG.MC_RANK {2} \
   CONFIG.MC_ROWADDRESSWIDTH {17} \
-  CONFIG.MC_SYSTEM_CLOCK {No_Buffer} \
+  CONFIG.MC_SYSTEM_CLOCK {Differential} \
   CONFIG.NUM_CLKS {2} \
   CONFIG.NUM_MC {1} \
   CONFIG.NUM_MI {0} \
@@ -37,18 +37,18 @@ set_property -dict [list \
 
 # u_jtag_ddr_subsys ports
 create_bd_pin -dir I u_jtag_ddr_subsys/S_AXI_MEM_ACLK
-create_bd_pin -dir I u_jtag_ddr_subsys/DDR_CLK
+create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 u_jtag_ddr_subsys/DDR_CLK_D
 create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 u_jtag_ddr_subsys/S_AXI_MEM
 create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:ddr4_rtl:1.0 u_jtag_ddr_subsys/DDR4
 
 # u_jtag_ddr_subsys connections
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/DDR_CLK] [get_bd_pins u_jtag_ddr_subsys/axi_noc/sys_clk0]
+connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/DDR_CLK_D] [get_bd_intf_pins u_jtag_ddr_subsys/axi_noc/sys_clk0]
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/S_AXI_MEM] [get_bd_intf_pins u_jtag_ddr_subsys/axi_noc/S00_AXI]
 connect_bd_net [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ACLK] [get_bd_pins u_jtag_ddr_subsys/axi_noc/aclk0]
-connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/ps/PMC_AXI_NOC0] [get_bd_intf_pins u_jtag_ddr_subsys/axi_noc/S01_AXI]
-connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ps/pmc_axi_noc0_clk] [get_bd_pins u_jtag_ddr_subsys/axi_noc/aclk1]
+connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/ps/SLR2_PMC_AXI_NOC0] [get_bd_intf_pins u_jtag_ddr_subsys/axi_noc/S01_AXI]
+connect_bd_net [get_bd_pins u_jtag_ddr_subsys/ps/slr2_pmc_axi_noc0_clk] [get_bd_pins u_jtag_ddr_subsys/axi_noc/aclk1]
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/DDR4] [get_bd_intf_pins u_jtag_ddr_subsys/axi_noc/CH0_DDR4_0]
 
 # Place NoC Components
-set_property -dict [list CONFIG.PHYSICAL_LOC {NOC_NMU512_S0X3Y11}] [get_bd_intf_pins /u_jtag_ddr_subsys/axi_noc/S00_AXI]
-set_property -dict [list CONFIG.PHYSICAL_LOC {DDRMC_S0X3Y0}] [get_bd_intf_pins /u_jtag_ddr_subsys/axi_noc/CH0_DDR4_0]
+set_property -dict [list CONFIG.PHYSICAL_LOC {NOC_NMU512_S2X3Y6}] [get_bd_intf_pins /u_jtag_ddr_subsys/axi_noc/S00_AXI]
+set_property -dict [list CONFIG.PHYSICAL_LOC {DDRMC_S2X1Y0}] [get_bd_intf_pins /u_jtag_ddr_subsys/axi_noc/CH0_DDR4_0]

@@ -15,6 +15,7 @@ set_clock_groups -name async_ln -asynchronous \
 -group [get_clocks noc_clk_ln_simple_noc_pll_0] \
 -group [get_clocks peri_clk_ln_simple_noc_pll_0] \
 -group [get_clocks core_clk_ln_simple_core_pll_0] \
+-group [get_clocks rtc_clk_ln_simple_in_mmcm_0] \
 -group [get_clocks dev_clk]
 
 # LLC timing expcetions
@@ -37,22 +38,6 @@ set_multicycle_path -hold  -from [get_pins $hnx_dat/ram/rreqReg*[0]/C] 1
 set_multicycle_path -setup -from [get_pins $hnx_dat/ram/array/mem/*mem_reg*/CLK] -to [get_pins $hnx_dat/dataReg*/D] 2
 set_multicycle_path -hold  -from [get_pins $hnx_dat/ram/array/mem/*mem_reg*/CLK] -to [get_pins $hnx_dat/dataReg*/D] 1
 
-# LLC tag ram is implemeted with BRAM, s1h0l2
-set_multicycle_path -setup -from [get_pins $hnx_llc_tag/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_llc_tag/dataReg*/D] 2
-set_multicycle_path -hold  -from [get_pins $hnx_llc_tag/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_llc_tag/dataReg*/D] 1
-
-# LLC meta ram is implemeted with BRAM, s1h0l2
-set_multicycle_path -setup -from [get_pins $hnx_llc_meta/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_llc_meta/dataReg*/D] 2
-set_multicycle_path -hold  -from [get_pins $hnx_llc_meta/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_llc_meta/dataReg*/D] 1
-
-# SF tag ram is implemeted with BRAM, s1h0l2
-set_multicycle_path -setup -from [get_pins $hnx_sf_tag/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_sf_tag/dataReg*/D] 2
-set_multicycle_path -hold  -from [get_pins $hnx_sf_tag/ram/array/mem/*mem_reg*/CLK*] -to [get_pins $hnx_sf_tag/dataReg*/D] 1
-
-# SF meta ram is implemeted with LUTRAM, s1h0l2
-set_multicycle_path -setup -from [get_pins $hnx_sf_meta/ram/array/mem/rdata*/C] -to [get_pins $hnx_sf_meta/dataReg*/D] 2
-set_multicycle_path -hold  -from [get_pins $hnx_sf_meta/ram/array/mem/rdata*/C] -to [get_pins $hnx_sf_meta/dataReg*/D] 1
-
 # Device Wrapper Async Constraints
 set tl_dev_wrp $ln_path/uncore/devWrp/tlDevBlock
 
@@ -73,14 +58,13 @@ set sba_d_sink $sba_mst/nodeIn_d_sink
 proc dev_wrp_async {src sink} {
   set src_clk_period  [get_property PERIOD [get_clocks -of_object [lindex [get_pins $src/sink_extend/*/*/sync_*_reg/C] 0]]]
   set sink_clk_period [get_property PERIOD [get_clocks -of_object [lindex [get_pins $sink/source_extend/*/*/sync_*_reg/C] 0]]]
-  set dat_clk_period  [expr $sink_clk_period *2]
-  set skew_period     [expr {min($src_clk_period, $sink_clk_period)}]
-  set_max_delay $dat_clk_period  -from [get_pins $src/mem*/C]        -to [get_pins $sink/io_deq_bits*/cdc_reg*/D]        -datapath_only
-  set_bus_skew  $skew_period     -from [get_pins $src/mem*/C]        -to [get_pins $sink/io_deq_bits*/cdc_reg*/D]
-  set_max_delay $sink_clk_period -from [get_pins $src/widx_gray*/C]  -to [get_pins $sink/widx_widx_gray/*/sync_*_reg*/D] -datapath_only
-  set_bus_skew  $skew_period     -from [get_pins $src/widx_gray*/C]  -to [get_pins $sink/widx_widx_gray/*/sync_*_reg*/D]
-  set_max_delay $src_clk_period  -from [get_pins $sink/ridx_gray*/C] -to [get_pins $src/ridx_ridx_gray/*/sync_*_reg/D]   -datapath_only
-  set_bus_skew  $skew_period     -from [get_pins $sink/ridx_gray*/C] -to [get_pins $src/ridx_ridx_gray/*/sync_*_reg/D]
+  set min_period     [expr {min($src_clk_period, $sink_clk_period)}]
+  set_max_delay $min_period -from [get_pins $src/mem*/C]        -to [get_pins $sink/io_deq_bits*/cdc_reg*/D]        -datapath_only
+  set_bus_skew  $min_period -from [get_pins $src/mem*/C]        -to [get_pins $sink/io_deq_bits*/cdc_reg*/D]
+  set_max_delay $min_period -from [get_pins $src/widx_gray*/C]  -to [get_pins $sink/widx_widx_gray/*/sync_*_reg*/D] -datapath_only
+  set_bus_skew  $min_period -from [get_pins $src/widx_gray*/C]  -to [get_pins $sink/widx_widx_gray/*/sync_*_reg*/D]
+  set_max_delay $min_period -from [get_pins $sink/ridx_gray*/C] -to [get_pins $src/ridx_ridx_gray/*/sync_*_reg/D]   -datapath_only
+  set_bus_skew  $min_period -from [get_pins $sink/ridx_gray*/C] -to [get_pins $src/ridx_ridx_gray/*/sync_*_reg/D]
   set_property ASYNC_REG TRUE [get_cells $src/ridx_ridx_gray/*/sync_*_reg]
   set_property ASYNC_REG TRUE [get_cells $src/sink_extend/io_out_sink_valid_0/*/sync_*_reg]
   set_property ASYNC_REG TRUE [get_cells $sink/widx_widx_gray/*/sync_*_reg]
@@ -103,14 +87,13 @@ set rx_sink  $tile_pdc/async_sink_*
 proc cpu_chi_async {src sink} {
   set src_clk_period  [get_property PERIOD [get_clocks -of_object [lindex [get_pins $src/sink_extend/*/*/sync_*_reg/C] 0]]]
   set sink_clk_period [get_property PERIOD [get_clocks -of_object [lindex [get_pins $sink/source_extend/*/*/sync_*_reg/C] 0]]]
-  set dat_clk_period  [expr $sink_clk_period *2]
-  set skew_period     [expr {min($src_clk_period, $sink_clk_period)}]
-  set_max_delay $dat_clk_period  -from [get_pins $src/mem_ext/Memory_*/RAM*/CLK] -to [get_pins $sink/io_deq_bits*/cdc_reg*/D] -datapath_only
-  set_bus_skew  $skew_period     -from [get_pins $src/mem_ext/Memory_*/RAM*/CLK] -to [get_pins $sink/io_deq_bits*/cdc_reg*/D]
-  set_max_delay $sink_clk_period -from [get_pins $src/widx_gray*/C]  -to [get_pins $sink/widx_widx_gray/*/sync_*_reg*/D] -datapath_only
-  set_bus_skew  $skew_period     -from [get_pins $src/widx_gray*/C]  -to [get_pins $sink/widx_widx_gray/*/sync_*_reg*/D]
-  set_max_delay $src_clk_period  -from [get_pins $sink/ridx_gray*/C] -to [get_pins $src/ridx_ridx_gray/*/sync_*_reg/D]   -datapath_only
-  set_bus_skew  $skew_period     -from [get_pins $sink/ridx_gray*/C] -to [get_pins $src/ridx_ridx_gray/*/sync_*_reg/D]
+  set min_period     [expr {min($src_clk_period, $sink_clk_period)}]
+  set_max_delay $min_period -from [get_pins $src/mem_ext/Memory_*/RAM*/CLK] -to [get_pins $sink/io_deq_bits*/cdc_reg*/D] -datapath_only
+  set_bus_skew  $min_period -from [get_pins $src/mem_ext/Memory_*/RAM*/CLK] -to [get_pins $sink/io_deq_bits*/cdc_reg*/D]
+  set_max_delay $min_period -from [get_pins $src/widx_gray*/C]  -to [get_pins $sink/widx_widx_gray/*/sync_*_reg*/D] -datapath_only
+  set_bus_skew  $min_period -from [get_pins $src/widx_gray*/C]  -to [get_pins $sink/widx_widx_gray/*/sync_*_reg*/D]
+  set_max_delay $min_period -from [get_pins $sink/ridx_gray*/C] -to [get_pins $src/ridx_ridx_gray/*/sync_*_reg/D]   -datapath_only
+  set_bus_skew  $min_period -from [get_pins $sink/ridx_gray*/C] -to [get_pins $src/ridx_ridx_gray/*/sync_*_reg/D]
   set_property ASYNC_REG TRUE [get_cells $src/ridx_ridx_gray/*/sync_*_reg]
   set_property ASYNC_REG TRUE [get_cells $src/sink_extend/io_out_sink_valid_0/*/sync_*_reg]
   set_property ASYNC_REG TRUE [get_cells $sink/widx_widx_gray/*/sync_*_reg]
@@ -141,8 +124,8 @@ set_property ASYNC_REG TRUE [get_cells $ln_path/cc_*/hub/reqToOn*_reg]
 set_property ASYNC_REG TRUE [get_cells $ln_path/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/paccept*_reg]
 set_property ASYNC_REG TRUE [get_cells $ln_path/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/pdenied*_reg]
 set_false_path -from [get_pins $ln_path/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcsm/ctrl/ctrlState_fnEn*/C]
-set_max_delay -datapath_only -from [get_pins $ln_path/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/asyncSrc/src_v*/C] $cpu_clk_period
-set_max_delay -datapath_only -from [get_pins $ln_path/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/asyncSrc/src_d*/C] [expr $cpu_clk_period *2]
+set_max_delay -datapath_only -from [get_pins $ln_path/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/asyncSrc/src_v*/C] $min_clk_period
+set_max_delay -datapath_only -from [get_pins $ln_path/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/asyncSrc/src_d*/C] $min_clk_period
 set_bus_skew $min_clk_period \
 -from [get_pins $ln_path/cc_*/hub/clusterPeriCx/cpu_pwr_ctl_*/pcu/devMst/asyncSrc/src_d*/C] \
 -to [get_pins $ln_path/cc_*/tile/cpc/pSlv/asyncSink/sink_d*/D]

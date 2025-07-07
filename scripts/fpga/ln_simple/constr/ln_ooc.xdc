@@ -1,7 +1,7 @@
 # Create clocks
 set ln_path */soc
 create_clock -name noc_clk -period 10.000 [get_ports io_aclk]
-create_clock -name cpu_clk -period 12.500 [get_ports io_core_clk_0]
+create_clock -name cpu_clk -period 10.000 [get_ports io_core_clk_0]
 create_clock -name rtc_clk -period 100.00 [get_ports io_rtc_clk]
 create_generated_clock -name dev_clk -divide_by 2 \
 -source [get_pins $ln_path/uncore/crg/clk_div_2/out*/C] \
@@ -39,12 +39,7 @@ set rx_sink  $tile_pdc/async_sink_*
 set timer_src  $ln_path/cc_*/hub/timerSource
 set timer_sink $ln_path/cc_*/tile/timerSink
 
-set hnx          $ln_path/uncore/noc/hnf_*/hnx
-set hnx_dat      $hnx/dataBlock/dataStorage_*/array
-set hnx_llc_tag  $hnx/directory/llcs*/tagArray
-set hnx_llc_meta $hnx/directory/llcs*/metaArray
-set hnx_sf_tag   $hnx/directory/sfs*/tagArray
-set hnx_sf_meta  $hnx/directory/sfs*/metaArray
+set hnx_dat      $ln_path/uncore/noc/hnf_*/hnx/dataBlock/dataStorage_*/array
 
 set_property ASYNC_REG TRUE [get_cells $cfg_src_a/ridx_ridx_gray/*/sync_*_reg]
 set_property ASYNC_REG TRUE [get_cells $cfg_src_a/sink_extend/io_out_sink_valid_0/*/sync_*_reg]
@@ -95,25 +90,13 @@ set_property ASYNC_REG TRUE [get_cells $ln_path/cc_*/hub/clusterPeriCx/cpu_pwr_c
 set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/uncore/noc/hnf_*]
 set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/uncore/noc/iowrp_west]
 set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/uncore/noc/iowrp_east]
-set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/cfgBufOuts_bufChains]
-set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/ddrBufOuts_bufChains]
 set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/uncore/devWrp]
 set_property KEEP_HIERARCHY TRUE [get_cells $hnx_dat]
-set_property KEEP_HIERARCHY TRUE [get_cells $hnx_llc_tag]
-set_property KEEP_HIERARCHY TRUE [get_cells $hnx_llc_meta]
-set_property KEEP_HIERARCHY TRUE [get_cells $hnx_sf_tag]
-set_property KEEP_HIERARCHY TRUE [get_cells $hnx_sf_meta]
 set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/uncore/noc/ring/ring_stop_*]
 set_property KEEP_HIERARCHY TRUE [get_cells $ln_path/cc_*]
 
 # Dont Touch
 set_property DONT_TOUCH TRUE [get_cells $hnx_dat/addr*_reg*]
 set_property DONT_TOUCH TRUE [get_cells $hnx_dat/data_*_reg*]
-set_property DONT_TOUCH TRUE [get_cells $hnx_dat/dataReg*_reg*]
 set_property DONT_TOUCH TRUE [get_cells $hnx_dat/ram/wreqReg*_reg*]
 set_property DONT_TOUCH TRUE [get_cells $hnx_dat/ram/rreqReg*_reg*]
-
-set_property DONT_TOUCH TRUE [get_cells $hnx_llc_tag/dataReg*_reg*]
-set_property DONT_TOUCH TRUE [get_cells $hnx_llc_meta/dataReg*_reg*]
-set_property DONT_TOUCH TRUE [get_cells $hnx_sf_tag/dataReg*_reg*]
-set_property DONT_TOUCH TRUE [get_cells $hnx_sf_meta/dataReg*_reg*]

@@ -252,9 +252,9 @@ set_property -dict [list \
 
 set_property -dict [list \
   CONFIG.CLKOUT1_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT1_JITTER {151.652} \
+  CONFIG.CLKOUT1_JITTER {144.719} \
   CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
-  CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {80} \
+  CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {100} \
   CONFIG.CLKOUT2_DRIVES {BUFGCE} \
   CONFIG.CLKOUT3_DRIVES {BUFGCE} \
   CONFIG.CLKOUT4_DRIVES {BUFGCE} \
@@ -265,7 +265,7 @@ set_property -dict [list \
   CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
   CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
   CONFIG.MMCM_CLKFBOUT_MULT_F {8} \
-  CONFIG.MMCM_CLKOUT0_DIVIDE_F {10} \
+  CONFIG.MMCM_CLKOUT0_DIVIDE_F {8} \
   CONFIG.MMCM_COMPENSATION {AUTO} \
   CONFIG.OPTIMIZE_CLOCKING_STRUCTURE_EN {true} \
   CONFIG.PRIMITIVE {PLL} \
@@ -396,6 +396,7 @@ set_property strategy Flow_PerfOptimized_high [get_runs ln_simple_ln_0_synth_1]
 set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
 
 set_property CONSTRSET ln_occ_constr [get_runs ln_simple_ln_0_synth_1]
+set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY none [get_runs ln_simple_ln_0_synth_1]
 set_property STEPS.INIT_DESIGN.TCL.POST [get_files $te_tcl -of [get_fileset utils_1]] [get_runs impl_*]
 
 launch_runs synth_1 -job 8
