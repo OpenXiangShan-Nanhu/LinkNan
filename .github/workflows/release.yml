@@ -66,11 +66,6 @@ jobs:
           mv "$nh_dir/out/xiangshan/test/assembly.dest/out.jar" \
           "$GITHUB_WORKSPACE/release_${date_str}_${nanhu_commit}.jar"
 
-          echo "Restore nanhu original state"
-          cd $GITHUB_WORKSPACE
-          rm -rf "$nh_dir"
-          xmake init
-
       - name: Move nanhu jar
         run: |
           JAR_FILE=$(ls -t release_*.jar 2>/dev/null | head -1)
@@ -85,4 +80,4 @@ jobs:
         if: always()
         run: |
           echo "Cleaning generated files inside workspace..."
-          rm -rf build build.bak release_* out .xmake sim
+          rm -rf build build.bak release_* out .xmake sim dependencies
