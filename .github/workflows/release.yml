@@ -47,13 +47,5 @@ jobs:
       - name: Cleanup work dir
         if: always()
         run: |
-          echo "Cleaning up workspace: $GITHUB_WORKSPACE"
-          if [[ -z "$GITHUB_WORKSPACE" || "$GITHUB_WORKSPACE" == "/" ]]; then
-            echo "ERROR: GITHUB_WORKSPACE is invalid, aborting cleanup."
-            exit 1
-          fi
-          if [ ! -d "$GITHUB_WORKSPACE/.git" ]; then
-            echo "ERROR: Not a git repo, aborting cleanup."
-            exit 1
-          fi
-          rm -rf "$GITHUB_WORKSPACE"
+          echo "Cleaning generated files inside workspace..."
+          rm -rf build build.bak release_* out .xmake sim
