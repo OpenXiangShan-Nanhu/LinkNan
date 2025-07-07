@@ -1,4 +1,4 @@
-local prj_dir = os.curdir()
+---@diagnostic disable
 
 task("soc" , function()
   set_menu {
@@ -231,8 +231,9 @@ end)
 
 task("init", function()
   on_run(function()
+    os.cd(os.scriptdir())
     os.exec("git submodule update --init")
-    os.cd(path.join("dependencies", "nanhu"))
+    os.cd(path.join(os.scriptdir(), "dependencies", "nanhu"))
     os.exec("git submodule update --init YunSuan")
   end)
   set_menu {}
