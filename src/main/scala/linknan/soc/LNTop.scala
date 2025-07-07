@@ -117,14 +117,14 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     case CHIAddrWidthKey => raw
   })
   private val ccnNodes = uncore.cluster.map(_.socket)
-  private val ccGen = LazyModule(new CpuCluster(ccnNodes.head.node)(clusterP))
+
   val core = Option.when(p(LinkNanParamsKey).removeCore)(IO(Vec(uncore.cluster.size, new BlockTestIO(ccGen.btIoParams.get))))
   val ccns = uncore.cluster.map(_.socket.node)
 
   for(ccn <- uncore.cluster) {
     val clusterId = ccn.socket.node.clusterId
-    val _cc = LazyModule(new CpuCluster(ccnNodes.head.node)(clusterP))
-    val cc = Module(_cc.module)
+    val ccGen = LazyModule(new CpuCluster(ccnNodes.head.node)(clusterP))
+    val cc = Module(ccGen.module)
     cc.icn <> ccn
     ccn.socket.c2cClock.foreach(_ := io.noc_clock)
     cc.icn.socket.c2cClock.foreach(_ := io.noc_clock)
