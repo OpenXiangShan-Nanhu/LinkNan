@@ -5,13 +5,13 @@ description: |
 
 on:
   workflow_dispatch: # Enable manual web testing
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   schedule:
     # run at 21:00 UTC (5:00 UTC+8) on Wednesday
-    # - cron: '0 21 * * 2'
+    - cron: '0 21 * * 2'
     # run every 5 minutes for testing purposes
-    - cron: '*/5 * * * *'
+    # - cron: '*/5 * * * *'
 
 
 jobs:
@@ -19,4 +19,27 @@ jobs:
     name: Weely LN Release Job
     runs-on: [self-hosted, sz-open] 
     steps:
-      - run: echo "Running Weely LN Release Job"
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Show time
+        run: |
+          echo "Running Weely LN Release Job"
+          echo "Time: $(date)"
+
+      - name: Init project
+        run: xmake init
+        
+      - name: Make release
+        run: ./scripts/release/release.sh 
+
+      - name: Move release files
+        run: |
+          LATEST_TAR=$(ls -t release_*.tar.gz 2>/dev/null | head -1)
+          if [ -z "$LATEST_TAR" ]; then
+            echo "Release tarball not found after release, aborting."
+            exit 1
+          fi
+          echo "Release successful, found $LATEST_TAR"
+          mv "$LATEST_TAR" /nfs/share/LN-release/
