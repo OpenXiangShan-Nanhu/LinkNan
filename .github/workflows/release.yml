@@ -1,0 +1,22 @@
+name: Weely LN Release
+description: |
+  This workflow is triggered on a schedule or manually to run the Weely LN Release Job.
+  It is designed to run on a self-hosted runner tagged with 'sz-open'.
+
+on:
+  workflow_dispatch: # Enable manual web testing
+  push:
+    branches: [main]
+  schedule:
+    # run at 21:00 UTC (5:00 UTC+8) on Wednesday
+    # - cron: '0 21 * * 2'
+    # run every 5 minutes for testing purposes
+    - cron: '*/5 * * * *'
+
+
+jobs:
+  run:
+    name: Weely LN Release Job
+    runs-on: [self-hosted, sz-open] 
+    steps:
+      - run: echo "Running Weely LN Release Job"
