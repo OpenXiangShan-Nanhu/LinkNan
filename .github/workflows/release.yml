@@ -31,10 +31,10 @@ jobs:
       - name: Init project
         run: xmake init
         
-      - name: Make release
+      - name: Make LN release
         run: ./scripts/release/release.sh 
 
-      - name: Move release files
+      - name: Move LN release
         run: |
           LATEST_TAR=$(ls -t release_*.tar.gz 2>/dev/null | head -1)
           if [ -z "$LATEST_TAR" ]; then
@@ -43,6 +43,43 @@ jobs:
           fi
           echo "Release successful, found $LATEST_TAR"
           mv "$LATEST_TAR" /nfs/share/LN-release/
+
+      - name: Build nanhu jar from origin/main
+        run: |
+          set -e
+          nh_dir="$GITHUB_WORKSPACE/dependencies/nanhu"
+          cd "$nh_dir"
+
+          git fetch origin
+          git checkout -B __tmp_build origin/main
+
+          echo "init nanhu dependencies"
+          make init
+
+          echo "Build jar..."
+          export NOOP_HOME="$nh_dir"
+          make test-jar
+
+          nanhu_commit=$(git rev-parse --short HEAD)
+          date_str=$(date +"%Y%m%d")
+
+          mv "$nh_dir/out/xiangshan/test/assembly.dest/out.jar" \
+          "$GITHUB_WORKSPACE/release_${date_str}_${nanhu_commit}.jar"
+
+          echo "Restore nanhu original state"
+          cd $GITHUB_WORKSPACE
+          rm -rf "$nh_dir"
+          xmake init
+
+      - name: Move nanhu jar
+        run: |
+          JAR_FILE=$(ls -t release_*.jar 2>/dev/null | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "Jar file not found after build, aborting."
+            exit 1
+          fi
+          echo "Jar file found: $JAR_FILE"
+          mv "$JAR_FILE" /nfs/share/LN-release/
 
       - name: Cleanup work dir
         if: always()
