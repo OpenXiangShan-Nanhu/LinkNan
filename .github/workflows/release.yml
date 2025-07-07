@@ -43,3 +43,5 @@ jobs:
           fi
           echo "Release successful, found $LATEST_TAR"
           mv "$LATEST_TAR" /nfs/share/LN-release/
+      - name: Cleanup work dir
+        run: rm -rf ./work
