@@ -59,6 +59,16 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
   val cpc = Module(new CorePowerController)
   io.chi <> pdc.io.async
   pdc.io.icn.rx.debug.foreach(_ := DontCare)
+  for((name, txd) <- pdc.io.async.tx.elements) {
+    val a = txd.asInstanceOf[AsyncBundle[UInt]]
+    val b = io.chi.tx.elements(name).asInstanceOf[AsyncBundle[UInt]]
+    a.safe.foreach(_.sink_reset_n := b.safe.get.sink_reset_n | io.dft.scan_mode)
+  }
+  for((name, rxd) <- pdc.io.async.rx.elements) {
+    val a = rxd.asInstanceOf[AsyncBundle[UInt]]
+    val b = io.chi.rx.elements(name).asInstanceOf[AsyncBundle[UInt]]
+    a.safe.foreach(_.source_reset_n := b.safe.get.source_reset_n | io.dft.scan_mode)
+  }
 
   private val timerSink = Module(new AsyncQueueSink(UInt(64.W), p(LinkNanParamsKey).coreTimerAsyncParams))
   timerSink.io.async <> io.timer

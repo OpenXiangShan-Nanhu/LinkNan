@@ -2,7 +2,7 @@ package linknan.cluster.hub
 
 import chisel3._
 import chisel3.util.Cat
-import freechips.rocketchip.util.AsyncQueueSource
+import freechips.rocketchip.util.{AsyncBundle, AsyncQueueSource}
 import linknan.cluster.core.CoreWrapperIO
 import linknan.cluster.hub.interconnect.{ClusterDeviceBundle, ClusterHub}
 import org.chipsalliance.cde.config.Parameters
@@ -42,6 +42,16 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   clusterHub.io.core <> pdc.io.dev
   clusterHub.io.nodeNid := io.icn.misc.nodeNid
   clusterHub.io.clusterId := io.icn.misc.clusterId
+  for((name, txd) <- pdc.io.async.tx.elements) {
+    val a = txd.asInstanceOf[AsyncBundle[UInt]]
+    val b = io.cpu.chi.rx.elements(name).asInstanceOf[AsyncBundle[UInt]]
+    a.safe.foreach(_.sink_reset_n := b.safe.get.sink_reset_n | io.icn.dft.scan_mode)
+  }
+  for((name, rxd) <- pdc.io.async.rx.elements) {
+    val a = rxd.asInstanceOf[AsyncBundle[UInt]]
+    val b = io.cpu.chi.tx.elements(name).asInstanceOf[AsyncBundle[UInt]]
+    a.safe.foreach(_.source_reset_n := b.safe.get.source_reset_n | io.icn.dft.scan_mode)
+  }
 
   pll.io.cfg := clusterPeriCx.io.cluster.pllCfg
   clusterPeriCx.io.cluster.pllLock := pll.io.lock
