@@ -72,6 +72,7 @@ class BaseCoreWrapperImpl(outer:BaseCoreWrapper, node:Node) extends LazyRawModul
 
   private val timerSink = Module(new AsyncQueueSink(UInt(64.W), p(LinkNanParamsKey).coreTimerAsyncParams))
   timerSink.io.async <> io.timer
+  timerSink.io.async.safe.foreach(_.source_reset_n := io.timer.safe.get.source_reset_n | io.dft.scan_mode)
   val timerUpdate = Wire(Valid(UInt(64.W)))
   timerUpdate.valid := timerSink.io.deq.valid
   timerUpdate.bits := timerSink.io.deq.bits
