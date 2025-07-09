@@ -117,6 +117,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
 
   pb.full_clock := full_clock
   pb.div2_clock := div2_clock
+  pb.reset := implicitReset
   pb.tlm.foreach(tlm => {
     connectByName(tlm.a, axi2tl.io.tl.a)
     connectByName(axi2tl.io.tl.d, tlm.d)
