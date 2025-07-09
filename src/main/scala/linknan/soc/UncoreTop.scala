@@ -90,14 +90,16 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   private val rtcClockGated = rtcSync & rtcEn
   devWrp.io.ext.intr := io.ext_intr
   devWrp.io.ci := io.ci
-  devWrp.io.debug.systemjtag.foreach(_ <> io.jtag.get)
+  devWrp.io.debug.systemjtag.foreach({ jtag =>
+    jtag <> io.jtag.get
+    jtag.reset := withClockAndReset(io.jtag.get.jtag.TCK, io.jtag.get.reset) {ResetGen(3, Some(io.dft.toResetDftBundle))}
+  })
   devWrp.io.dft.from(io.dft)
   devWrp.io.debug.dmactiveAck := devWrp.io.debug.dmactive
   devWrp.io.debug.clock := DontCare
   devWrp.io.debug.reset := DontCare
   devWrp.full_clock := crg.io.out_clk_full
   devWrp.div2_clock := crg.io.out_clk_div2
-  devWrp.reset := io.reset
   io.ndreset := devWrp.io.debug.ndreset
   noc.io.ci := io.ci
   noc.io.dft.from(io.dft)

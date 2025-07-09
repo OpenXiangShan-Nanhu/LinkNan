@@ -115,11 +115,8 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
   axi2tl.io.axi <> cfgXBar.io.downstream.head
   io.ext.cfg <> AxiBuffer(cfgXBar.io.downstream.last)
 
-  
-
   pb.full_clock := full_clock
   pb.div2_clock := div2_clock
-  pb.reset := reset
   pb.tlm.foreach(tlm => {
     connectByName(tlm.a, axi2tl.io.tl.a)
     connectByName(axi2tl.io.tl.d, tlm.d)
