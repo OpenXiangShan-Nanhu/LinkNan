@@ -1,7 +1,8 @@
 ---@diagnostic disable: undefined-field, undefined-global
 
 local LuaDataBase = require "LuaDataBase"
-local L2TLMonitor do
+local L2TLMonitor
+do
     os.setenv("KMH", 1)
     L2TLMonitor = require "L2TLMonitorV2"
 end
@@ -110,7 +111,7 @@ local function init_components()
 
         l2_hier = tostring(dut.soc["cc_" .. l2_id].tile.l2cache)
 
-        local gen_l2_prefix = function (chnl, idx)
+        local gen_l2_prefix = function(chnl, idx)
             if nr_slice == 1 then
                 return "auto_in_" .. chnl .. "_"
             else
@@ -136,7 +137,7 @@ local function init_components()
                 | bits_param => param
                 | bits_data => data
             ]]):abdl({ hier = l2_hier, prefix = gen_l2_prefix("b", j), name = "L2 TL B" })
-            tl_b.source = { __type = "CallableHDL", get = function () return 0 end }
+            tl_b.source = (""):fake_chdl { get = function() return 0 end }
 
             local tl_c = ([[
                 | valid
@@ -301,7 +302,7 @@ local function init_components()
             | bits_len => len
             | bits_burst => burst
             | bits_cache => cache
-        ]]):abdl {hier = sn_hier, prefix = "axi_aw_", name = "SN AXI AW"}
+        ]]):abdl { hier = sn_hier, prefix = "axi_aw_", name = "SN AXI AW" }
 
         local axi_ar = ([[
             | valid
@@ -312,7 +313,7 @@ local function init_components()
             | bits_len => len
             | bits_burst => burst
             | bits_cache => cache
-        ]]):abdl {hier = sn_hier, prefix = "axi_ar_", name = "SN AXI AR"}
+        ]]):abdl { hier = sn_hier, prefix = "axi_ar_", name = "SN AXI AR" }
 
         local axi_w = ([[
             | valid
@@ -320,20 +321,15 @@ local function init_components()
             | bits_data => data
             | bits_strb => strb
             | bits_last => last
-        ]]):abdl {hier = sn_hier, prefix = "axi_w_", name = "SN AXI W"}
-        axi_w.id = {
-            __type = "CallableHDL",
-            get = function ()
-                return 0
-            end
-        }
+        ]]):abdl { hier = sn_hier, prefix = "axi_w_", name = "SN AXI W" }
+        axi_w.id = (""):fake_chdl { get = function() return 0 end }
 
         local axi_b = ([[
             | valid
             | ready
             | bits_id => id
             | bits_resp => resp
-        ]]):abdl {hier = sn_hier, prefix = "axi_b_", name = "SN AXI B"}
+        ]]):abdl { hier = sn_hier, prefix = "axi_b_", name = "SN AXI B" }
 
         local axi_r = ([[
             | valid
@@ -342,14 +338,14 @@ local function init_components()
             | bits_data => data
             | bits_resp => resp
             | bits_last => last
-        ]]):abdl {hier = sn_hier, prefix = "axi_r_", name = "SN AXI R"}
+        ]]):abdl { hier = sn_hier, prefix = "axi_r_", name = "SN AXI R" }
 
         local sn_mon = AXI4Monitor(
             "sn_mon_out_" .. i,
 
-            -- 
+            --
             -- AXI Channels
-            -- 
+            --
             axi_aw,
             axi_ar,
             axi_w,
@@ -377,12 +373,7 @@ local function init_components()
         local dj_hier = hnf_hier .. ".hnx"
 
         local function make_fake_chdl()
-            return {
-                __type = "CallableHDL",
-                get = function ()
-                    return 5555
-                end
-            }
+            return (""):fake_chdl { get = function() return 5555 end }
         end
 
         local chi_txreq = ([[
@@ -403,12 +394,7 @@ local function init_components()
         chi_txreq.snpAttr = make_fake_chdl()
 
         local erqTgt = (hnf_hier .. ".erqTgt"):chdl()
-        chi_txreq.tgtID = {
-            __type = "CallableHDL",
-            get = function ()
-                return erqTgt:get()
-            end
-        }
+        chi_txreq.tgtID = erqTgt
 
         local chi_txrsp = ([[
             | valid
@@ -470,10 +456,10 @@ local function init_components()
         local ret = vpiml.vpiml_handle_by_name_safe(dj_rxrsp_ready_hierpath)
         if ret == -1 then
             chi_rxrsp.ready = (""):fake_chdl({
-                get = function (self)
+                get = function(self)
                     return 1
                 end,
-                is = function (self, value)
+                is = function(self, value)
                     return true
                 end
             })
@@ -526,7 +512,7 @@ local function init_components()
         )
 
         final {
-            function ()
+            function()
                 hnf_mon:list_tasks()
             end
         }
@@ -537,7 +523,7 @@ local function init_components()
     if cfg.enable_scoreboard_db then
         local scb = require "GlobalScoreboard"
         scb:enable_debug_db({
-            get_cycles = function ()
+            get_cycles = function()
                 return l2_mon_in_vec[1].cycles
             end,
         })
@@ -547,12 +533,13 @@ end
 local print = function(...) print("[main.lua]", ...) end
 
 fork {
-    function ()
+    function()
         local l2 = dut.soc.cc_0.tile.l2cache
         local clock = l2.clock:chdl()
         local timer = dut.difftest_timer:chdl()
 
-        clock:posedge() do
+        clock:posedge()
+        do
             cfg.load_config_from_env()
             init_components()
         end
@@ -589,12 +576,12 @@ fork {
 }
 
 verilua "finishTask" {
-    function (is_error)
-         if is_error and cfg.simulator == "verilator" then
-             local symbol_helper = require "verilua.utils.SymbolHelper"
-             local xs_assert = symbol_helper.ffi_cast("void (*)(long long)", "xs_assert")
+    function(is_error)
+        if is_error and cfg.simulator == "verilator" then
+            local symbol_helper = require "verilua.utils.SymbolHelper"
+            local xs_assert = symbol_helper.ffi_cast("void (*)(long long)", "xs_assert")
 
-             xs_assert(0)
-         end
+            xs_assert(0)
+        end
     end
 }
