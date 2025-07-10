@@ -71,7 +71,7 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
   soc.io.ci := 0.U
   soc.io.dft.lgc_rst_n := true.B
   soc.io.jtag.foreach(_ := DontCare)
-  soc.io.jtag.foreach(_.reset := true.B)
+  soc.io.jtag.foreach(_.reset := true.B.asAsyncReset)
   soc.dmaIO.foreach(_ := DontCare)
 
   val ddrDrv = soc.ddrIO.map(AxiUtils.getIntnl)
