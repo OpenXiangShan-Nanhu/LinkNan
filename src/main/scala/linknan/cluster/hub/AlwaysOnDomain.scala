@@ -92,9 +92,8 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   timerSource.io.enq.bits := cpuCtl.timerUpdate.bits
   cpuDev.timer <> timerSource.io.async
   timerSource.io.async.safe.foreach(_.sink_reset_n := cpuDev.timer.safe.get.sink_reset_n | io.icn.dft.scan_mode)
-  private val resetState = withReset(cpuDev.reset) { RegInit("b111".U) }
-  resetState := Cat(false.B, resetState(2, 1))
-  io.icn.misc.resetState(0) := resetState(0)
+  private val resetState = withReset(cpuDev.reset) { ResetGen(2, Some(io.icn.dft.toResetDftBundle))}
+  io.icn.misc.resetState(0) := resetState.asBool
   cpuDev.dft.from(io.icn.dft)
   cpuDev.ramctl := io.icn.ramctl
   cpuCtl.coreId := cpuDev.mhartid.tail(ciIdBits)
