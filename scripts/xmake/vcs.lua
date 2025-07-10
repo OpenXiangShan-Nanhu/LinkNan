@@ -1,3 +1,5 @@
+---@diagnostic disable
+
 import("core.base.option")
 import("core.project.depend")
 import("core.base.task")
@@ -122,6 +124,9 @@ function simv_comp(num_cores)
   end
   if option.get("no_diff") then
     cxx_flags = cxx_flags .. " -DCONFIG_NO_DIFFTEST"
+  end
+  if option.get("lua_scoreboard") then
+    cxx_flags = cxx_flags .. " -DDPI_EXP_CALL_VERILUA_ENV_STEP"
   end
 
   local cxx_ldflags = "-Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz -lzstd"

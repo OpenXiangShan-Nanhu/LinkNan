@@ -1,3 +1,5 @@
+---@diagnostic disable
+
 function dramsim(home, build)
   local dramsim_build = path.join(os.curdir(), "sim", "dramsim")
   if not os.exists(dramsim_build) then os.mkdir(dramsim_build) end

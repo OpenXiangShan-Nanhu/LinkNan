@@ -1,3 +1,5 @@
+---@diagnostic disable
+
 import("core.base.option")
 import("core.project.depend")
 import("core.base.task")
@@ -110,6 +112,7 @@ function emu_comp(num_cores)
   cxx_flags = cxx_flags .. " -DNOOP_HOME=\\\\\\\"" .. abs_base .. "\\\\\\\""
   if option.get("lua_scoreboard") then
       cxx_flags = cxx_flags .. " -DDUT_CLEAN"
+      cxx_flags = cxx_flags .. " -DDPI_EXP_CALL_VERILUA_ENV_STEP"
   end
   if option.get("ref") == "Spike" then
     cxx_flags = cxx_flags .. " -DREF_PROXY=SpikeProxy"

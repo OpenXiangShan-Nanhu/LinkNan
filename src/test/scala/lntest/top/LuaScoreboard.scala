@@ -52,13 +52,14 @@ class LuaScoreboard(l2Str:String, nrHnf:Int) extends BlackBox(
        |`endif // MANUALLY_CALL_DPI_EXPORTER_TICK
        |
        |always @ (negedge clock) begin
+       |  if(~reset) begin
        |`ifdef MANUALLY_CALL_DPI_EXPORTER_TICK
        |`ifdef CALL_DPI_EXPORTER_TICK
        |`CALL_DPI_EXPORTER_TICK
        |`endif // CALL_DPI_EXPORTER_TICK
        |`endif // MANUALLY_CALL_DPI_EXPORTER_TICK
-       |
-       |  if(~reset) verilua_main_step_safe();
+       |  end
+       |  // if(~reset) verilua_main_step_safe();
        |  if(sim_final) verilua_final();
        |end
        |

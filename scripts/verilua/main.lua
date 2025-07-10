@@ -552,21 +552,27 @@ fork {
         print("hello from main.lua")
 
         local cycles = tonumber(timer:get())
+
+        local DpiExporter = require("DpiExporter"):init()
+        local dpi_exporter_trigger = DpiExporter:fetch_trigger_func()
+
         while true do
-            for i = 1, nr_l2_mon_in do
-                l2_mon_in_vec[i]:sample_all(cycles)
-            end
+            if dpi_exporter_trigger() then
+                for i = 1, nr_l2_mon_in do
+                    l2_mon_in_vec[i]:sample_all(cycles)
+                end
 
-            for i = 1, nr_l2_mon_out do
-                l2_mon_out_vec[i]:sample_all(cycles)
-            end
+                for i = 1, nr_l2_mon_out do
+                    l2_mon_out_vec[i]:sample_all(cycles)
+                end
 
-            for i = 1, nr_hnf_mon do
-                hnf_mon_vec[i]:sample_all(cycles)
-            end
+                for i = 1, nr_hnf_mon do
+                    hnf_mon_vec[i]:sample_all(cycles)
+                end
 
-            for i = 1, nr_sn_mon do
-                sn_mon_vec[i]:sample_all(cycles)
+                for i = 1, nr_sn_mon do
+                    sn_mon_vec[i]:sample_all(cycles)
+                end
             end
 
             cycles = tonumber(timer:get())

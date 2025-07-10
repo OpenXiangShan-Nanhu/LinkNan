@@ -1,3 +1,5 @@
+---@diagnostic disable
+
 import("core.base.option")
 -- verilator
 -- image
