@@ -55,14 +55,19 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
   })
   private val _reset = (!io.aresetn).asAsyncReset
   private val resetSync = withClockAndReset(io.aclk, _reset) { ResetGen(2, None) }
-  private val _rtc_reg = withClockAndReset(io.rtc_clk, _reset) { RegInit(false.B) }
-  _rtc_reg := ~_rtc_reg
+  private val div_reg = withClockAndReset(io.rtc_clk, _reset) { RegInit(0.U(4.W)) }
+  when(div_reg >= 9.U) {
+    div_reg := 0.U
+  }.otherwise {
+    div_reg := div_reg + 1.U
+  }
+  private val rtc_reg = withClockAndReset(io.rtc_clk, _reset) { RegNext(div_reg > 4.U, false.B) }
   val implicitClock = io.aclk
   val implicitReset = resetSync
 
   soc.io.cluster_clocks := io.core_clk
   soc.io.noc_clock := io.aclk
-  soc.io.rtc_clock := _rtc_reg
+  soc.io.rtc_clock := rtc_reg
   soc.io.ext_intr := io.ext_intr
   soc.io.default_reset_vector := io.reset_vector
   soc.io.reset := resetSync
