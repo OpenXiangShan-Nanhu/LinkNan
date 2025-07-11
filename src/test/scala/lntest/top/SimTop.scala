@@ -40,8 +40,8 @@ import zhujiang.{NocIOHelper, ZJParametersKey}
 import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
 
 class StMmioBridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
-  private def internal(addr: UInt):Bool = 0x5000_0000L.U <= addr && addr < 0x8000_0000L.U
-  private def external(addr:UInt): Bool = addr < 0x5000_0000L.U
+  private def internal(addr:UInt): Bool = addr < 0x5000_0000L.U
+  private def external(addr: UInt):Bool = 0x5000_0000L.U <= addr && addr < 0x8000_0000L.U
   val slvMatchersSeq = Seq(internal, external)
   initialize()
 }
