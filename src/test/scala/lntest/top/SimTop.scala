@@ -28,6 +28,7 @@ import linknan.cluster.BlockTestIO
 import linknan.devicetree.DeviceTreeGenerator
 import linknan.generator.Generator
 import linknan.soc.{LNTop, LinkNanParamsKey}
+import linknan.utils.connectByName
 import lntest.info.InfoGen
 import org.chipsalliance.diplomacy.DisableMonitors
 import xiangshan.XSCoreParamsKey
@@ -38,9 +39,24 @@ import xs.utils.stage.XsStage
 import zhujiang.{NocIOHelper, ZJParametersKey}
 import zhujiang.axi.{AxiBundle, AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
 
-class MasterBridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
+class StMmioBridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
+  private def internal(addr: UInt):Bool = 0x5000_0000L.U <= addr && addr < 0x8000_0000L.U
+  private def external(addr:UInt): Bool = addr < 0x5000_0000L.U
+  val slvMatchersSeq = Seq(internal, external)
+  initialize()
+}
+
+class SimNto1Bridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
   val slvMatchersSeq = Seq(_ => true.B)
   initialize()
+}
+
+class SystemExtensionWrapper(slvP:AxiParams, mstP:AxiParams) extends BlackBox {
+  val io = IO(new Bundle{
+    val s_axi_cfg = Flipped(new AxiBundle(slvP))
+    val m_axi_dma = new AxiBundle(mstP)
+    val ext_intr = Output(UInt(256.W))
+  })
 }
 
 class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
@@ -49,25 +65,21 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   private val doBlockTest = p(LinkNanParamsKey).removeCore
   private val soc = Module(new LNTop)
 
-  private def genAxiMstPort(nocPorts:Seq[ExtAxiBundle]):AxiBundle = {
-    val intnls = nocPorts.map(AxiUtils.getIntnl)
-    val xbar = Module(new MasterBridge(intnls.map(_.params)))
-    xbar.io.upstream.zip(intnls).foreach({case(a, b) => a <> b})
-    xbar.io.downstream.head
-  }
+  private val mmioXbar = if(doBlockTest) Module(new SimNto1Bridge(soc.cfgIO.map(_.params))) else Module(new StMmioBridge(soc.cfgIO.map(_.params)))
+  mmioXbar.io.upstream.zip(soc.cfgIO).foreach({case(a, b) => a <> b})
+  private val intCfgPort = if(doBlockTest) None else Some(mmioXbar.io.downstream.head)
+  private val extCfgPort = if(doBlockTest) mmioXbar.io.downstream.head else mmioXbar.io.downstream.last
 
-  private val cfgPort = genAxiMstPort(soc.cfgIO)
-  private val memPort = genAxiMstPort(soc.ddrIO)
-
-  private val l_simMMIO = if(doBlockTest) None else Some(LazyModule(new SimMMIO(cfgPort.params, soc.dmaIO.head.params)))
+  private val l_simMMIO = if(doBlockTest) None else Some(LazyModule(new SimMMIO(intCfgPort.get.params, soc.dmaIO.head.params)))
   private val simMMIO = if(doBlockTest) None else Some(Module(l_simMMIO.get.module))
 
   val io = IO(new Bundle(){
     val simFinal = Option.when(p(DebugOptionsKey).EnableLuaScoreBoard)(Input(Bool()))
   })
+  soc.dmaIO.foreach(_ := DontCare)
   val ddrDrv = Seq()
-  val cfgDrv = Seq(cfgPort)
-  val dmaDrv = soc.dmaIO.map(AxiUtils.getIntnl)
+  val cfgDrv = if(doBlockTest) Seq(extCfgPort) else Seq()
+  val dmaDrv = if(doBlockTest) soc.dmaIO.map(AxiUtils.getIntnl) else Seq()
   val ccnDrv = Seq()
   val hwaDrv = if(doBlockTest) {
     soc.hwaIO.map(AxiUtils.getIntnl)
@@ -76,51 +88,40 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
     None
   }
 
-  private def connByName(sink:ReadyValidIO[Bundle], src:ReadyValidIO[Bundle]):Unit = {
-    sink.valid := src.valid
-    src.ready := sink.ready
-    sink.bits := DontCare
-    val recvMap = sink.bits.elements.map(e => (e._1.toLowerCase, e._2))
-    val sendMap = src.bits.elements.map(e => (e._1.toLowerCase, e._2))
-    for((name, data) <- recvMap) {
-      if(sendMap.contains(name)) data := sendMap(name).asTypeOf(data)
-    }
-  }
+  private val dmaPort = soc.dmaIO.filter(_.params.dataBits >= 256).head
+  private val extraDev = if(doBlockTest) None else Some(Module(new SystemExtensionWrapper(extCfgPort.params, dmaPort.params)))
+  extraDev.foreach(d => {
+    d.io.s_axi_cfg <> extCfgPort
+    dmaPort <> d.io.m_axi_dma
+  })
 
+  runIOAutomation()
   if(doBlockTest) {
     soc.io.ext_intr := 0.U
-    runIOAutomation()
     dmaIO.foreach(InfoGen.addSaxi)
     hwaIO.foreach(InfoGen.addSaxi)
     cfgIO.foreach(InfoGen.addMaxi)
   } else {
-    dmaDrv.foreach(_ := DontCare)
-    soc.io.ext_intr := simMMIO.get.io.intr
+    soc.io.ext_intr := simMMIO.get.io.intr | extraDev.map(_.io.ext_intr).getOrElse(0.U)
     val periCfg = simMMIO.get.cfg.head
-    val periDma = simMMIO.get.dma.head
-    val dmaMain = dmaDrv.filter(_.params.dataBits == 256).head
-
-    connByName(periCfg.aw, cfgPort.aw)
-    connByName(periCfg.ar, cfgPort.ar)
-    connByName(periCfg.w, cfgPort.w)
-    connByName(cfgPort.r, periCfg.r)
-    connByName(cfgPort.b, periCfg.b)
-
-    connByName(dmaMain.aw, periDma.aw)
-    connByName(dmaMain.ar, periDma.ar)
-    connByName(dmaMain.w, periDma.w)
-    connByName(periDma.r, dmaMain.r)
-    connByName(periDma.b, dmaMain.b)
+    connectByName(periCfg.aw, intCfgPort.get.aw)
+    connectByName(periCfg.ar, intCfgPort.get.ar)
+    connectByName(periCfg.w, intCfgPort.get.w)
+    connectByName(intCfgPort.get.r, periCfg.r)
+    connectByName(intCfgPort.get.b, periCfg.b)
   }
 
+  private val memXbar = Module(new SimNto1Bridge(soc.ddrIO.map(_.params)))
+  memXbar.io.upstream.zip(soc.ddrIO).foreach({case(a, b) => a <> b})
+  private val memPort = memXbar.io.downstream.head
   private val l_simAXIMem = LazyModule(new DummyDramMoudle(memPort.params))
   private val simAXIMem = Module(l_simAXIMem.module)
   private val memAxi = simAXIMem.axi.head
-  connByName(memAxi.aw, memPort.aw)
-  connByName(memAxi.ar, memPort.ar)
-  connByName(memAxi.w, memPort.w)
-  connByName(memPort.r, memAxi.r)
-  connByName(memPort.b, memAxi.b)
+  connectByName(memAxi.aw, memPort.aw)
+  connectByName(memAxi.ar, memPort.ar)
+  connectByName(memAxi.w, memPort.w)
+  connectByName(memPort.r, memAxi.r)
+  connectByName(memPort.b, memAxi.b)
 
   private val cntDiv = p(LinkNanParamsKey).rtcDiv
   val cnt = RegInit((cntDiv - 1).U)
@@ -137,7 +138,6 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   soc.io.dft.lgc_rst_n := true.B
   soc.io.default_reset_vector := 0x10000000L.U
   soc.io.ci := 0.U
-
 
   if(doBlockTest) {
     soc.io.jtag.foreach( jtag => {

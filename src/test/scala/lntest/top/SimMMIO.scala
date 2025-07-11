@@ -37,47 +37,18 @@ class SimMMIO(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: config.Par
       )
     )
   )
-  private val maw = p(ZJParametersKey).requestAddrBits - 1
-  private val dmaDplmcSlvParams = AXI4SlavePortParameters (
-    slaves = Seq(
-      AXI4SlaveParameters(
-        address = AddressSet(0x0L, (1L << maw) - 1L).subtract(AddressSet(0x0L, 0x7FFFFFFFL)),
-        regionType = RegionType.UNCACHED,
-        executable = true,
-        supportsRead = TransferSizes(1, 64),
-        supportsWrite = TransferSizes(1, 64),
-        interleavedId = Some(0),
-        resources = (new MemoryDevice).reg("mem")
-      )
-    ),
-    beatBytes = dmaParams.dataBits / 8
-  )
-  private val dmaDplmcMstParams = AXI4MasterPortParameters(
-    masters = Seq(
-      AXI4MasterParameters(
-        name = "dma",
-        id = IdRange(0, 1 << dmaParams.idBits)
-      )
-    )
-  )
-
   private val node = AXI4MasterNode(Seq(cfgDplmcParams))
-  private val dma_node = AXI4SlaveNode(Seq(dmaDplmcSlvParams))
 
   private val flash = LazyModule(new AXI4Flash(Seq(AddressSet(0x10000000L, 0xfffffff))))
   private val uart = LazyModule(new AXI4UART(Seq(AddressSet(0x40600000L, 0xf))))
   private val intrGen = LazyModule(new AXI4IntrGenerator(Seq(AddressSet(0x40070000L, 0x0000ffffL)), p(LinkNanParamsKey).nrExtIntr))
-  private val dmaGen = LazyModule(new AXI4FakeDMA(Seq(AddressSet(0x40080000L, 0x0000ffffL)), dmaDplmcMstParams))
 
   private val axiBus = AXI4Xbar()
 
   uart.node := axiBus
   flash.node := axiBus
   intrGen.node := axiBus
-  dmaGen.node := axiBus
-
   axiBus := node
-  dma_node := dmaGen.dma_node
 
   lazy val module = new Impl
   class Impl extends LazyModuleImp(this) {
@@ -86,9 +57,7 @@ class SimMMIO(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: config.Par
       val intr = Output(UInt(p(LinkNanParamsKey).nrExtIntr.W))
     })
     val cfg = node.makeIOs()
-    val dma = dma_node.makeIOs()
     dontTouch(cfg)
-    dontTouch(dma)
     io.uart <> uart.module.io.extra.get
     io.intr := intrGen.module.io.intr
   }
