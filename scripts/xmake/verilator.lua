@@ -11,6 +11,7 @@ function emu_comp(num_cores)
   table.join2(chisel_dep_srcs, os.filedirs(path.join(abs_base, "dependencies", "**.scala")))
   table.join2(chisel_dep_srcs, {path.join(abs_base, "build.sc")})
   table.join2(chisel_dep_srcs, {path.join(abs_base, "xmake.lua")})
+  if option.get("jar") ~= "" then chisel_dep_srcs = option.get("jar") end
 
   local vtop = "SimTop"
   local build_dir = path.join(abs_base, "build")
@@ -36,7 +37,7 @@ function emu_comp(num_cores)
       dramsim3 = option.get("dramsim3"), enable_perf = not option.get("no_perf"),
       socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
       core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
-      legacy = option.get("legacy")
+      legacy = option.get("legacy"), jar = option.get("jar")
     })
     local vsrc = os.files(path.join(design_vsrc, "*v"))
     table.join2(vsrc, os.files(path.join(difftest_vsrc, "*v")))
