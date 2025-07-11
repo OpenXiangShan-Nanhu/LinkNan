@@ -102,11 +102,13 @@ object linknan extends SbtModule with CommonModule {
   override def millSourcePath = os.pwd
   override def moduleDeps = super.moduleDeps ++ Seq(rocketchip, xsutils, cpl2, zhujiang, nanhu, aia)
   override def scalacOptions = super.scalacOptions() ++ Agg("-deprecation")
+  def mainClass = Some("linknan.generator.SocGenerator")
 
   object test extends SbtModuleTests with TestModule.ScalaTest {
     override def ivyDeps = super.ivyDeps() ++ Agg(
       getVersion("scalatest", "org.scalatest")
     )
+    def mainClass = Some("lntest.top.SimGenerator")
     def testFramework = "org.scalatest.tools.Framework"
   }
 }
