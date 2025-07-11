@@ -22,6 +22,7 @@ task("soc" , function()
       {'Y', "legacy", "k", nil, "use XS legacy memory map"},
       {'z', "no_tfb", "k", nil, "disable traffic board of ring bus"},
       {'x', "prefix", "kv", "", "assign a prefix for rtl modules"},
+      {'J', "jar", "kv", "", "use jar to generate artifacts"},
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "full", "define L3 config"},
       {'N', "noc", "kv", "full", "define noc config"},
@@ -30,17 +31,21 @@ task("soc" , function()
       {'j', "jobs", "kv", "16", "post-compile process jobs"}
     }
   }
-  local chisel_opts =  {"-i"}
+  local chisel_opts = {}
 
   on_run(function()
     import("core.base.option")
     print(option.get("options"))
-    if option.get("sim") then
-        table.join2(chisel_opts, {"linknan.test.runMain", "lntest.top.SimGenerator"})
+    local exec = "mill"
+    if option.get("jar") ~= "" then
+      exec = "java"
+      table.join2(chisel_opts, {"-jar", option.get("jar")})
+    elseif option.get("sim") then
+      table.join2(chisel_opts, {"-i", "linknan.test.runMain", "lntest.top.SimGenerator"})
     elseif option.get("fpga") then
-        table.join2(chisel_opts, {"linknan.test.runMain", "lntest.top.FpgaGenerator"})
+      table.join2(chisel_opts, {"-i", "linknan.test.runMain", "lntest.top.FpgaGenerator"})
     else
-        table.join2(chisel_opts, {"linknan.runMain", "linknan.generator.SocGenerator"})
+      table.join2(chisel_opts, {"-i", "linknan.runMain", "linknan.generator.SocGenerator"})
     end
     if not option.get("all_in_one") or option.get("release") then table.join2(chisel_opts, {"--split-verilog"}) end
     if option.get("block_test_l2l3") then table.join2(chisel_opts, {"--no-core"}) end
@@ -64,9 +69,9 @@ task("soc" , function()
     table.join2(chisel_opts, {"--socket", option.get("socket")})
     table.join2(chisel_opts, {"--throw-on-first-error", "--target", "systemverilog", "--full-stacktrace", "-td", build_dir})
     if os.host() == "windows" then
-      os.execv(os.shell(), table.join({"mill"}, chisel_opts))
+      os.execv(os.shell(), table.join({exec}, chisel_opts))
     else
-      os.execv("mill", chisel_opts)
+      os.execv(exec, chisel_opts)
     end
 
     os.rm(path.join(build_dir, "firrtl_black_box_resource_files.f"))
@@ -248,6 +253,27 @@ task("comp", function()
       os.execv("mill", {"-i", "linknan.compile"})
       os.execv("mill", {"-i", "linknan.test.compile"})
     end
+  end)
+  set_menu {}
+end)
+
+task("jar", function()
+  on_run(function()
+    local abs_base = os.curdir()
+    local ln_out_dir = path.join(abs_base, "out", "linknan")
+    local jar_path = path.join(ln_out_dir, "assembly.dest", "out.jar")
+    local test_jar_path = path.join(ln_out_dir, "test", "assembly.dest", "out.jar")
+    local build_dir = path.join(abs_base, "build")
+    if os.exists(ln_out_dir) then os.rmdir(ln_out_dir) end
+    if os.host() == "windows" then
+      os.execv(os.shell(), {"mill", "-i", "linknan.assembly"})
+      os.execv(os.shell(), {"mill", "-i", "linknan.test.assembly"})
+    else
+      os.execv("mill", {"-i", "linknan.assembly"})
+      os.execv("mill", {"-i", "linknan.test.assembly"})
+    end
+    os.cp(jar_path, path.join(build_dir, "linknan.jar"))
+    os.cp(test_jar_path, path.join(build_dir, "linknan.test.jar"))
   end)
   set_menu {}
 end)
