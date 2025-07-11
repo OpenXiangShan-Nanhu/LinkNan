@@ -248,19 +248,6 @@ end)
 
 task("comp", function()
   on_run(function()
-    if os.host() == "windows" then
-      os.execv(os.shell(), {"mill", "-i", "linknan.compile"})
-      os.execv(os.shell(), {"mill", "-i", "linknan.test.compile"})
-    else
-      os.execv("mill", {"-i", "linknan.compile"})
-      os.execv("mill", {"-i", "linknan.test.compile"})
-    end
-  end)
-  set_menu {}
-end)
-
-task("jar", function()
-  on_run(function()
     local abs_base = os.curdir()
     local ln_out_dir = path.join(abs_base, "out", "linknan")
     local jar_path = path.join(ln_out_dir, "assembly.dest", "out.jar")
