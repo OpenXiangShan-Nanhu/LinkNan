@@ -15,3 +15,4 @@ sim
 *EmuTasks
 debug
 release_*
+*.jar
