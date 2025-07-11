@@ -56,6 +56,8 @@ class SystemExtensionWrapper(slvP:AxiParams, mstP:AxiParams) extends BlackBox {
     val s_axi_cfg = Flipped(new AxiBundle(slvP))
     val m_axi_dma = new AxiBundle(mstP)
     val ext_intr = Output(UInt(256.W))
+    val clock = Input(Clock())
+    val reset = Input(AsyncReset())
   })
 }
 
@@ -93,6 +95,8 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   extraDev.foreach(d => {
     d.io.s_axi_cfg <> extCfgPort
     dmaPort <> d.io.m_axi_dma
+    d.io.clock := clock
+    d.io.reset := reset
   })
 
   runIOAutomation()
