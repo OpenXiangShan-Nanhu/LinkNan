@@ -138,6 +138,7 @@ task("emu-run", function ()
     options = {
       {'d', "dump", "k", nil, "dump full wave and disable fork"},
       {'i', "image", "kv", nil, "bin image bin name"},
+      {'f', "flash", "kv", nil, "flash image bin name"},
       {'z', "imagez", "kv", nil, "gz image name"},
       {'c', "cycles", "kv", "0", "simlation max cycles"},
       {'X', "fork", "kv", "50", "lightSSS fork interval in seconds, ignored when --dump is assigned"},
@@ -197,6 +198,7 @@ task("simv-run", function ()
       {nil, "no_dump", "k", nil, "do not dump waveform"},
       {'I', "init_reg", "kv", nil, "init reg by 0/1/random"},
       {'i', "image", "kv", nil, "bin image bin name"},
+      {'f', "flash", "kv", nil, "flash image bin name"},
       {'z', "imagez", "kv", nil, "gz image name"},
       {'c', "cycles", "kv", "0", "gz image name"},
       {nil, "case_dir", "kv", "ready-to-run", "image base dir"},

@@ -222,10 +222,12 @@ function emu_run()
   assert(option.get("image") or option.get("imagez"))
   local abs_dir = os.curdir()
   local image_file = ""
+  local flash_file = ""
   local abs_case_base_dir = path.join(abs_dir, option.get("case_dir"))
   local abs_ref_base_dir = path.join(abs_dir, option.get("ref_dir"))
   if option.get("imagez") then image_file = path.join(abs_case_base_dir, option.get("imagez") .. ".gz") end
   if option.get("image") then image_file = path.join(abs_case_base_dir, option.get("image") .. ".bin") end
+  if option.get("flash") then flash_file = path.join(abs_case_base_dir, option.get("flash") .. ".bin") end
   local warmup = option.get("warmup")
   local instr = option.get("instr")
   local cycles = option.get("cycles")
@@ -252,6 +254,7 @@ function emu_run()
   if(instr ~= "0") then sh_str = sh_str .. " -I " .. instr end
   if(cycles ~= "0") then sh_str = sh_str .. " -C " .. cycles end
   if(gcpt_restore ~= "") then sh_str = sh_str .. " -r " .. gcpt_restore end
+  if(flash_file ~= "") then sh_str = sh_str .. " -F " .. flash_file end
   sh_str = sh_str .. " --diff " .. ref_so
   sh_str = sh_str .. " -i " .. image_file
   sh_str = sh_str .. " -s " .. option.get("seed")

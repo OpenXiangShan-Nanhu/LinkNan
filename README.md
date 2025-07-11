@@ -60,6 +60,7 @@ xmake emu -j64 -l -L medium
 # Task emu-run is used for running bare-metal programs
 # -d: disable fork, dump wave anyway
 # -i: program bin
+# -f: flash bin
 # -z: program gz
 # -c: max sim cycles, 0 means no limit
 # -X: fork interval, 50 by default
@@ -71,6 +72,9 @@ xmake emu -j64 -l -L medium
 
 # This line is used for running linux.bin in ready-to-run, needs xmake emu -Y
 xmake emu-run -i linux -X 15
+
+# This line is used for running dhrystone.bin in ready-to-run with qual core
+xmake emu-run -i dhrystone -f flash --ref=iscv64-nemu-interpreter-multicore-so
 ```
 
 # Simluation with Synopsys VCS
@@ -87,8 +91,12 @@ xmake simv
 # Task simv-run is used for running simulation
 # -I: init reg, 0/1/random, needs xmake simv -x
 # -i: program bin
+# -f: flash bin
 # -z: program gz
 # -c: max cycles
 # This line is used for running dhrystone.bin in ready-to-run
 xmake simv-run -i dhrystone
+
+# This line is used for running dhrystone.bin in ready-to-run with qual core
+xmake simv-run -i dhrystone -f flash --ref=iscv64-nemu-interpreter-multicore-so
 ```

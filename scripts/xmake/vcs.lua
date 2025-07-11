@@ -212,10 +212,12 @@ function simv_run()
   assert(option.get("image") or option.get("imagez"))
   local abs_dir = os.curdir()
   local image_file = ""
+  local flash_file = ""
   local abs_case_base_dir = path.join(abs_dir, option.get("case_dir"))
   local abs_ref_base_dir = path.join(abs_dir, option.get("ref_dir"))
   if option.get("imagez") then image_file = path.join(abs_case_base_dir, option.get("imagez") .. ".gz") end
   if option.get("image") then image_file = path.join(abs_case_base_dir, option.get("image") .. ".bin") end
+  if option.get("flash") then flash_file = path.join(abs_case_base_dir, option.get("flash") .. ".bin") end
   local image_basename = path.basename(image_file)
   local sim_dir = path.join("sim", "simv", image_basename)
   local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
@@ -234,6 +236,7 @@ function simv_run()
   if option.get("init_reg") ~= nil then
     sh_str = sh_str .. " +vcs+initreg+" .. option.get("init_reg")
   end
+  if(flash_file ~= "") then sh_str = sh_str .. " +flash=" .. flash_file end
   sh_str = sh_str .. " +diff=" .. ref_so
   sh_str = sh_str .. " +max-cycles=" .. option.get("cycles")
   sh_str = sh_str .. " +workload=" .. image_file
