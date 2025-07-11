@@ -253,7 +253,10 @@ task("comp", function()
     local jar_path = path.join(ln_out_dir, "assembly.dest", "out.jar")
     local test_jar_path = path.join(ln_out_dir, "test", "assembly.dest", "out.jar")
     local build_dir = path.join(abs_base, "build")
-    if os.exists(ln_out_dir) then os.rmdir(ln_out_dir) end
+    local asmb_json = path.join(ln_out_dir, "assembly.json")
+    local test_asmb_json = path.join(ln_out_dir, "test", "assembly.json")
+    if os.exists(asmb_json) then os.rm(asmb_json) end
+    if os.exists(test_asmb_json) then os.rm(test_asmb_json) end
     if os.host() == "windows" then
       os.execv(os.shell(), {"mill", "-i", "linknan.assembly"})
       os.execv(os.shell(), {"mill", "-i", "linknan.test.assembly"})
@@ -261,8 +264,8 @@ task("comp", function()
       os.execv("mill", {"-i", "linknan.assembly"})
       os.execv("mill", {"-i", "linknan.test.assembly"})
     end
-    os.cp(jar_path, path.join(build_dir, "linknan.jar"))
-    os.cp(test_jar_path, path.join(build_dir, "linknan.test.jar"))
+    os.mv(jar_path, path.join(build_dir, "linknan.jar"))
+    os.mv(test_jar_path, path.join(build_dir, "linknan.test.jar"))
   end)
   set_menu {}
 end)
