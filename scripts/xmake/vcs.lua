@@ -7,10 +7,10 @@ import("core.base.task")
 function simv_comp(num_cores)
   if not option.get("no_fsdb") then
     if not os.getenv("VERDI_HOME") then
-      print("error: VERDI_HOME is not set!")
-      os.exit(1, true)
+      raise("[vcs.lua] [simv_comp] error: VERDI_HOME is not set!")
     end
   end
+
   local abs_base = os.curdir()
   local chisel_dep_srcs = os.filedirs(path.join(abs_base, "src", "**.scala"))
   table.join2(chisel_dep_srcs, os.filedirs(path.join(abs_base, "dependencies", "**.scala")))
@@ -18,7 +18,6 @@ function simv_comp(num_cores)
   table.join2(chisel_dep_srcs, {path.join(abs_base, "xmake.lua")})
   if option.get("jar") ~= "" then chisel_dep_srcs = option.get("jar") end
 
-  local vtop = "tb_top"
   local build_dir = path.join(abs_base, "build")
   local comp_dir = path.join(abs_base, "sim", "simv", "comp")
   if not os.exists(comp_dir) then os.mkdir(comp_dir) end
@@ -58,7 +57,7 @@ function simv_comp(num_cores)
       table.join2(dpi_exp_opts, {"--work-dir", dpi_export_dir})
       table.join2(dpi_exp_opts, {"-I", design_gen_dir})
       table.join2(dpi_exp_opts, {"--quiet"})
-      table.join2(dpi_exp_opts, {"--top", vtop})
+      table.join2(dpi_exp_opts, {"--top", "tb_top"})
       table.join2(dpi_exp_opts, vsrc)
       local cmd_file = path.join(comp_dir, "dpi_exp_cmd.sh")
       io.writefile(cmd_file, table.concat(dpi_exp_opts, " "))
