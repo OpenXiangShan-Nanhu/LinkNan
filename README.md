@@ -62,6 +62,7 @@ xmake emu -j64 -l -L medium
 # -i: program bin
 # -f: flash bin
 # -z: program gz
+# -w: workload bin/gz(fullpath)
 # -c: max sim cycles, 0 means no limit
 # -X: fork interval, 50 by default
 # -b: wave dump begin time
@@ -93,6 +94,7 @@ xmake simv
 # -i: program bin
 # -f: flash bin
 # -z: program gz
+# -w: workload bin/gz(fullpath)
 # -c: max cycles
 # This line is used for running dhrystone.bin in ready-to-run
 xmake simv-run -i dhrystone

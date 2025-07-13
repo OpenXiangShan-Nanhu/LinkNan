@@ -219,7 +219,11 @@ function emu_comp(num_cores)
 end
 
 function emu_run()
-  assert(option.get("image") or option.get("imagez"))
+  assert(
+    option.get("image") or option.get("imagez") or option.get("workload"),
+    "[verilator.lua] [emu_run] must set one of `image(-i)`, `imagez(-z)` or `workload(-w)`"
+  )
+
   local abs_dir = os.curdir()
   local image_file = ""
   local flash_file = ""
@@ -228,10 +232,15 @@ function emu_run()
 
   if option.get("imagez") then image_file = path.join(abs_case_base_dir, option.get("imagez") .. ".gz") end
   if option.get("image") then image_file = path.join(abs_case_base_dir, option.get("image") .. ".bin") end
+  if option.get("workload") then image_file = path.absolute(option.get("workload")) end
   if option.get("flash") then flash_file = path.join(abs_case_base_dir, option.get("flash") .. ".bin") end
 
-  if option.get("imagez") and option.get("image") then
-    raise("`image(-i)` and `imagez(-z)` cannot be both set")
+  local w_cnt = 0
+  if option.get("image") then w_cnt = w_cnt + 1 end
+  if option.get("imagez") then w_cnt = w_cnt + 1 end
+  if option.get("workload") then w_cnt = w_cnt + 1 end
+  if w_cnt ~= 1 then
+    raise("[verilator.lua] [emu_run] `image(-i)`, `imagez(-z)` and `workload(-w)` cannot be both set")
   end
 
   local warmup = option.get("warmup")
