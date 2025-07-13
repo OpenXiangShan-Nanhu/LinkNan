@@ -225,9 +225,15 @@ function emu_run()
   local flash_file = ""
   local abs_case_base_dir = path.join(abs_dir, option.get("case_dir"))
   local abs_ref_base_dir = path.join(abs_dir, option.get("ref_dir"))
+
   if option.get("imagez") then image_file = path.join(abs_case_base_dir, option.get("imagez") .. ".gz") end
   if option.get("image") then image_file = path.join(abs_case_base_dir, option.get("image") .. ".bin") end
   if option.get("flash") then flash_file = path.join(abs_case_base_dir, option.get("flash") .. ".bin") end
+
+  if option.get("imagez") and option.get("image") then
+    raise("`image(-i)` and `imagez(-z)` cannot be both set")
+  end
+
   local warmup = option.get("warmup")
   local instr = option.get("instr")
   local cycles = option.get("cycles")
@@ -238,10 +244,12 @@ function emu_run()
   local sim_dir = path.join("sim", "emu", image_basename)
   local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
   local sim_emu = path.join(sim_dir, "emu")
+
   if not os.exists(sim_dir) then os.mkdir(sim_dir) end
   if os.exists(sim_emu) then os.rm(sim_emu) end
   os.ln(path.join(abs_dir, "sim", "emu", "comp", "emu"), sim_emu)
   os.cd(sim_dir)
+
   local sh_str = "chmod +x emu" .. " && ( ./emu"
   if option.get("dump") then
     sh_str = sh_str .. " --dump-wave"
@@ -250,16 +258,19 @@ function emu_run()
   elseif option.get("fork") ~= "0" then
     sh_str = sh_str .. " --enable-fork -X " .. option.get("fork")
   end
+
   if(warmup ~= "0") then sh_str = sh_str .. " -W " .. warmup end
   if(instr ~= "0") then sh_str = sh_str .. " -I " .. instr end
   if(cycles ~= "0") then sh_str = sh_str .. " -C " .. cycles end
   if(gcpt_restore ~= "") then sh_str = sh_str .. " -r " .. gcpt_restore end
   if(flash_file ~= "") then sh_str = sh_str .. " -F " .. flash_file end
+
   sh_str = sh_str .. " --diff " .. ref_so
   sh_str = sh_str .. " -i " .. image_file
   sh_str = sh_str .. " -s " .. option.get("seed")
   sh_str = sh_str .. " --wave-path " .. image_basename .. ".vcd"
   sh_str = sh_str .. " ) 2>assert.log |tee run.log"
+
   io.writefile("tmp.sh", sh_str)
   print(sh_str)
   os.execv(os.shell(), {"tmp.sh"})

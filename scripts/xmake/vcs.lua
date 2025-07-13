@@ -215,20 +215,29 @@ function simv_run()
   local flash_file = ""
   local abs_case_base_dir = path.join(abs_dir, option.get("case_dir"))
   local abs_ref_base_dir = path.join(abs_dir, option.get("ref_dir"))
+
   if option.get("imagez") then image_file = path.join(abs_case_base_dir, option.get("imagez") .. ".gz") end
   if option.get("image") then image_file = path.join(abs_case_base_dir, option.get("image") .. ".bin") end
   if option.get("flash") then flash_file = path.join(abs_case_base_dir, option.get("flash") .. ".bin") end
+
+  if option.get("imagez") and option.get("image") then
+    raise("`image(-i)` and `imagez(-z)` cannot be both set")
+  end
+
   local image_basename = path.basename(image_file)
   local sim_dir = path.join("sim", "simv", image_basename)
   local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
   local simv = path.join(sim_dir, "simv")
   local daidir = path.join(sim_dir, "simv.daidir")
+
   if not os.exists(sim_dir) then os.mkdir(sim_dir) end
   if os.exists(simv) then os.rm(simv) end
   if os.exists(daidir) then os.rm(daidir) end
+
   os.ln(path.join(abs_dir, "sim", "simv", "comp", "simv"), simv)
   os.ln(path.join(abs_dir, "sim", "simv", "comp", "simv.daidir"), daidir)
   os.cd(sim_dir)
+
   local sh_str = "chmod +x simv" .. " && ( ./simv"
   if not option.get("no_dump") then
     sh_str = sh_str .. " +dump-wave=fsdb"
@@ -244,6 +253,7 @@ function simv_run()
   sh_str = sh_str .. " -assert finish_maxfail=30"
   sh_str = sh_str .. " -assert global_finish_maxfail=10000"
   sh_str = sh_str .. " ) 2>assert.log |tee run.log"
+
   io.writefile("tmp.sh", sh_str)
   print(sh_str)
   os.execv(os.shell(), {"tmp.sh"})
