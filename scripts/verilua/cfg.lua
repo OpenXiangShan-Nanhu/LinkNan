@@ -13,6 +13,16 @@ end
 
 local test_zhujiang_dir = "/nfs/share/home/zhengchuyu/TestZhuJiang"
 local test_dongjiang_dir = "/nfs/share/home/zhengchuyu/TestDongJiang"
+
+local path = require "pl.path"
+if not path.isfile(path.join(test_zhujiang_dir, "xmake.lua")) then
+    -- Use alternative path
+    test_zhujiang_dir = "/nfs/share/zhengchuyu/TestZhuJiang"
+end
+if not path.isfile(path.join(test_dongjiang_dir, "xmake.lua")) then
+    -- Use alternative path
+    test_dongjiang_dir = "/nfs/share/zhengchuyu/TestDongJiang"
+end
 cfg.srcs = {
     "./?.lua",
     test_zhujiang_dir .. "/src/test/lua/common/?.lua",
