@@ -30,7 +30,7 @@ function emu_comp(num_cores)
   local difftest_csrc_verilator = path.join(difftest_csrc, "verilator")
   local difftest_config = path.join(difftest, "config")
 
-  local gen_soc = function ()
+  depend.on_changed(function ()
     if os.exists(build_dir) then os.rmdir(build_dir) end
     task.run("soc", {
       sim = true, config = option.get("config"),
@@ -58,17 +58,11 @@ function emu_comp(num_cores)
       io.writefile(cmd_file, table.concat(dpi_exp_opts, " "))
       os.execv(os.shell(), { cmd_file })
     end
-  end
-
-  if option.get("skip_depend_check") then
-    gen_soc()
-  else
-    depend.on_changed(gen_soc,{
-      files = chisel_dep_srcs,
-      dependfile = path.join("out", "chisel.verilator.dep"),
-      dryrun = option.get("rebuild")
-    })
-  end
+  end,{
+    files = chisel_dep_srcs,
+    dependfile = path.join("out", "chisel.verilator.dep"),
+    dryrun = option.get("rebuild")
+  })
 
   local vsrc = os.files(path.join(design_vsrc, "*v"))
   table.join2(vsrc, os.files(path.join(difftest_vsrc, "*v")))

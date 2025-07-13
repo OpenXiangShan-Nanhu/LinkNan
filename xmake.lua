@@ -118,8 +118,7 @@ task("emu", function()
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
-      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
-      {'E', "skip_depend_check", "k", nil, "skip depend check"}
+      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"}
     }
   }
 
@@ -186,8 +185,7 @@ task("simv", function()
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
-      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
-      {'E', "skip_depend_check", "k", nil, "skip depend check"}
+      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"}
     }
   }
 

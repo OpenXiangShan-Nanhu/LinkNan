@@ -7,7 +7,8 @@ import("core.base.task")
 function simv_comp(num_cores)
   if not option.get("no_fsdb") then
     if not os.getenv("VERDI_HOME") then
-      raise("[vcs.lua] [simv_comp] error: VERDI_HOME is not set!")
+      print("error: VERDI_HOME is not set!")
+      os.exit(1, true)
     end
   end
   local abs_base = os.curdir()
@@ -35,7 +36,7 @@ function simv_comp(num_cores)
   local difftest_csrc_vcs = path.join(difftest_csrc, "vcs")
   local difftest_config = path.join(difftest, "config")
 
-  local gen_soc = function ()
+  depend.on_changed(function ()
     if os.exists(build_dir) then os.rmdir(build_dir) end
     task.run("soc", {
       vcs = true, sim = true, config = option.get("config"),
@@ -63,17 +64,11 @@ function simv_comp(num_cores)
       io.writefile(cmd_file, table.concat(dpi_exp_opts, " "))
       os.execv(os.shell(), { cmd_file })
     end
-  end
-
-  if option.get("skip_depend_check") then
-    gen_soc()
-  else
-    depend.on_changed(gen_soc, {
-      files = chisel_dep_srcs,
-      dependfile = path.join("out", "chisel.simv.dep"),
-      dryrun = option.get("rebuild")
-    })
-  end
+  end,{
+    files = chisel_dep_srcs,
+    dependfile = path.join("out", "chisel.simv.dep"),
+    dryrun = option.get("rebuild")
+  })
 
   local vsrc = os.files(path.join(design_vsrc, "*v"))
   table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
