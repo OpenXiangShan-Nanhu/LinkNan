@@ -157,6 +157,13 @@ task("emu-run", function ()
   }
 
   on_run(function()
+    -- Set verilua env
+    os.setenv("VERILUA_CFG", path.join(os.scriptdir(), "scripts", "verilua", "cfg.lua"))
+    os.setenv("LUA_SCRIPT", path.join(os.scriptdir(), "scripts", "verilua", "main.lua"))
+    os.setenv("SIM", "verilator")
+    os.setenv("PRJ_TOP", os.scriptdir())
+    os.setenv("SOC_CFG_FILE", path.join(os.scriptdir(), "build", "generated-src", "soc.lua"))
+
     import("scripts.xmake.verilator").emu_run()
   end)
 end)
@@ -212,6 +219,13 @@ task("simv-run", function ()
   }
 
   on_run(function()
+    -- Set verilua env
+    os.setenv("VERILUA_CFG", path.join(os.scriptdir(), "scripts", "verilua", "cfg.lua"))
+    os.setenv("LUA_SCRIPT", path.join(os.scriptdir(), "scripts", "verilua", "main.lua"))
+    os.setenv("SIM", "vcs")
+    os.setenv("PRJ_TOP", os.scriptdir())
+    os.setenv("SOC_CFG_FILE", path.join(os.scriptdir(), "build", "generated-src", "soc.lua"))
+
     import("scripts.xmake.vcs").simv_run()
   end)
 end)
