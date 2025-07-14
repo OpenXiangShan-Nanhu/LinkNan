@@ -152,6 +152,7 @@ task("emu-run", function ()
       {'r', "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
       {'s', "seed", "kv", "1234", "random seed"},
+      {nil, "case_name", "kv", nil, "user defined case name"}
     }
   }
 
@@ -212,7 +213,8 @@ task("simv-run", function ()
       {'c', "cycles", "kv", "0", "max simulation cycles"},
       {nil, "case_dir", "kv", "ready-to-run", "image base dir"},
       {'r', "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
-      {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"}
+      {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
+      {nil, "case_name", "kv", nil, "user defined case name"}
     }
   }
 

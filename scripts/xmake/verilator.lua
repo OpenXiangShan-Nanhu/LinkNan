@@ -249,8 +249,11 @@ function emu_run()
   local wave_begin = option.get("begin")
   local wave_end = option.get("end")
   local gcpt_restore = option.get("gcpt_restore")
-  local image_basename = path.basename(image_file)
-  local sim_dir = path.join("sim", "emu", image_basename)
+
+  local case_name = path.basename(image_file)
+  if option.get("case_name") ~= nil then case_name = option.get("case_name") end
+
+  local sim_dir = path.join("sim", "emu", case_name)
   local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
   local sim_emu = path.join(sim_dir, "emu")
 
@@ -277,7 +280,7 @@ function emu_run()
   sh_str = sh_str .. " --diff " .. ref_so
   sh_str = sh_str .. " -i " .. image_file
   sh_str = sh_str .. " -s " .. option.get("seed")
-  sh_str = sh_str .. " --wave-path " .. image_basename .. ".vcd"
+  sh_str = sh_str .. " --wave-path " .. case_name .. ".vcd"
   sh_str = sh_str .. " ) 2>assert.log |tee run.log"
 
   io.writefile("tmp.sh", sh_str)

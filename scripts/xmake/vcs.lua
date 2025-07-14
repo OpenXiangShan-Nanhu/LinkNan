@@ -232,8 +232,10 @@ function simv_run()
     raise("[vcs.lua] [simv_run] `image(-i)`, `imagez(-z)` and `workload(-w)` cannot be both set")
   end
 
-  local image_basename = path.basename(image_file)
-  local sim_dir = path.join("sim", "simv", image_basename)
+  local case_name = path.basename(image_file)
+  if option.get("case_name") ~= nil then case_name = option.get("case_name") end
+
+  local sim_dir = path.join("sim", "simv", case_name)
   local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
   local simv = path.join(sim_dir, "simv")
   local daidir = path.join(sim_dir, "simv.daidir")
