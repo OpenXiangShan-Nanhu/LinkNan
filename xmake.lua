@@ -20,7 +20,7 @@ task("soc" , function()
       {'p', "pldm_verilog", "k", nil, "enable only basic difftest function"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
       {'Y', "legacy", "k", nil, "use XS legacy memory map"},
-      {'z', "no_tfb", "k", nil, "disable traffic board of ring bus"},
+      {'z', "with_tfb", "k", nil, "enable traffic board of ring bus"},
       {'x', "prefix", "kv", "", "assign a prefix for rtl modules"},
       {'J', "jar", "kv", "", "use jar to generate artifacts"},
       {'C', "core", "kv", "full", "define cpu core config in soc"},
@@ -52,7 +52,7 @@ task("soc" , function()
     if option.get("keep_l1") then table.join2(chisel_opts, {"--keep-l1c"}) end
     if option.get("mbist") then table.join2(chisel_opts, {"--enable-mbist"}) end
     if option.get("legacy") then table.join2(chisel_opts, {"--legacy"}) end
-    if option.get("no_tfb") then table.join2(chisel_opts, {"--no-tfb"}) end
+    if not option.get("with_tfb") then table.join2(chisel_opts, {"--no-tfb"}) end
     if not option.get("clean_difftest") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--basic-difftest"}) end
     if not option.get("clean_difftest") and not option.get("pldm_verilog") then table.join2(chisel_opts, {"--enable-difftest"}) end
     if not option.get("enable_perf") or option.get("release") then table.join2(chisel_opts, {"--fpga-platform"}) end
