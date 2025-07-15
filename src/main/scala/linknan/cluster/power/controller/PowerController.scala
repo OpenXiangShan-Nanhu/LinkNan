@@ -85,7 +85,7 @@ class PwrCtlTlIntf(tlParams:TilelinkParams) extends BaseTLULPeripheral(tlParams)
     irqPendingReg.dynAcptIrqMask := Mux(policyReg.dynamicEn, !irqMaskReg.dynAcptIrqMask & ctl.transResp.bits, false.B)
     policyReg.powerPolicy := Mux(policyReg.dynamicEn | ctl.transResp.bits, policyReg.powerPolicy, ctl.devMode)
   }
-  ext.intr := RegNext((irqPendingReg.asUInt & irqMaskReg.asUInt).orR, false.B)
+  ext.intr := RegNext((irqPendingReg.asUInt & (~irqMaskReg.asUInt).asUInt).orR, false.B)
 }
 
 class PowerController(tlParams:TilelinkParams) extends Module {
