@@ -39,7 +39,7 @@ class FpgaClkDiv10 extends BlackBox with HasBlackBoxInline {
   setInline(s"FpgaClkDiv10.sv",
     s"""module FpgaClkDiv10 (
        |  input  wire CK,
-       |  input  wire Q
+       |  output wire Q
        |);
        |  reg  [3:0]   div_reg;
        |  reg          rtc_reg;
