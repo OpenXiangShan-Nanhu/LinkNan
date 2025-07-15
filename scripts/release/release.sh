@@ -41,11 +41,11 @@ find "$am_dir/cases" -name '*.bin'  -exec cp {} "$case_dir" \;
 
 # 4. generate soc package and env
 if [ "$1" = "fpga_bosc_1" ]; then
-  xmake soc -sgrmzAY -x bosc_ -N fpga_bosc_1 -L medium
+  xmake soc -sgrmAY -x bosc_ -N fpga_bosc_1 -L medium
 elif [ "$1" = "fpga_inno_1" ]; then
-  xmake soc -sgrmzA -x bosc_ -N fpga_inno_1 -L medium
+  xmake soc -sgrmA -x bosc_ -N fpga_inno_1 -L medium
 else
-  xmake soc -sgrmzA -x bosc_
+  xmake soc -sgrmA -x bosc_
 fi
 cd "$package_dir"/software && dtc -I dts -O dtb -o LNSim.dtb LNSim.dts
 cd "$linknan_dir"
