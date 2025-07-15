@@ -259,6 +259,57 @@ task("simv-run", function ()
   end)
 end)
 
+task("pldm", function()
+  set_menu {
+    usage = "xmake pldm [options]",
+    description = "Compile with pldm(Cadence Palladium)",
+    options = {
+      {'b', "rebuild", "k", nil, "forcely rebuild"},
+      {'n', "no_diff", "k", nil, "disable difftest"},
+      {'d', "no_fsdb", "k", nil, "do not dump wave"},
+      -- {'s', "sparse_mem", "k", nil, "use sparse mem"},
+      {'G', "bypass_clockgate", "k", nil, "force enable all clock gates"},
+      {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
+      {'J', "jar", "kv", "", "use jar to generate artifacts"},
+      {'Y', "legacy", "k", nil, "use XS legacy memory map"},
+      {'r', "ref", "kv", "Nemu", "reference model"},
+      {'C', "core", "kv", "full", "define cpu core config in soc"},
+      {'L', "l3", "kv", "small", "define L3 config"},
+      {'N', "noc", "kv", "small", "define noc config"},
+      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"}
+    }
+  }
+
+  on_run(function()
+    import("core.base.option")
+    local num_cores = "1"
+    if option.get("noc") == "full" then num_cores = 4 end
+    if option.get("noc") == "reduced" then num_cores = 2 end
+    import("scripts.xmake.pldm").pldm_comp(num_cores)
+  end)
+end)
+
+task("pldm-run", function ()
+  set_menu {
+    usage = "xmake pldm-run [options]",
+    description = "Run pldm(Cadence Palladium)",
+    options = {
+      {'i', "image", "kv", nil, "bin image bin name"},
+      {'f', "flash", "kv", nil, "flash image bin name"},
+      {'z', "imagez", "kv", nil, "gz image name"},
+      {'w', "workload", "kv", nil, "workload name(.bin/.gz)(fullpath)"},
+      {'r', "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
+      {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
+      {nil, "case_dir", "kv", "ready-to-run", "image base dir"},
+      {nil, "case_name", "kv", nil, "user defined case name"}
+    }
+  }
+
+  on_run(function()
+    import("scripts.xmake.pldm").pldm_run()
+  end)
+end)
+
 task("verdi", function ()
   set_menu {
     usage = "xmake verdi [options]",

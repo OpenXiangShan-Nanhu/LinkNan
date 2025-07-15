@@ -1,0 +1,7 @@
+* $test$plusargs TB_IMPORT
+* $value$plusargs TB_IMPORT
+* $finish TB_IMPORT
+* $fatal TB_IMPORT
+* $random TB_IMPORT
+* $fwrite GFIFO
+LogPerfEndpoint $fwrite TB_IMPORT
