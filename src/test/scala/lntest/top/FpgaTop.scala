@@ -1,6 +1,6 @@
 package lntest.top
 
-import chisel3._
+import chisel3.{BlackBox, _}
 import chisel3.stage.ChiselGeneratorAnnotation
 import chisel3.util.HasBlackBoxInline
 import linknan.generator.{AddrConfig, Generator}
@@ -31,6 +31,34 @@ class VerilogAddrRemapper(width:Int) extends BlackBox with HasBlackBoxInline {
        |endmodule""".stripMargin)
 }
 
+class FpgaClkDiv10 extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val CK = Input(Clock())
+    val Q = Output(Clock())
+  })
+  setInline(s"FpgaClkDiv10.sv",
+    s"""module FpgaClkDiv10 (
+       |  input  wire CK,
+       |  input  wire Q
+       |);
+       |  reg  [3:0]   div_reg;
+       |  reg          rtc_reg;
+       |`ifndef SYNTHESIS
+       |  initial div_reg = 0;
+       |  initial rtc_reg = 0;
+       |`endif
+       |  always @(posedge CK) begin
+       |    if (div_reg > 4'h8) begin
+       |      div_reg <= 4'h0;
+       |    end else begin
+       |      div_reg <= div_reg + 4'h1;
+       |    end
+       |    rtc_reg <= div_reg > 4'h4;
+       |  end
+       |  assign Q = rtc_reg;
+       |endmodule""".stripMargin)
+}
+
 object VerilogAddrRemapper {
   def apply(a:UInt, b:UInt, c:UInt):UInt = {
     val rmp = Module(new VerilogAddrRemapper(a.getWidth.max(b.getWidth)))
@@ -55,19 +83,15 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
   })
   private val _reset = (!io.aresetn).asAsyncReset
   private val resetSync = withClockAndReset(io.aclk, _reset) { ResetGen(2, None) }
-  private val div_reg = withClockAndReset(io.rtc_clk, _reset) { RegInit(0.U(4.W)) }
-  when(div_reg >= 9.U) {
-    div_reg := 0.U
-  }.otherwise {
-    div_reg := div_reg + 1.U
-  }
-  private val rtc_reg = withClockAndReset(io.rtc_clk, _reset) { RegNext(div_reg > 4.U, false.B) }
   val implicitClock = io.aclk
   val implicitReset = resetSync
 
+  private val rtc_div = Module(new FpgaClkDiv10)
+  rtc_div.io.CK := io.rtc_clk
+
   soc.io.cluster_clocks := io.core_clk
   soc.io.noc_clock := io.aclk
-  soc.io.rtc_clock := rtc_reg
+  soc.io.rtc_clock := rtc_div.io.Q.asBool
   soc.io.ext_intr := io.ext_intr
   soc.io.default_reset_vector := io.reset_vector
   soc.io.reset := resetSync
