@@ -8,6 +8,12 @@ import("core.base.task")
 -- TODO: Seperate difftest as a sub xmake.lua
 
 local debug = false
+local check_host_name = true
+local pldm_z2_host_prefix = "node016"
+
+if os.getenv("NO_CHECK_HOST") then
+  check_host_name = false
+end
 
 local tb_top = "tb_top"
 local dpi_so_name = "libdpi_emu.so"
@@ -45,6 +51,16 @@ end
 
 local function load_pldm_z2env()
   -- TODO: load_pldm_z1env
+
+  local host_name = os.getenv("HOSTNAME") or "<Undefined>"
+  if check_host_name and not host_name:startswith(pldm_z2_host_prefix) then
+    raise(format(
+      "[pldm.lua] [load_pldm_z2env] you are not in the correct host, expect host name prefix: `%s`, but got host name: `%s`", 
+      pldm_z2_host_prefix,
+      host_name
+    ))
+  end
+
   local envs = {}
   local function set_env(key, value)
     os.setenv(key, value)
