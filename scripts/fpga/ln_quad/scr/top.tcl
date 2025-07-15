@@ -53,7 +53,7 @@ set_property -dict [list \
 
 set_property -dict [list CONFIG.PRIM_IN_FREQ.VALUE_SRC USER] [get_bd_cells in_mmcm]
 set_property -dict [list \
-  CONFIG.CLKOUT_DRIVES {BUFG,BUFG,BUFG,BUFGCE,BUFGCE,BUFGCE,BUFGCE} \
+  CONFIG.CLKOUT_DRIVES {BUFG,BUFG,BUFG,BUFG,BUFG,BUFG,BUFG} \
   CONFIG.CLKOUT_DYN_PS {None,None,None,None,None,None,None} \
   CONFIG.CLKOUT_GROUPING {Auto,Auto,Auto,Auto,Auto,Auto,Auto} \
   CONFIG.CLKOUT_MATCHED_ROUTING {false,false,false,false,false,false,false} \
@@ -79,19 +79,21 @@ set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins in_mmcm/s
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/DDR_CLK_D] [get_bd_intf_ports ddr]
 connect_bd_intf_net [get_bd_intf_pins in_mmcm/CLK_IN1_D] [get_bd_intf_ports sys]
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/DDR4] [get_bd_intf_ports DDR0]
-connect_bd_net [get_bd_pins in_mmcm/rtc_clk] [get_bd_pins ln/io_rtc_clk]
+
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins u_peri_subsys/ACLK_NOC]
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ACLK]
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins vio_0/clk]
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins ln/io_aclk]
 connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins ln/io_core_clk_0]
 connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins ln/io_core_clk_1]
 connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins ln/io_core_clk_2]
 connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins ln/io_core_clk_3]
-connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins vio_0/clk]
-connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins ln/io_aclk]
-connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins u_peri_subsys/ACLK_NOC]
-connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ACLK]
+connect_bd_net [get_bd_pins in_mmcm/locked] [get_bd_pins noc_reset_gen/dcm_locked]
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins noc_reset_gen/slowest_sync_clk]
+
+connect_bd_net [get_bd_pins in_mmcm/rtc_clk] [get_bd_pins ln/io_rtc_clk]
 connect_bd_net [get_bd_pins in_mmcm/peri_clk] [get_bd_pins u_peri_subsys/ACLK_PERI]
 
-connect_bd_net [get_bd_pins in_mmcm/rtc_clk] [get_bd_pins noc_reset_gen/slowest_sync_clk]
-connect_bd_net [get_bd_pins in_mmcm/locked] [get_bd_pins noc_reset_gen/dcm_locked]
 connect_bd_net [get_bd_pins vio_0/probe_out0] [get_bd_pins noc_reset_gen/ext_reset_in]
 connect_bd_net [get_bd_pins noc_reset_gen/peripheral_aresetn] [get_bd_pins u_peri_subsys/ARESETN]
 connect_bd_net [get_bd_pins noc_reset_gen/interconnect_aresetn] [get_bd_pins ln/io_aresetn]
