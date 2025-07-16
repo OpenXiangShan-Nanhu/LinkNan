@@ -116,8 +116,8 @@ function pldm_comp(num_cores)
   load_pldm_z2env()
 
   local abs_dir = os.curdir()
-  local ixcom_dir = path.join(remove_trailing_newline(io_run("cds_root ixcom")), "share", "uxe", "etc", "ixcom")
-  local simtool_dir = path.join(remove_trailing_newline(io_run("cds_root xrun")), "tools", "include")
+  local ixcom_dir = path.join(io_run("cds_root ixcom"), "share", "uxe", "etc", "ixcom")
+  local simtool_dir = path.join(io_run("cds_root xrun"), "tools", "include")
   local pldm_scripts_dir = path.join(abs_dir, "scripts", "pldm")
   local chisel_dep_srcs = os.filedirs(path.join(abs_dir, "src", "**.scala"))
   table.join2(chisel_dep_srcs, os.filedirs(path.join(abs_dir, "dependencies", "**.scala")))
@@ -172,13 +172,13 @@ function pldm_comp(num_cores)
   -- TODO: Lua scoreboard
   depend.on_changed(function ()
     log("[pldm_comp]", "change detected! start compiling `soc`...")
-    -- if os.exists(build_dir) then os.rmdir(build_dir) end
-    -- task.run("soc", {
-    --   vcs = true, sim = true, config = option.get("config"),
-    --   socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
-    --   core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
-    --   legacy = option.get("legacy"), jar = option.get("jar")
-    -- })
+    if os.exists(build_dir) then os.rmdir(build_dir) end
+    task.run("soc", {
+      vcs = true, sim = true, config = option.get("config"),
+      socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
+      core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
+      legacy = option.get("legacy"), jar = option.get("jar")
+    })
 
     -- if option.get("lua_scoreboard") then
     --   local dpi_cfg_lua = path.join(abs_dir, "scripts", "verilua", "dpi_cfg.lua")
@@ -297,7 +297,7 @@ function pldm_comp(num_cores)
 
         table.join2(pldm_cflags, csrc)
         if #csrc > 0 then
-          log("[pldm_comp]", "\tGenerate objects(total csrc: %d)...", #csrc)
+          log("[pldm_comp]", "\tGenerate dpi objects(total csrc: %d)...", #csrc)
           os.exec(cc .. " " .. table.concat(pldm_cflags, " "))
         end
       end
@@ -311,7 +311,7 @@ function pldm_comp(num_cores)
         local objs = os.files(path.join(cc_build_dir, "*.o"))
         if #objs > 0 then
           table.join2(pldm_ldflags, objs)
-          log("[pldm_comp]", "\tGenerate shared library(total obj: %d)...", #objs)
+          log("[pldm_comp]", "\tGenerate dpi shared library(total obj: %d)...", #objs)
           os.exec(cc .. " " .. table.concat(pldm_ldflags, " "))
           has_so = true
         end
@@ -375,6 +375,12 @@ function pldm_run()
   local comp_dir = path.join(abs_dir, "sim", "pldm", "comp")
   local pldm_scripts_dir = path.join(abs_dir, "scripts", "pldm")
 
+  if not os.exists(comp_dir) then 
+    raise(format(
+      "[pldm.lua] [pldm_run] comp_dir(`%s`) does not exist, maybe you should run `xmake pldm <flags>` first", 
+      comp_dir
+    )) 
+  end
   if not os.exists(sim_dir) then os.mkdir(sim_dir) end
 
   os.cd(comp_dir)
