@@ -281,7 +281,8 @@ task("pldm", function()
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
       {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
-      {'o', "build_dir", "kv", nil, "assign build dir"}
+      {'o', "build_dir", "kv", nil, "assign build dir"},
+      {nil, "sim_dir", "kv", nil, "assign simulation dir"},
     }
   }
 
@@ -307,11 +308,25 @@ task("pldm-run", function ()
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
       {nil, "case_dir", "kv", "ready-to-run", "image base dir"},
       {nil, "case_name", "kv", nil, "user defined case name"},
-      {'o', "build_dir", "kv", nil, "assign build dir"}
+      {'o', "build_dir", "kv", nil, "assign build dir"},
+      {nil, "sim_dir", "kv", nil, "assign simulation dir"},
     }
   }
 
   on_run(function()
+    import("core.base.option")
+
+    -- Set verilua env
+    os.setenv("VERILUA_CFG", path.join(os.scriptdir(), "scripts", "verilua", "cfg.lua"))
+    os.setenv("LUA_SCRIPT", path.join(os.scriptdir(), "scripts", "verilua", "main.lua"))
+    os.setenv("SIM", "vcs")
+    os.setenv("PRJ_TOP", os.scriptdir())
+    os.setenv("SOC_CFG_FILE", path.join(os.scriptdir(), "build", "generated-src", "soc.lua"))
+    local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
+    if new_build_dir then
+      os.setenv("SOC_CFG_FILE", path.absolute(path.join(new_build_dir, "generated-src", "soc.lua")))
+    end
+
     import("scripts.xmake.pldm").pldm_run()
   end)
 end)

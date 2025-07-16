@@ -129,7 +129,11 @@ function pldm_comp(num_cores)
   local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
   if new_build_dir then build_dir = path.absolute(new_build_dir) end
 
-  local comp_dir = path.join(abs_dir, "sim", "pldm", "comp")
+  local sim_dir = path.join(abs_dir, "sim")
+  local new_sim_dir = option.get("sim_dir") or os.getenv("SIM_DIR")
+  if new_sim_dir then sim_dir = path.absolute(new_sim_dir) end
+  
+  local comp_dir = path.join(sim_dir, "pldm", "comp")
   if not os.exists(comp_dir) then os.mkdir(comp_dir) end
   local design_gen_dir = path.join(build_dir, "generated-src")
   local dpi_export_dir = path.join(comp_dir, "dpi_export")
@@ -202,9 +206,9 @@ function pldm_comp(num_cores)
     -- end
   end,{
     files = chisel_dep_srcs,
-    dependfile = path.join("out", "chisel.pldm.dep"),
+    dependfile = path.join("out", "chisel.pldm.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = {os.getenv("BUILD_DIR")}
+    values = {os.getenv("BUILD_DIR"), os.getenv("SIM_DIR")}
   })
 
   if option.get("lua_scoreboard") then
@@ -376,22 +380,27 @@ function pldm_run()
   log("[pldm_run]", "flash_file: " .. flash_file)
   log("[pldm_run]", "case_name: " .. case_name)
 
-  local sim_dir = path.join(abs_dir, "sim", "pldm", case_name)
-  local comp_dir = path.join(abs_dir, "sim", "pldm", "comp")
+  local sim_dir = path.join(abs_dir, "sim")
+  local new_sim_dir = option.get("sim_dir") or os.getenv("SIM_DIR")
+  if new_sim_dir then sim_dir = path.absolute(new_sim_dir) end
+  
+  local pldm_sim_dir = path.join(sim_dir, "pldm")
+  local pldm_case_dir = path.join(pldm_sim_dir, case_name)
+  local pldm_comp_dir = path.join(pldm_sim_dir, "comp")
   local pldm_scripts_dir = path.join(abs_dir, "scripts", "pldm")
 
-  if not os.exists(comp_dir) then 
+  if not os.exists(pldm_comp_dir) then 
     raise(format(
       "[pldm.lua] [pldm_run] comp_dir(`%s`) does not exist, maybe you should run `xmake pldm <flags>` first", 
-      comp_dir
-    )) 
+      pldm_comp_dir
+    ))
   end
-  if not os.exists(sim_dir) then os.mkdir(sim_dir) end
+  if not os.exists(pldm_case_dir) then os.mkdir(pldm_case_dir) end
 
-  os.cd(comp_dir)
+  os.cd(pldm_comp_dir)
   local xsim_pre_flags = {
     "--xmsim", "-64", "+xcprof", "-profile", "-PROFTHREAD", 
-    if_debug("", "-sv_lib " .. path.join(comp_dir, dpi_so_name)),
+    if_debug("", "-sv_lib " .. path.join(pldm_comp_dir, dpi_so_name)),
     "-licqueue", -- waitting for license release
     "+diff=" .. path.join(abs_ref_base_dir, option.get("ref")),
     "+workload=" .. image_file,
