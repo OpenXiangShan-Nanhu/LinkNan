@@ -27,23 +27,6 @@ class LuaScoreboard(l2Str:String, nrHnf:Int) extends BlackBox(
        |`ifndef SYNTHESIS
        |  import "DPI-C" function void verilua_final();
        |  import "DPI-C" function void verilua_main_step_safe();
-       |`ifdef VERILATOR
-       |  initial begin
-       |    $$c("char value[500];");
-       |
-       |    $$c("setenv(\\"L2_CFG_STR\\",", L2_CFG_STR, ".c_str(), 1);");
-       |
-       |    $$c("sprintf(value, \\"%d\\",", NR_HNF, ");");
-       |    $$c("setenv(\\"NR_HNF\\", value, 1);");
-       |  end
-       |`else // VERILATOR
-       |  import "DPI-C" function void setenv(string name, string value, integer replace);
-       |
-       |  initial begin 
-       |    setenv("L2_CFG_STR", L2_CFG_STR, 1);
-       |    setenv("NR_HNF", $$sformatf("%d", NR_HNF), 1);
-       |  end
-       |`endif // VERILATOR
        |
        |`ifdef MANUALLY_CALL_DPI_EXPORTER_TICK
        |`ifdef DECL_DPI_EXPORTER_TICK

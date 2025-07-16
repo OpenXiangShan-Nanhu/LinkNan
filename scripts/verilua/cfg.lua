@@ -31,24 +31,6 @@ cfg.srcs = {
     test_dongjiang_dir .. "/src/?.lua"
 }
 
-cfg.load_config_from_env = function ()
-    local cfg = _G.cfg
-
-    -- Check whether parameters are correctly set by enviroment variables
-    local L2_CFG_STR = assert(os.getenv("L2_CFG_STR"), "Enviroment variable `L2_CFG_STR` is not set!")
-
-    -- 
-    -- l2_cfg:
-    -- {
-    --      [0] = { <l2_bank>, <l2_core> },
-    --      [1] = ...
-    --      ...
-    -- }
-    -- 
-    local l2_cfg = loadstring("return " .. L2_CFG_STR)()
-    cfg.l2_cfg = l2_cfg
-end
-
 do
 	local soc_cfg
 	local soc_cfg_file = assert(os.getenv("SOC_CFG_FILE"), "`SOC_CFG_FILE` is not set!")
@@ -59,6 +41,8 @@ do
 	cfg.soc_cfg = soc_cfg
 end
 
+cfg.nr_l2 = #cfg.soc_cfg.l2c
+cfg.nr_l2_slice = cfg.soc_cfg.l2c.nr_bank
 cfg.nr_hnf = #cfg.soc_cfg.hnf
 cfg.nr_sn = #cfg.soc_cfg.snf
 

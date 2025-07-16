@@ -101,12 +101,10 @@ local function init_components()
         verbose = false,
     }
 
-    for k, v in pairs(cfg.l2_cfg) do
-        local l2_id = k
-        local nr_slice = v[1]
-        local nr_core = v[2] -- TODO: Not used for now
+    for i = 1, cfg.nr_l2 do
+        local l2_id = i - 1
+        local nr_slice = cfg.nr_l2_slice
 
-        local l2_prefix = ""
         local l2_hier = ""
 
         l2_hier = tostring(dut.soc["cc_" .. l2_id].tile.l2cache)
@@ -540,7 +538,7 @@ fork {
 
         clock:posedge()
         do
-            cfg.load_config_from_env()
+            -- cfg.load_config_from_env()
             init_components()
         end
 
