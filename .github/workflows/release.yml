@@ -31,8 +31,8 @@ jobs:
       - name: Init project
         run: xmake init
         
-      - name: Make LN release
-        run: ./scripts/release/release.sh 
+      - name: Make LN 1-core release
+        run: ./scripts/release/release.sh fpga_inno_1
 
       - name: Move LN release
         run: |
@@ -44,7 +44,25 @@ jobs:
           echo "Release successful, found $LATEST_TAR"
           mv "$LATEST_TAR" /nfs/share/LN-release/
 
-      - name: Build nanhu jar from origin/main
+      - name: Build LinkNan jar from origin/main
+        run: |
+          xmake comp
+          date_str=$(date +"%Y%m%d")
+          ln_commit=$(git rev-parse --short HEAD)
+          mv "$GITHUB_WORKSPACE/build/linknan.test.jar" \
+          "$GITHUB_WORKSPACE/release_ln_${date_str}_${ln_commit}.jar"
+
+      - name: Move LinkNan jar
+        run: |
+          JAR_FILE=$(ls -t release_ln_*.jar 2>/dev/null | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "Jar file not found after build, aborting."
+            exit 1
+          fi
+          echo "Jar file found: $JAR_FILE"
+          mv "$JAR_FILE" /nfs/share/LN-release/
+
+      - name: Build NanHu jar from origin/main
         run: |
           set -e
           nh_dir="$GITHUB_WORKSPACE/dependencies/nanhu"
@@ -64,11 +82,11 @@ jobs:
           date_str=$(date +"%Y%m%d")
 
           mv "$nh_dir/out/xiangshan/test/assembly.dest/out.jar" \
-          "$GITHUB_WORKSPACE/release_${date_str}_${nanhu_commit}.jar"
+          "$GITHUB_WORKSPACE/release_nh_${date_str}_${nanhu_commit}.jar"
 
       - name: Move nanhu jar
         run: |
-          JAR_FILE=$(ls -t release_*.jar 2>/dev/null | head -1)
+          JAR_FILE=$(ls -t release_nh_*.jar 2>/dev/null | head -1)
           if [ -z "$JAR_FILE" ]; then
             echo "Jar file not found after build, aborting."
             exit 1
