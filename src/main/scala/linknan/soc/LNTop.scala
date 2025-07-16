@@ -20,6 +20,9 @@ import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey
 import xs.utils.sram.SramCtrlBundle
 import zhujiang.axi.AxiUtils
 import zhujiang.{NocIOHelper, ZJParametersKey, ZJRawModule}
+import difftest.gateway._
+import difftest._
+import scala.collection.mutable.ListBuffer
 
 object GlobalStaticParameters {
   var lnParams:LinkNanParams = null
@@ -124,7 +127,11 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   val core = Option.when(p(LinkNanParamsKey).removeCore)(IO(Vec(uncore.cluster.size, new BlockTestIO(ccGen.btIoParams.get))))
   val ccns = uncore.cluster.map(_.socket.node)
 
-  for(ccn <- uncore.cluster) {
+  val instanceSeq = ListBuffer.empty[(DifftestBundle, Int)]
+
+  val probe_reset = Wire(Vec(uncore.cluster.length, Bool()))
+
+  for((ccn, idx) <- uncore.cluster.zipWithIndex) {
     val clusterId = ccn.socket.node.clusterId
     val cc = Instance(ccDef)
     cc.icn <> ccn
@@ -135,6 +142,30 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
       val cid = clusterId + i
       if(p(LinkNanParamsKey).removeCore) core.get(cid) <> cc.btio.get
     }
+
+    cc.probeDiff.getInstanceSeq.foreach {
+      case inst =>
+        instanceSeq += inst
+    }
+    probe_reset(idx) := cc.probe_reset
   }
   linknan.devicetree.DeviceTreeGenerator.lnGenerate(clusterP)
+
+  val difftest = IO(new Bundle {
+    val exit = Output(UInt(64.W))
+    val step = Output(UInt(64.W))
+  })
+  dontTouch(difftest)
+
+  withClockAndReset(io.cluster_clocks.head, probe_reset.head.asAsyncReset) {
+    val difftestMacros = Seq(
+      s"DEBUG_MEM_BASE 0x${p(LinkNanParamsKey).debugBase.toHexString}",
+      s"DEFAULT_EMU_RAM_SIZE 0x${(8L * 1024 * 1024 * 1024).toHexString}UL",
+      s"NUM_CORES ${uncore.cluster.length}"
+    )
+    val (exit, step) = DifftestModule.lntop_finish("XiangShan", difftestMacros, instanceSeq.toSeq)
+
+    difftest.exit := exit.getOrElse(0.U)
+    difftest.step := step.getOrElse(0.U)
+  }
 }
