@@ -15,6 +15,9 @@ function emu_comp(num_cores)
 
   local vtop = "SimTop"
   local build_dir = path.join(abs_base, "build")
+  local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
+  if new_build_dir then build_dir = path.absolute(new_build_dir) end
+
   local comp_dir = path.join(abs_base, "sim", "emu", "comp")
   if not os.exists(comp_dir) then os.mkdir(comp_dir) end
   local dpi_export_dir = path.join(comp_dir, "dpi_export")
@@ -37,7 +40,8 @@ function emu_comp(num_cores)
       dramsim3 = option.get("dramsim3"), enable_perf = not option.get("no_perf"),
       socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
       core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
-      legacy = option.get("legacy"), jar = option.get("jar")
+      legacy = option.get("legacy"), jar = option.get("jar"),
+      build_dir = build_dir
     })
     local vsrc = os.files(path.join(design_vsrc, "*v"))
     table.join2(vsrc, os.files(path.join(difftest_vsrc, "*v")))
@@ -61,8 +65,11 @@ function emu_comp(num_cores)
   end,{
     files = chisel_dep_srcs,
     dependfile = path.join("out", "chisel.verilator.dep"),
-    dryrun = option.get("rebuild")
+    dryrun = option.get("rebuild"),
+    values = {os.getenv("BUILD_DIR")}
   })
+
+  assert(#os.files(path.join(design_vsrc, "*v")) > 0, "[verilator.lua] [emu_comp] rtl dir(`%s`) is empty!", design_vsrc)
 
   local vsrc = os.files(path.join(design_vsrc, "*v"))
   table.join2(vsrc, os.files(path.join(difftest_vsrc, "*v")))
@@ -195,7 +202,8 @@ function emu_comp(num_cores)
     os.execv(os.shell(), { "verilator_cmd.sh" })
   end, {
     files = verilator_depends_files,
-    dependfile = path.join(comp_dir, "verilator.ln.dep")
+    dependfile = path.join(comp_dir, "verilator.ln.dep"),
+    values = {os.getenv("BUILD_DIR")}
   })
 
   local gmake_depend_files = csrc

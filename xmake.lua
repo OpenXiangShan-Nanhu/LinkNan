@@ -27,7 +27,7 @@ task("soc" , function()
       {'L', "l3", "kv", "full", "define L3 config"},
       {'N', "noc", "kv", "full", "define noc config"},
       {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
-      {'o', "out_dir", "kv", "build/rtl", "assign build dir"},
+      {'o', "build_dir", "kv", nil, "assign build dir"},
       {'j', "jobs", "kv", "16", "post-compile process jobs"}
     }
   }
@@ -35,7 +35,7 @@ task("soc" , function()
 
   on_run(function()
     import("core.base.option")
-    print(option.get("options"))
+
     local exec = "mill"
     if option.get("jar") ~= "" then
       exec = "java"
@@ -59,29 +59,31 @@ task("soc" , function()
     if option.get("lua_scoreboard") then table.join2(chisel_opts, {"--lua-scoreboard"}) end
     if option.get("hardware_assertion") then table.join2(chisel_opts, {"--enable-hardware-assertion"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
-    if option.get("prefix") ~= "" then table.join2(chisel_opts, {"--prefix", option.get("prefix")}) end
-    local build_dir = path.join("build", "rtl")
-    if not option.get("sim") and not option.get("release") then build_dir = option.get("out_dir") end
     if option.get("sim") then os.setenv("NOOP_HOME", os.curdir()) end
+    if option.get("prefix") ~= "" then table.join2(chisel_opts, {"--prefix", option.get("prefix")}) end
+
+    local build_dir = path.join("build")
+    local rtl_dir = path.join(build_dir, "rtl")
+
     table.join2(chisel_opts, {"--core", option.get("core")})
     table.join2(chisel_opts, {"--l3", option.get("l3")})
     table.join2(chisel_opts, {"--noc", option.get("noc")})
     table.join2(chisel_opts, {"--socket", option.get("socket")})
-    table.join2(chisel_opts, {"--throw-on-first-error", "--target", "systemverilog", "--full-stacktrace", "-td", build_dir})
+    table.join2(chisel_opts, {"--throw-on-first-error", "--target", "systemverilog", "--full-stacktrace", "-td", rtl_dir})
     if os.host() == "windows" then
       os.execv(os.shell(), table.join({exec}, chisel_opts))
     else
       os.execv(exec, chisel_opts)
     end
 
-    os.rm(path.join(build_dir, "firrtl_black_box_resource_files.f"))
-    os.rm(path.join(build_dir, "filelist.f"))
-    os.rm(path.join(build_dir, "extern_modules.sv"))
+    os.rm(path.join(rtl_dir, "firrtl_black_box_resource_files.f"))
+    os.rm(path.join(rtl_dir, "filelist.f"))
+    os.rm(path.join(rtl_dir, "extern_modules.sv"))
 
     local py_exec = "python3"
     if os.host() == "windows" then py_exec = "python" end
     local pcmp_scr_path = path.join("scripts", "linknan", "postcompile.py")
-    local postcompile_opts = {pcmp_scr_path, build_dir, "-j", option.get("jobs")}
+    local postcompile_opts = {pcmp_scr_path, rtl_dir, "-j", option.get("jobs")}
     if option.get("vcs") then table.join2(postcompile_opts, {"--vcs"}) end
     os.execv(py_exec, postcompile_opts)
 
@@ -93,6 +95,17 @@ task("soc" , function()
     local rel_scr_path = { path.join("scripts", "linknan", "release.py") }
     table.join2(rel_opts, harden_table)
     if option.get("release") then os.execv(py_exec, table.join2(rel_scr_path, rel_opts)) end
+
+    -- new_build_dir can be set by `--build_dir=<xxx>` or by setting environment variable `BUILD_DIR`
+    -- To make this easier, you can set environment variable `BUILD_DIR` using `export BUILD_DIR=<xxx>` and 
+    -- the subsequent `xmake` command will use the environment variable.
+    local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
+    if not option.get("release") and new_build_dir and path.absolute(build_dir) ~= path.absolute(new_build_dir) then
+      assert(new_build_dir ~= "", "build_dir(`%s`) is not a valid value!", new_build_dir)
+
+      -- Rename build dir to user assigned dir
+      os.mv("build", new_build_dir)
+    end
   end)
 end)
 
@@ -118,7 +131,8 @@ task("emu", function()
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
-      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"}
+      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
+      {'o', "build_dir", "kv", nil, "assign build dir"}
     }
   }
 
@@ -152,17 +166,24 @@ task("emu-run", function ()
       {'r', "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
       {'s', "seed", "kv", "1234", "random seed"},
-      {nil, "case_name", "kv", nil, "user defined case name"}
+      {nil, "case_name", "kv", nil, "user defined case name"},
+      {'o', "build_dir", "kv", nil, "assign build dir"},
     }
   }
 
   on_run(function()
+    import("core.base.option")
+
     -- Set verilua env
     os.setenv("VERILUA_CFG", path.join(os.scriptdir(), "scripts", "verilua", "cfg.lua"))
     os.setenv("LUA_SCRIPT", path.join(os.scriptdir(), "scripts", "verilua", "main.lua"))
     os.setenv("SIM", "verilator")
     os.setenv("PRJ_TOP", os.scriptdir())
     os.setenv("SOC_CFG_FILE", path.join(os.scriptdir(), "build", "generated-src", "soc.lua"))
+    local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
+    if new_build_dir then
+      os.setenv("SOC_CFG_FILE", path.join(new_build_dir, "generated-src", "soc.lua"))
+    end
 
     import("scripts.xmake.verilator").emu_run()
   end)
@@ -186,7 +207,8 @@ task("simv", function()
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
-      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"}
+      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
+      {'o', "build_dir", "kv", nil, "assign build dir"}
     }
   }
 
@@ -214,17 +236,24 @@ task("simv-run", function ()
       {nil, "case_dir", "kv", "ready-to-run", "image base dir"},
       {'r', "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
-      {nil, "case_name", "kv", nil, "user defined case name"}
+      {nil, "case_name", "kv", nil, "user defined case name"},
+      {'o', "build_dir", "kv", nil, "assign build dir"}
     }
   }
 
   on_run(function()
+    import("core.base.option")
+
     -- Set verilua env
     os.setenv("VERILUA_CFG", path.join(os.scriptdir(), "scripts", "verilua", "cfg.lua"))
     os.setenv("LUA_SCRIPT", path.join(os.scriptdir(), "scripts", "verilua", "main.lua"))
     os.setenv("SIM", "vcs")
     os.setenv("PRJ_TOP", os.scriptdir())
     os.setenv("SOC_CFG_FILE", path.join(os.scriptdir(), "build", "generated-src", "soc.lua"))
+    local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
+    if new_build_dir then
+      os.setenv("SOC_CFG_FILE", path.join(new_build_dir, "generated-src", "soc.lua"))
+    end
 
     import("scripts.xmake.vcs").simv_run()
   end)

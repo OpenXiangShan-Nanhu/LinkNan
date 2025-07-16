@@ -12,18 +12,22 @@ function simv_comp(num_cores)
   end
 
   local abs_base = os.curdir()
+  local build_dir = path.join(abs_base, "build")
+  local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
+  if new_build_dir then build_dir = path.absolute(new_build_dir) end
+
   local chisel_dep_srcs = os.filedirs(path.join(abs_base, "src", "**.scala"))
   table.join2(chisel_dep_srcs, os.filedirs(path.join(abs_base, "dependencies", "**.scala")))
   table.join2(chisel_dep_srcs, {path.join(abs_base, "build.sc")})
   table.join2(chisel_dep_srcs, {path.join(abs_base, "xmake.lua")})
   if option.get("jar") ~= "" then chisel_dep_srcs = option.get("jar") end
 
-  local build_dir = path.join(abs_base, "build")
   local comp_dir = path.join(abs_base, "sim", "simv", "comp")
   if not os.exists(comp_dir) then os.mkdir(comp_dir) end
   local dpi_export_dir = path.join(comp_dir, "dpi_export")
-  local design_vsrc = path.join(abs_base, "build", "rtl")
-  local design_gen_dir = path.join(abs_base, "build", "generated-src")
+  local design_vsrc = path.join(build_dir, "rtl")
+
+  local design_gen_dir = path.join(build_dir, "generated-src")
   local difftest = path.join(abs_base, "dependencies", "difftest")
   local difftest_vsrc = path.join(difftest, "src", "test", "vsrc")
   local difftest_vsrc_common = path.join(difftest_vsrc, "common")
@@ -41,7 +45,8 @@ function simv_comp(num_cores)
       vcs = true, sim = true, config = option.get("config"),
       socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
       core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
-      legacy = option.get("legacy"), jar = option.get("jar")
+      legacy = option.get("legacy"), jar = option.get("jar"),
+      build_dir = build_dir
     })
     local vsrc = os.files(path.join(design_vsrc, "*v"))
     table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
@@ -66,8 +71,11 @@ function simv_comp(num_cores)
   end,{
     files = chisel_dep_srcs,
     dependfile = path.join("out", "chisel.simv.dep"),
-    dryrun = option.get("rebuild")
+    dryrun = option.get("rebuild"),
+    values = {os.getenv("BUILD_DIR")}
   })
+
+  assert(#os.files(path.join(design_vsrc, "*v")) > 0, "[vcs.lua] [simv_comp] rtl dir(`%s`) is empty!", design_vsrc)
 
   local vsrc = os.files(path.join(design_vsrc, "*v"))
   table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
@@ -195,7 +203,8 @@ function simv_comp(num_cores)
   end, {
     files = depend_srcs,
     dependfile = path.join(comp_dir, "simv.ln.dep"),
-    dryrun = option.get("rebuild")
+    dryrun = option.get("rebuild"),
+    values = {os.getenv("BUILD_DIR")}
   })
 end
 
