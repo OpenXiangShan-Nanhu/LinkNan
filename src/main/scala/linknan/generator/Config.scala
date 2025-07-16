@@ -147,30 +147,6 @@ class MinimalNocConfig(socket: String) extends Config((site, here, up) => {
   )
 })
 
-class ExtremeNocConfig(socket: String) extends Config((site, here, up) => {
-  case ZJParametersKey => ZJParameters(
-    hnxBankOff = AddrConfig.interleaveOffset,
-    nodeParams = Seq(
-      NodeParam(nodeType = NodeType.CC, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
-      NodeParam(nodeType = NodeType.CC, socket = socket),
-
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 32, "default", "mem_0"))),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(1, 32, "default", "mem_1"))),
-      NodeParam(nodeType = NodeType.RI, axiDevParams = Some(AxiDeviceParams(0, 32, "default", "main", Some(AxiParams(idBits = 14))))),
-      NodeParam(nodeType = NodeType.HI, axiDevParams = Some(AxiDeviceParams(0, 8, "default", "main")), defaultHni = true),
-
-      NodeParam(nodeType = NodeType.CC, socket = socket),
-      NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 1),
-      NodeParam(nodeType = NodeType.CC, socket = socket),
-
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "default", "mem"))),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(1, 32, "default", "mem"))),
-      NodeParam(nodeType = NodeType.M),
-    )
-  )
-})
-
 class FpgaInnoSingleNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     hnxBankOff = AddrConfig.interleaveOffset,
@@ -375,7 +351,6 @@ object ConfigGenerater {
       case "fpga_inno_1" => new FpgaInnoSingleNocConfig(socket)
       case "fpga_bosc_1" => new FpgaBoscSingleNocConfig(socket)
       case "fpga_bosc_4" => new FpgaBoscQuadNocConfig(socket)
-      case "extreme" => new ExtremeNocConfig(socket)
       case _ =>
         require(requirement = false, s"not supported noc config: $noc")
         new MinimalNocConfig(socket)
