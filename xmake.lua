@@ -54,6 +54,7 @@ task("soc" , function()
     if option.get("legacy") then table.join2(chisel_opts, {"--legacy"}) end
     if not option.get("with_tfb") then table.join2(chisel_opts, {"--no-tfb"}) end
     if not option.get("clean_difftest") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--basic-difftest"}) end
+    if not option.get("clean_difftest") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--difftest-config", "EBINH"}) end
     if not option.get("clean_difftest") and not option.get("pldm_verilog") then table.join2(chisel_opts, {"--enable-difftest"}) end
     if not option.get("enable_perf") or option.get("release") then table.join2(chisel_opts, {"--fpga-platform"}) end
     if option.get("lua_scoreboard") then table.join2(chisel_opts, {"--lua-scoreboard"}) end

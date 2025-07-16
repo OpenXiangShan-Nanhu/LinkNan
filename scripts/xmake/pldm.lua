@@ -182,6 +182,7 @@ function pldm_comp(num_cores)
     if os.exists(build_dir) then os.rmdir(build_dir) end
     task.run("soc", {
       vcs = true, sim = true, config = option.get("config"),
+      pldm_verilog = true,
       socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
       core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
       legacy = option.get("legacy"), jar = option.get("jar"),
