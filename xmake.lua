@@ -182,7 +182,7 @@ task("emu-run", function ()
     os.setenv("SOC_CFG_FILE", path.join(os.scriptdir(), "build", "generated-src", "soc.lua"))
     local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
     if new_build_dir then
-      os.setenv("SOC_CFG_FILE", path.join(new_build_dir, "generated-src", "soc.lua"))
+      os.setenv("SOC_CFG_FILE", path.absolute(path.join(new_build_dir, "generated-src", "soc.lua")))
     end
 
     import("scripts.xmake.verilator").emu_run()
@@ -252,7 +252,7 @@ task("simv-run", function ()
     os.setenv("SOC_CFG_FILE", path.join(os.scriptdir(), "build", "generated-src", "soc.lua"))
     local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
     if new_build_dir then
-      os.setenv("SOC_CFG_FILE", path.join(new_build_dir, "generated-src", "soc.lua"))
+      os.setenv("SOC_CFG_FILE", path.absolute(path.join(new_build_dir, "generated-src", "soc.lua")))
     end
 
     import("scripts.xmake.vcs").simv_run()
