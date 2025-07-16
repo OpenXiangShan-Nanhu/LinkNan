@@ -276,7 +276,8 @@ task("pldm", function()
       {'C', "core", "kv", "full", "define cpu core config in soc"},
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
-      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"}
+      {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
+      {'o', "build_dir", "kv", nil, "assign build dir"}
     }
   }
 
@@ -301,7 +302,8 @@ task("pldm-run", function ()
       {'r', "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
       {nil, "case_dir", "kv", "ready-to-run", "image base dir"},
-      {nil, "case_name", "kv", nil, "user defined case name"}
+      {nil, "case_name", "kv", nil, "user defined case name"},
+      {'o', "build_dir", "kv", nil, "assign build dir"}
     }
   }
 

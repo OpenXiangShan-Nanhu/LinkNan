@@ -126,9 +126,12 @@ function pldm_comp(num_cores)
   if option.get("jar") ~= "" then chisel_dep_srcs = option.get("jar") end
 
   local build_dir = path.join(abs_dir, "build")
+  local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
+  if new_build_dir then build_dir = path.absolute(new_build_dir) end
+
   local comp_dir = path.join(abs_dir, "sim", "pldm", "comp")
   if not os.exists(comp_dir) then os.mkdir(comp_dir) end
-  local design_gen_dir = path.join(abs_dir, "build", "generated-src")
+  local design_gen_dir = path.join(build_dir, "generated-src")
   local dpi_export_dir = path.join(comp_dir, "dpi_export")
   local difftest_vsrc = path.join(abs_dir, "dependencies", "difftest", "src", "test", "vsrc")
   local difftest_csrc = path.join(abs_dir, "dependencies", "difftest", "src", "test", "csrc")
@@ -137,7 +140,7 @@ function pldm_comp(num_cores)
   local vsrc_dirs = if_debug({
     path.join(abs_dir, "scripts", "pldm", "debug_rtl")
   }, {
-    path.join(abs_dir, "build", "rtl"),
+    path.join(build_dir, "rtl"),
     path.join(difftest_vsrc, "common"),
     path.join(difftest_vsrc, "vcs")
   })
@@ -177,7 +180,8 @@ function pldm_comp(num_cores)
       vcs = true, sim = true, config = option.get("config"),
       socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
       core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
-      legacy = option.get("legacy"), jar = option.get("jar")
+      legacy = option.get("legacy"), jar = option.get("jar"),
+      build_dir = build_dir
     })
 
     -- if option.get("lua_scoreboard") then
@@ -199,7 +203,8 @@ function pldm_comp(num_cores)
   end,{
     files = chisel_dep_srcs,
     dependfile = path.join("out", "chisel.pldm.dep"),
-    dryrun = option.get("rebuild")
+    dryrun = option.get("rebuild"),
+    values = {os.getenv("BUILD_DIR")}
   })
 
   if option.get("lua_scoreboard") then
