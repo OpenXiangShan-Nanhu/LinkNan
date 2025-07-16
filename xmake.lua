@@ -132,7 +132,8 @@ task("emu", function()
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
       {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
-      {'o', "build_dir", "kv", nil, "assign build dir"}
+      {'o', "build_dir", "kv", nil, "assign build dir"},
+      {nil, "sim_dir", "kv", nil, "assign simulation dir"},
     }
   }
 
@@ -168,6 +169,7 @@ task("emu-run", function ()
       {'s', "seed", "kv", "1234", "random seed"},
       {nil, "case_name", "kv", nil, "user defined case name"},
       {'o', "build_dir", "kv", nil, "assign build dir"},
+      {nil, "sim_dir", "kv", nil, "assign simulation dir"},
     }
   }
 
@@ -208,7 +210,8 @@ task("simv", function()
       {'L', "l3", "kv", "small", "define L3 config"},
       {'N', "noc", "kv", "small", "define noc config"},
       {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
-      {'o', "build_dir", "kv", nil, "assign build dir"}
+      {'o', "build_dir", "kv", nil, "assign build dir"},
+      {nil, "sim_dir", "kv", nil, "assign simulation dir"},
     }
   }
 
@@ -237,7 +240,8 @@ task("simv-run", function ()
       {'r', "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
       {nil, "case_name", "kv", nil, "user defined case name"},
-      {'o', "build_dir", "kv", nil, "assign build dir"}
+      {'o', "build_dir", "kv", nil, "assign build dir"},
+      {nil, "sim_dir", "kv", nil, "assign simulation dir"},
     }
   }
 

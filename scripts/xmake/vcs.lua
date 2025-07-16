@@ -22,7 +22,11 @@ function simv_comp(num_cores)
   table.join2(chisel_dep_srcs, {path.join(abs_base, "xmake.lua")})
   if option.get("jar") ~= "" then chisel_dep_srcs = option.get("jar") end
 
-  local comp_dir = path.join(abs_base, "sim", "simv", "comp")
+  local sim_dir = path.join(abs_base, "sim")
+  local new_sim_dir = option.get("sim_dir") or os.getenv("SIM_DIR")
+  if new_sim_dir then sim_dir = path.absolute(new_sim_dir) end
+
+  local comp_dir = path.join(sim_dir, "simv", "comp")
   if not os.exists(comp_dir) then os.mkdir(comp_dir) end
   local dpi_export_dir = path.join(comp_dir, "dpi_export")
   local design_vsrc = path.join(build_dir, "rtl")
@@ -70,9 +74,9 @@ function simv_comp(num_cores)
     end
   end,{
     files = chisel_dep_srcs,
-    dependfile = path.join("out", "chisel.simv.dep"),
+    dependfile = path.join("out", "chisel.simv.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = {os.getenv("BUILD_DIR")}
+    values = {build_dir, sim_dir}
   })
 
   assert(#os.files(path.join(design_vsrc, "*v")) > 0, "[vcs.lua] [simv_comp] rtl dir(`%s`) is empty!", design_vsrc)
@@ -202,9 +206,9 @@ function simv_comp(num_cores)
     os.execv(os.shell(), { "vcs_cmd.sh" })
   end, {
     files = depend_srcs,
-    dependfile = path.join(comp_dir, "simv.ln.dep"),
+    dependfile = path.join(comp_dir, "simv.ln.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = {os.getenv("BUILD_DIR")}
+    values = {build_dir, sim_dir}
   })
 end
 
@@ -244,18 +248,31 @@ function simv_run()
   local case_name = path.basename(image_file)
   if option.get("case_name") ~= nil then case_name = option.get("case_name") end
 
-  local sim_dir = path.join("sim", "simv", case_name)
-  local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
-  local simv = path.join(sim_dir, "simv")
-  local daidir = path.join(sim_dir, "simv.daidir")
+  local sim_dir = path.join(abs_dir, "sim")
+  local new_sim_dir = option.get("sim_dir") or os.getenv("SIM_DIR")
+  if new_sim_dir then sim_dir = path.absolute(new_sim_dir) end
 
-  if not os.exists(sim_dir) then os.mkdir(sim_dir) end
+  local simv_sim_dir = path.join(sim_dir, "simv")
+  local simv_case_dir = path.join(simv_sim_dir, case_name)
+  local simv_comp_dir = path.join(simv_sim_dir, "comp")
+  local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
+  local simv = path.join(simv_case_dir, "simv")
+  local daidir = path.join(simv_case_dir, "simv.daidir")
+
+  if not os.exists(simv_comp_dir) then 
+    raise(format(
+      "[vcs.lua] [simv_run] comp_dir(`%s`) does not exist, maybe you should run `xmake vcs <flags>` first", 
+      simv_comp_dir
+    ))
+  end
+
+  if not os.exists(simv_case_dir) then os.mkdir(simv_case_dir) end
   if os.exists(simv) then os.rm(simv) end
   if os.exists(daidir) then os.rm(daidir) end
 
-  os.ln(path.join(abs_dir, "sim", "simv", "comp", "simv"), simv)
-  os.ln(path.join(abs_dir, "sim", "simv", "comp", "simv.daidir"), daidir)
-  os.cd(sim_dir)
+  os.ln(path.join(simv_comp_dir, "simv"), simv)
+  os.ln(path.join(simv_comp_dir, "simv.daidir"), daidir)
+  os.cd(simv_case_dir)
 
   local sh_str = "chmod +x simv" .. " && ( ./simv"
   if not option.get("no_dump") then
