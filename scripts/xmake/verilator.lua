@@ -18,13 +18,17 @@ function emu_comp(num_cores)
   local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
   if new_build_dir then build_dir = path.absolute(new_build_dir) end
 
-  local comp_dir = path.join(abs_base, "sim", "emu", "comp")
+  local sim_dir = path.join(abs_base, "sim")
+  local new_sim_dir = option.get("sim_dir") or os.getenv("SIM_DIR")
+  if new_sim_dir then sim_dir = path.absolute(new_sim_dir) end
+
+  local comp_dir = path.join(sim_dir, "emu", "comp")
   if not os.exists(comp_dir) then os.mkdir(comp_dir) end
   local dpi_export_dir = path.join(comp_dir, "dpi_export")
   local difftest = path.join(abs_base, "dependencies", "difftest")
   local comp_target = path.join(comp_dir, "emu")
-  local design_gen_dir = path.join(abs_base, "build", "generated-src")
-  local design_vsrc = path.join(abs_base, "build", "rtl")
+  local design_gen_dir = path.join(build_dir, "generated-src")
+  local design_vsrc = path.join(build_dir, "rtl")
   local difftest_vsrc = path.join(difftest, "src", "test", "vsrc", "common")
   local difftest_csrc = path.join(difftest, "src", "test", "csrc")
   local difftest_csrc_common = path.join(difftest_csrc, "common")
@@ -64,9 +68,9 @@ function emu_comp(num_cores)
     end
   end,{
     files = chisel_dep_srcs,
-    dependfile = path.join("out", "chisel.verilator.dep"),
+    dependfile = path.join("out", "chisel.verilator.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = {os.getenv("BUILD_DIR")}
+    values = {build_dir, sim_dir}
   })
 
   assert(#os.files(path.join(design_vsrc, "*v")) > 0, "[verilator.lua] [emu_comp] rtl dir(`%s`) is empty!", design_vsrc)
@@ -217,7 +221,8 @@ function emu_comp(num_cores)
     os.execv("make", make_opts)
   end, {
     files = gmake_depend_files,
-    dependfile = path.join(comp_dir, "emu.ln.dep")
+    dependfile = path.join(comp_dir, "emu.ln.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
+    values = {build_dir, sim_dir}
   })
 
   local emu_target = path.join(build_dir, "emu")
@@ -261,14 +266,27 @@ function emu_run()
   local case_name = path.basename(image_file)
   if option.get("case_name") ~= nil then case_name = option.get("case_name") end
 
-  local sim_dir = path.join("sim", "emu", case_name)
-  local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
-  local sim_emu = path.join(sim_dir, "emu")
+  local sim_dir = path.join(abs_dir, "sim")
+  local new_sim_dir = option.get("sim_dir") or os.getenv("SIM_DIR")
+  if new_sim_dir then sim_dir = path.absolute(new_sim_dir) end
 
-  if not os.exists(sim_dir) then os.mkdir(sim_dir) end
+  local emu_sim_dir = path.join(sim_dir, "emu")
+  local emu_case_dir = path.join(emu_sim_dir, case_name)
+  local emu_comp_dir = path.join(emu_sim_dir, "comp")
+  local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
+  local sim_emu = path.join(emu_case_dir, "emu")
+
+  if not os.exists(emu_comp_dir) then 
+    raise(format(
+      "[verilator.lua] [emu_run] comp_dir(`%s`) does not exist, maybe you should run `xmake verilator <flags>` first", 
+      emu_comp_dir
+    ))
+  end
+
+  if not os.exists(emu_case_dir) then os.mkdir(emu_case_dir) end
   if os.exists(sim_emu) then os.rm(sim_emu) end
-  os.ln(path.join(abs_dir, "sim", "emu", "comp", "emu"), sim_emu)
-  os.cd(sim_dir)
+  os.ln(path.join(emu_comp_dir, "emu"), sim_emu)
+  os.cd(emu_case_dir)
 
   local sh_str = "chmod +x emu" .. " && ( ./emu"
   if option.get("dump") then
