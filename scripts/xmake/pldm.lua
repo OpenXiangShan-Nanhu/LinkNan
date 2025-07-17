@@ -209,7 +209,7 @@ function pldm_comp(num_cores)
     files = chisel_dep_srcs,
     dependfile = path.join("out", "chisel.pldm.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = {os.getenv("BUILD_DIR"), os.getenv("SIM_DIR")}
+    values = table.join2({build_dir, sim_dir}, xmake.argv())
   })
 
   if option.get("lua_scoreboard") then
@@ -398,7 +398,8 @@ function pldm_run()
   end
   if not os.exists(pldm_case_dir) then os.mkdir(pldm_case_dir) end
 
-  os.cd(pldm_comp_dir)
+  os.cd(pldm_case_dir)
+  os.setenv("PLDM_COMP_DIR", pldm_comp_dir)
   local xsim_pre_flags = {
     "--xmsim", "-64", "+xcprof", "-profile", "-PROFTHREAD", 
     if_debug("", "-sv_lib " .. path.join(pldm_comp_dir, dpi_so_name)),
@@ -411,7 +412,7 @@ function pldm_run()
   local xsim_post_flags = {
     "--",
     "-input " .. path.join(pldm_scripts_dir, "run.tcl"),
-    "-l " .. path.join(sim_dir, format("run-%s-%s.log", case_name, io_run("date +%Y%m%d-%H%M%S")))
+    "-l " .. path.join(pldm_case_dir, format("run-%s-%s.log", case_name, io_run("date +%Y%m%d-%H%M%S")))
   }
 
   local xsim_flags = {}
