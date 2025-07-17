@@ -142,7 +142,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   linknan.devicetree.DeviceTreeGenerator.lnGenerate(clusterP)
 
   private val hasDifftest = (p(DebugOptionsKey).EnableDifftest || p(DebugOptionsKey).AlwaysBasicDiff) && !p(DebugOptionsKey).FPGAPlatform
-  private val gateways = Option.when(hasDifftest)(uncore.cluster.indices.map(idx => Module(new DifftestCoreGateWayCollector(idx, "LNTop"))))
+  private val gateways = Option.when(hasDifftest)(uncore.cluster.indices.map(idx => Module(new DifftestCoreGateWayCollector(idx, s"${xs.utils.GlobalData.prefix}LNTop"))))
   gateways.foreach(_.zipWithIndex.foreach({case(g, i) =>
     g.suggestName(s"difftest_core_gateway_$i")
     dontTouch(g.io)
