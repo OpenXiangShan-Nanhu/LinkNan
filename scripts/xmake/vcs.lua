@@ -111,6 +111,7 @@ function simv_comp(num_cores)
   for _, f in ipairs(vsrc) do
     vsrc_filelist_contents = vsrc_filelist_contents .. f .. "\n"
   end
+  os.tryrm(vsrc_filelist_path)
   io.writefile(vsrc_filelist_path, vsrc_filelist_contents)
 
   local csrc_filelist_path = path.join(comp_dir, "csrc.f")
@@ -118,6 +119,7 @@ function simv_comp(num_cores)
   for _, f in ipairs(csrc) do
     csrc_filelist_contents = csrc_filelist_contents .. f .. "\n"
   end
+  os.tryrm(csrc_filelist_path)
   io.writefile(csrc_filelist_path, csrc_filelist_contents)
 
   local cxx_flags = "-std=c++17 -static -Wall -DNUM_CORES=" .. num_cores
