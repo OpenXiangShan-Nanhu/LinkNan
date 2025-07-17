@@ -188,8 +188,14 @@ function pldm_comp(num_cores)
       build_dir = build_dir
     })
 
+    vsrc = {}
+    csrc = {}
     for _, p in ipairs(vsrc_dirs) do
       table.join2(vsrc, os.files(path.join(p, "*v")))
+    end
+    for _, p in ipairs(csrc_dirs) do
+      table.join2(csrc, os.files(path.join(p, "*.cpp")))
+      table.join2(csrc, os.files(path.join(p, "*.c")))
     end
 
     if option.get("lua_scoreboard") then
