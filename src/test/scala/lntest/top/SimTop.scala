@@ -19,6 +19,7 @@ package lntest.top
 import org.chipsalliance.cde.config.Parameters
 import chisel3.stage.ChiselGeneratorAnnotation
 import chisel3._
+import chisel3.util.experimental.BoringUtils
 import chisel3.util.{MixedVec, ReadyValidIO}
 import lntest.peripheral.SimJTAG
 import org.chipsalliance.diplomacy.lazymodule._
@@ -181,7 +182,7 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
 
 
   if(!doBlockTest) {
-    val difftest = DifftestModule.lntop_createTopIOs(soc.difftest.exit, soc.difftest.step)
+    val difftest = DifftestModule.lntop_createTopIOs(BoringUtils.tapAndRead(soc.exit), BoringUtils.tapAndRead(soc.step))
     difftest.uart <> simMMIO.get.io.uart
   }
 

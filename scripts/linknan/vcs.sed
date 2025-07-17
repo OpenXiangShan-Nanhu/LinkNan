@@ -7,6 +7,8 @@ s/(^\s*)(reg\s+(\[[^]]+\]\s+)?(ridx_gray|widx_gray|src_v|src_d|sink_d)\b\s*[;=])
 /^  .*DummyDPICWrapper/{:L0; N; /;/!b L0; s/;/;\n`endif/ };
 /^  .*DelayReg(_[0-9]*)? difftest/i\`ifndef SYNTHESIS
 /^  .*DelayReg(_[0-9]*)? difftest/{:L1; N; /;/!b L1; s/;/;\n`endif/ };
+/^  .*DifftestCoreGateWayCollector(_[0-9]*)? difftest/i\`ifndef SYNTHESIS
+/^  .*DifftestCoreGateWayCollector(_[0-9]*)? difftest/{:L1; N; /;/!b L1; s/;/;\n`endif/ };
 /^  .*TrafficBoard[a-zA-Z0-9_]+ cosim_.*/i\`ifndef SYNTHESIS
 /^  .*TrafficBoard[a-zA-Z0-9_]+ cosim_.*/{:L1; N; /;/!b L1; s/;/;\n`endif/ };
 /^ *[a-zA-Z0-9_]*:$/i\`ifndef SYNTHESIS

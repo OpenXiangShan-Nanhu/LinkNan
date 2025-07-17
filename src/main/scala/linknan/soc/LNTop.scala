@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.experimental.hierarchy.{Definition, Instance}
 import chisel3.util.{log2Ceil, log2Up}
 import coupledL2.tl2chi.{CHIAddrWidthKey, CHIIssue, DecoupledCHI, Issue}
+import difftest.DifftestModule
 import xs.utils.cache.{EnableCHI, L1Param, L2Param}
 import freechips.rocketchip.tile.MaxHartIdBits
 import linknan.cluster.{BlockTestIO, CpuCluster}
@@ -20,9 +21,8 @@ import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey
 import xs.utils.sram.SramCtrlBundle
 import zhujiang.axi.AxiUtils
 import zhujiang.{NocIOHelper, ZJParametersKey, ZJRawModule}
-import difftest.gateway._
-import difftest._
-import scala.collection.mutable.ListBuffer
+import linknan.utils.DifftestCoreGateWayCollector
+
 
 object GlobalStaticParameters {
   var lnParams:LinkNanParams = null
@@ -127,10 +127,6 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   val core = Option.when(p(LinkNanParamsKey).removeCore)(IO(Vec(uncore.cluster.size, new BlockTestIO(ccGen.btIoParams.get))))
   val ccns = uncore.cluster.map(_.socket.node)
 
-  val instanceSeq = ListBuffer.empty[(DifftestBundle, Int)]
-
-  val probe_reset = Wire(Vec(uncore.cluster.length, Bool()))
-
   for((ccn, idx) <- uncore.cluster.zipWithIndex) {
     val clusterId = ccn.socket.node.clusterId
     val cc = Instance(ccDef)
@@ -142,30 +138,30 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
       val cid = clusterId + i
       if(p(LinkNanParamsKey).removeCore) core.get(cid) <> cc.btio.get
     }
-
-    cc.probeDiff.getInstanceSeq.foreach {
-      case inst =>
-        instanceSeq += inst
-    }
-    probe_reset(idx) := cc.probe_reset
   }
   linknan.devicetree.DeviceTreeGenerator.lnGenerate(clusterP)
 
-  val difftest = IO(new Bundle {
-    val exit = Output(UInt(64.W))
-    val step = Output(UInt(64.W))
-  })
-  dontTouch(difftest)
-
-  withClockAndReset(io.cluster_clocks.head, probe_reset.head.asAsyncReset) {
-    val difftestMacros = Seq(
-      s"DEBUG_MEM_BASE 0x${p(LinkNanParamsKey).debugBase.toHexString}",
-      s"DEFAULT_EMU_RAM_SIZE 0x${(8L * 1024 * 1024 * 1024).toHexString}UL",
-      s"NUM_CORES ${uncore.cluster.length}"
-    )
-    val (exit, step) = DifftestModule.lntop_finish("XiangShan", difftestMacros, instanceSeq.toSeq)
-
-    difftest.exit := exit.getOrElse(0.U)
-    difftest.step := step.getOrElse(0.U)
+  private val hasDifftest = (p(DebugOptionsKey).EnableDifftest || p(DebugOptionsKey).AlwaysBasicDiff) && !p(DebugOptionsKey).FPGAPlatform
+  private val gateways = Option.when(hasDifftest)(uncore.cluster.indices.map(idx => Module(new DifftestCoreGateWayCollector(idx, "LNTop"))))
+  gateways.foreach(_.zipWithIndex.foreach({case(g, i) =>
+    g.suggestName(s"difftest_core_gateway_$i")
+    dontTouch(g.io)
+  }))
+  private val difftestMacros = Seq(
+    s"DEBUG_MEM_BASE 0x${p(LinkNanParamsKey).debugBase.toHexString}",
+    s"DEFAULT_EMU_RAM_SIZE 0x${(8L * 1024 * 1024 * 1024).toHexString}UL",
+    s"NUM_CORES ${uncore.cluster.length}"
+  )
+  private val probeSeq = gateways.map(_.flatMap(_.io.probe.getInstanceSeq).toSeq)
+  val exit = WireInit(0.U(64.W))
+  val step = WireInit(0.U(64.W))
+  if(hasDifftest) {
+    withClockAndReset(io.noc_clock, io.reset) {
+      val (_exit, _step) = DifftestModule.lntop_finish("XiangShan", difftestMacros, probeSeq.get)
+      exit := _exit.getOrElse(0.U)
+      step := _step.getOrElse(0.U)
+    }
   }
+  dontTouch(exit)
+  dontTouch(step)
 }

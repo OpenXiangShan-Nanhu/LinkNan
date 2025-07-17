@@ -60,8 +60,8 @@ task("soc" , function()
     if option.get("lua_scoreboard") then table.join2(chisel_opts, {"--lua-scoreboard"}) end
     if option.get("hardware_assertion") then table.join2(chisel_opts, {"--enable-hardware-assertion"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
-    if option.get("sim") then os.setenv("NOOP_HOME", os.curdir()) end
     if option.get("prefix") ~= "" then table.join2(chisel_opts, {"--prefix", option.get("prefix")}) end
+    os.setenv("NOOP_HOME", os.curdir())
 
     local build_dir = path.join("build")
     local rtl_dir = path.join(build_dir, "rtl")
