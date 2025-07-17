@@ -181,13 +181,8 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
 
 
   if(!doBlockTest) {
-    val difftestMacros = Seq(
-      s"DEBUG_MEM_BASE 0x${p(LinkNanParamsKey).debugBase.toHexString}",
-      s"DEFAULT_EMU_RAM_SIZE 0x${(8L * 1024 * 1024 * 1024).toHexString}UL",
-      s"NUM_CORES ${soc.ccns.map(_.cpuNum).sum}"
-    )
-    val difftest = DifftestModule.finish("XiangShan", difftestMacros)
-    difftest.uart <> simMMIO.get.io.uart  // workaround for kmh difftest wrapper
+    val difftest = DifftestModule.lntop_createTopIOs(soc.difftest.exit, soc.difftest.step)
+    difftest.uart <> simMMIO.get.io.uart
   }
 
   DeviceTreeGenerator.simGenerate

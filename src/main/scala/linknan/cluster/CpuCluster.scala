@@ -13,6 +13,7 @@ import org.chipsalliance.cde.config.Parameters
 import xiangshan.cache.DCacheIO
 import xijiang.{Node, NodeType}
 import zhujiang.{ZJParametersKey, ZJRawModule}
+import difftest.gateway._
 
 class BlockTestIO(val params:BlockTestIOParams)(implicit p:Parameters) extends Bundle {
   val clock = Output(Clock())
@@ -66,6 +67,47 @@ class CpuCluster(node:Node)(implicit p:Parameters) extends LazyModule {
       case w: NoCoreWrapper => btio.get <> w.module.btio
       case w: DCacheCoreWrapper => btio.get <> w.module.btio
       case _ => None
+    }
+
+    // Difftest
+    @public val probeDiff = IO(Output(new CoreGatewayBundle))
+    @public val probe_reset = IO(Output(Bool()))
+    probe_reset := hub.io.cpu.reset.asBool
+    tile match {
+      case w: NanhuCoreWrapper => {
+        import chisel3.util.experimental._
+        import difftest.gateway._
+        
+        CoreGateway.PrintGateway()
+
+        probeDiff.archEvent := BoringUtils.tapAndRead(CoreGateway.getOne("difftestArchEvent"))
+        probeDiff.instrCommit.zipWithIndex.foreach {
+          case (cmt, idx) => cmt := BoringUtils.tapAndRead(CoreGateway.getOne(s"difftestInstrCommit_${idx}"))
+        }
+        probeDiff.intWriteback.zipWithIndex.foreach {
+          case (wb, idx) => wb := BoringUtils.tapAndRead(CoreGateway.getOne(s"difftestIntWriteback_${idx}"))
+        }
+        probeDiff.fpWriteback.zipWithIndex.foreach {
+          case (wb, idx) => wb := BoringUtils.tapAndRead(CoreGateway.getOne(s"difftestFpWriteback_${idx}"))
+        }
+        probeDiff.vecWriteback.zipWithIndex.foreach {
+          case (wb, idx) => wb := BoringUtils.tapAndRead(CoreGateway.getOne(s"difftestVecWriteback_${idx}"))
+        }
+        probeDiff.vecV0Writeback.zipWithIndex.foreach {
+          case (wb, idx) => wb := BoringUtils.tapAndRead(CoreGateway.getOne(s"difftestVecV0Writeback_${idx}"))
+        }
+        probeDiff.csrState := BoringUtils.tapAndRead(CoreGateway.getOne("difftestCSRState"))
+        probeDiff.hcsrState := BoringUtils.tapAndRead(CoreGateway.getOne("difftestHCSRState"))
+        probeDiff.debugMode := BoringUtils.tapAndRead(CoreGateway.getOne("difftestDebugMode"))
+        probeDiff.triggerCSRState := BoringUtils.tapAndRead(CoreGateway.getOne("difftestTriggerCSRState"))
+        probeDiff.fpCSRState := BoringUtils.tapAndRead(CoreGateway.getOne("difftestFpCSRState"))
+        probeDiff.archIntRegState := BoringUtils.tapAndRead(CoreGateway.getOne("difftestArchIntRegState"))
+        probeDiff.archFpRegState := BoringUtils.tapAndRead(CoreGateway.getOne("difftestArchFpRegState"))
+        probeDiff.nonRegInterruptPendingEvent := BoringUtils.tapAndRead(CoreGateway.getOne("difftestNonRegInterruptPendingEvent"))
+        probeDiff.trapEvent := BoringUtils.tapAndRead(CoreGateway.getOne("difftestTrapEvent"))
+        probeDiff.lrscEvent := BoringUtils.tapAndRead(CoreGateway.getOne("difftestLrScEvent"))
+      }
+      case _ => probeDiff := DontCare
     }
   }
 }
