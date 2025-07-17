@@ -29,9 +29,9 @@ class LnCrg extends Module {
     val out_clk_div2 = Output(Clock())
   })
   private val clk_div_2 = Module(new ClkDiv2)
-  clk_div_2.io.clock := io.in_clk
+  clk_div_2.io.CK := io.in_clk
   io.out_clk_full := io.in_clk
-  io.out_clk_div2 := clk_div_2.io.out
+  io.out_clk_div2 := clk_div_2.io.Q
 }
 
 class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper

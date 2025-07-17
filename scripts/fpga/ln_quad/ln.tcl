@@ -91,16 +91,4 @@ create_ip_run [get_files -of_objects [get_fileset sources_1] $bd_file]
 set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
 set_property STEPS.INIT_DESIGN.TCL.POST [get_files $te_tcl -of [get_fileset utils_1]] [get_runs impl_*]
 
-launch_runs synth_1 -job 8
-reset_runs ln_quad_ln_0_synth_1
-reset_runs synth_1
-wait_on_runs CpuCluster_0_synth_1
-
-launch_runs ln_quad_ln_0_synth_1
-wait_on_runs ln_quad_ln_0_synth_1
-
-launch_runs synth_1
-wait_on_runs synth_1
-
-launch_runs impl_1 -job 8
-wait_on_runs impl_1
+source scr/runs.tcl

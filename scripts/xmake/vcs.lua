@@ -76,7 +76,7 @@ function simv_comp(num_cores)
     files = chisel_dep_srcs,
     dependfile = path.join("out", "chisel.simv.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = {build_dir, sim_dir}
+    values = table.join2({build_dir, sim_dir}, xmake.argv())
   })
 
   assert(#os.files(path.join(design_vsrc, "*v")) > 0, "[vcs.lua] [simv_comp] rtl dir(`%s`) is empty!", design_vsrc)
@@ -111,6 +111,7 @@ function simv_comp(num_cores)
   for _, f in ipairs(vsrc) do
     vsrc_filelist_contents = vsrc_filelist_contents .. f .. "\n"
   end
+  os.tryrm(vsrc_filelist_path)
   io.writefile(vsrc_filelist_path, vsrc_filelist_contents)
 
   local csrc_filelist_path = path.join(comp_dir, "csrc.f")
@@ -118,6 +119,7 @@ function simv_comp(num_cores)
   for _, f in ipairs(csrc) do
     csrc_filelist_contents = csrc_filelist_contents .. f .. "\n"
   end
+  os.tryrm(csrc_filelist_path)
   io.writefile(csrc_filelist_path, csrc_filelist_contents)
 
   local cxx_flags = "-std=c++17 -static -Wall -DNUM_CORES=" .. num_cores
@@ -208,7 +210,7 @@ function simv_comp(num_cores)
     files = depend_srcs,
     dependfile = path.join(comp_dir, "simv.ln.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = {build_dir, sim_dir}
+    values = table.join2({build_dir, sim_dir}, xmake.argv())
   })
 end
 

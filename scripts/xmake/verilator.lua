@@ -70,7 +70,7 @@ function emu_comp(num_cores)
     files = chisel_dep_srcs,
     dependfile = path.join("out", "chisel.verilator.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = {build_dir, sim_dir}
+    values = table.join2({build_dir, sim_dir}, xmake.argv())
   })
 
   assert(#os.files(path.join(design_vsrc, "*v")) > 0, "[verilator.lua] [emu_comp] rtl dir(`%s`) is empty!", design_vsrc)
@@ -104,6 +104,7 @@ function emu_comp(num_cores)
   for _, f in ipairs(vsrc) do
     vsrc_filelist_contents = vsrc_filelist_contents .. f .. "\n"
   end
+  os.tryrm(vsrc_filelist_path)
   io.writefile(vsrc_filelist_path, vsrc_filelist_contents)
 
   local csrc_filelist_path = path.join(comp_dir, "csrc.f")
@@ -111,6 +112,7 @@ function emu_comp(num_cores)
   for _, f in ipairs(csrc) do
     csrc_filelist_contents = csrc_filelist_contents .. f .. "\n"
   end
+  os.tryrm(csrc_filelist_path)
   io.writefile(csrc_filelist_path, csrc_filelist_contents)
 
   local cxx_flags = "-std=c++17 -DVERILATOR -DNUM_CORES=" .. num_cores
@@ -206,8 +208,8 @@ function emu_comp(num_cores)
     os.execv(os.shell(), { "verilator_cmd.sh" })
   end, {
     files = verilator_depends_files,
-    dependfile = path.join(comp_dir, "verilator.ln.dep"),
-    values = {os.getenv("BUILD_DIR")}
+    dependfile = path.join(comp_dir, "verilator.ln.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
+    values = table.join2({build_dir, sim_dir}, xmake.argv())
   })
 
   local gmake_depend_files = csrc
@@ -222,7 +224,7 @@ function emu_comp(num_cores)
   end, {
     files = gmake_depend_files,
     dependfile = path.join(comp_dir, "emu.ln.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
-    values = {build_dir, sim_dir}
+    values = table.join2({build_dir, sim_dir}, xmake.argv())
   })
 
   local emu_target = path.join(build_dir, "emu")
