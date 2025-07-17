@@ -14,7 +14,7 @@ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 sy
 create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 ddr
 
 set_property -dict [list \
-  CONFIG.CONST_VAL {0x80000000} \
+  CONFIG.CONST_VAL {0x10000000} \
   CONFIG.CONST_WIDTH {48} \
 ] [get_bd_cells boot_addr]
 
@@ -112,4 +112,5 @@ connect_bd_net [get_bd_pins ln/io_ext_intr] [get_bd_pins intr_cat/dout]
 regenerate_bd_layout
 
 assign_bd_address
+set_property offset 0x10000000 [get_bd_addr_segs {ln/m_axi_cfg/SEG_axi_bram_ctrl_0_Mem0}]
 set_property offset 0x310B0000 [get_bd_addr_segs {ln/m_axi_cfg/SEG_axi_uart16550_0_Reg}]
