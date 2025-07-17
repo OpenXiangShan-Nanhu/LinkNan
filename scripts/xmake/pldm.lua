@@ -176,7 +176,6 @@ function pldm_comp(num_cores)
     table.join2(csrc, os.files(path.join(difftest_csrc_difftest, "*.cpp")))
   end
 
-  -- TODO: Lua scoreboard
   depend.on_changed(function ()
     log("[pldm_comp]", "change detected! start compiling `soc`...")
     if os.exists(build_dir) then os.rmdir(build_dir) end
@@ -189,22 +188,26 @@ function pldm_comp(num_cores)
       build_dir = build_dir
     })
 
-    -- if option.get("lua_scoreboard") then
-    --   local dpi_cfg_lua = path.join(abs_dir, "scripts", "verilua", "dpi_cfg.lua")
-    --   if os.exists(dpi_export_dir) then os.rmdir(dpi_export_dir) end
-    --   os.mkdir(dpi_export_dir)
-    --   local dpi_exp_opts =  {"dpi_exporter"}
-    --   table.join2(dpi_exp_opts, {"--config", dpi_cfg_lua})
-    --   table.join2(dpi_exp_opts, {"--out-dir", dpi_export_dir})
-    --   table.join2(dpi_exp_opts, {"--work-dir", dpi_export_dir})
-    --   table.join2(dpi_exp_opts, {"-I", design_gen_dir})
-    --   table.join2(dpi_exp_opts, {"--quiet"})
-    --   table.join2(dpi_exp_opts, {"--tb_top", "tb_top"})
-    --   table.join2(dpi_exp_opts, vsrc)
-    --   local cmd_file = path.join(comp_dir, "dpi_exp_cmd.sh")
-    --   io.writefile(cmd_file, table.concat(dpi_exp_opts, " "))
-    --   os.execv(os.shell(), { cmd_file })
-    -- end
+    for _, p in ipairs(vsrc_dirs) do
+      table.join2(vsrc, os.files(path.join(p, "*v")))
+    end
+
+    if option.get("lua_scoreboard") then
+      local dpi_cfg_lua = path.join(abs_dir, "scripts", "verilua", "dpi_cfg.lua")
+      if os.exists(dpi_export_dir) then os.rmdir(dpi_export_dir) end
+      os.mkdir(dpi_export_dir)
+      local dpi_exp_opts =  {"dpi_exporter"}
+      table.join2(dpi_exp_opts, {"--config", dpi_cfg_lua})
+      table.join2(dpi_exp_opts, {"--out-dir", dpi_export_dir})
+      table.join2(dpi_exp_opts, {"--work-dir", dpi_export_dir})
+      table.join2(dpi_exp_opts, {"-I", design_gen_dir})
+      table.join2(dpi_exp_opts, {"--quiet", "--pldm-gfifo-dpi"})
+      table.join2(dpi_exp_opts, {"--top", tb_top})
+      table.join2(dpi_exp_opts, vsrc)
+      local cmd_file = path.join(comp_dir, "dpi_exp_cmd.sh")
+      io.writefile(cmd_file, table.concat(dpi_exp_opts, " "))
+      os.execv(os.shell(), { cmd_file })
+    end
   end,{
     files = chisel_dep_srcs,
     dependfile = path.join("out", "chisel.pldm.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
@@ -214,13 +217,14 @@ function pldm_comp(num_cores)
 
   if option.get("lua_scoreboard") then
     vsrc = os.files(path.join(dpi_export_dir, "*v"))
-    table.join2(csrc, os.files(path.join(dpi_export_dir, "*cpp")))
   end
   assert(#vsrc > 0, "[pldm.lua] [pldm_comp] vsrc is empty")
 
   -- Generate filelist
   local vsrc_f = path.join(comp_dir, "vsrc.f")
   local csrc_f = path.join(comp_dir, "csrc.f")
+  os.tryrm(vsrc_f)
+  os.tryrm(csrc_f)
   io.writefile(vsrc_f, table.concat(vsrc, "\n"))
   io.writefile(csrc_f, table.concat(csrc, "\n"))
 
@@ -255,6 +259,10 @@ function pldm_comp(num_cores)
 
   if option.get("bypass_clockgate") then
     table.join2(macro_flags, {"+define+BYPASS_CLOCKGATE"})
+  end
+
+  if option.get("lua_scoreboard") then
+    table.join2(macro_flags, {"+define+DUT_CLEAN"})
   end
 
   if option.get("synthesis") then
@@ -295,6 +303,14 @@ function pldm_comp(num_cores)
           "-I" .. ixcom_dir, "-I" .. simtool_dir,
           "-DNUM_CORES=" .. num_cores
         }
+
+        if option.get("lua_scoreboard") then
+          local verilua_home = assert(os.getenv("VERILUA_HOME"), "[pldm.lua] [pldm_comp] error: VERILUA_HOME is not set!")
+          table.insert(pldm_cflags, "-DDPI_EXP_CALL_VERILUA_ENV_STEP")
+          table.join2(csrc, os.files(path.join(dpi_export_dir, "*cpp")))
+          table.insert(csrc, path.join(verilua_home, "src", "dummy_vpi", "dummy_vpi.cpp"))
+        end
+
         for _, inc in ipairs(cinc_dirs) do
           table.insert(pldm_cflags, "-I" .. inc) 
         end
@@ -319,6 +335,23 @@ function pldm_comp(num_cores)
           "-o " .. path.join(cc_build_dir, dpi_so_name), "-m64", "-shared"
         }
         local objs = os.files(path.join(cc_build_dir, "*.o"))
+        
+        if option.get("lua_scoreboard") then
+          local verilua_home = assert(os.getenv("VERILUA_HOME"), "[pldm.lua] [pldm_comp] error: VERILUA_HOME is not set!")
+          local verilua_shared = path.join(verilua_home, "shared")
+          local luajit_home = path.join(verilua_home, "luajit-pro", "luajit2.1")
+          local luajit_lib_home = path.join(luajit_home, "lib")
+
+          table.join2(pldm_ldflags, {
+            "-lverilua_vcs_dpi",
+            "-L" .. verilua_shared,
+            "-Wl,-rpath," .. verilua_shared,
+            "-lluajit-5.1",
+            "-L" .. luajit_lib_home,
+            "-Wl,-rpath," .. luajit_lib_home
+          })
+        end
+
         if #objs > 0 then
           table.join2(pldm_ldflags, objs)
           log("[pldm_comp]", "\tGenerate dpi shared library(total obj: %d)...", #objs)
@@ -331,10 +364,6 @@ function pldm_comp(num_cores)
         os.cp(path.join(cc_build_dir, dpi_so_name), path.join(comp_dir, dpi_so_name))
       end
       os.cd(os.curdir())
-
-      -- TODO:
-      -- if option.get("lua_scoreboard") then
-      -- end
     end
   end
 
