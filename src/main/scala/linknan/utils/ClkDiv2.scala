@@ -10,8 +10,7 @@ class ClkDiv2 extends BlackBox with HasBlackBoxInline {
     val Q = Output(Clock())
   })
   setInline(s"$desiredName.sv",
-    s"""
-       |module $desiredName (
+    s"""module ClkDiv2 (
        |  input  wire CK,
        |  output wire Q
        |);
@@ -22,8 +21,8 @@ class ClkDiv2 extends BlackBox with HasBlackBoxInline {
        |  initial out = 1'b0;
        |`endif
        |
-       |always @ (posedge clock) div <= ~div;
-       |always @ (posedge clock) out <= div;
+       |always @ (posedge CK) div <= ~div;
+       |always @ (posedge CK) out <= div;
        |
        |`ifndef __VIVADO__
        |assign Q = out;
