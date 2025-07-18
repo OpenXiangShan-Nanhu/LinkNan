@@ -6,9 +6,10 @@ import difftest.gateway.{CoreGateway, CoreGatewayBundle}
 
 import scala.collection.SeqMap
 import scala.collection.mutable
+import difftest.DifftestBaseBundle
 
 class DifftestCoreGateWayCollector(ccid:Int, path:String) extends BlackBox with HasBlackBoxInline {
-  override def desiredName = xs.utils.GlobalData.prefix + "DifftestCoreGateWayCollector"
+  override def desiredName = xs.utils.GlobalData.prefix + s"DifftestCoreGateWayCollector_cc_${ccid}"
   val io = IO(new Bundle {
     val probe = Output(new CoreGatewayBundle)
     val reset = Output(Bool())
@@ -38,22 +39,28 @@ class DifftestCoreGateWayCollector(ccid:Int, path:String) extends BlackBox with 
   }
   private def xmrIO(data:Data, sink:String, src:String): Unit = {
     data match {
-      case b: Bundle => b.elements.foreach({case(n, d) => xmrIO(d, s"${sink}_$n", s"${src}_$n")})
+      case b: DifftestBaseBundle => b.elements.foreach({
+        case (n, d) => if((b.hasValid && n.takeRight(5) == "valid") || n.takeRight(7) == "hasTrap") {
+          xmrIO(d, s"${sink}_$n", s"${src}_$n & ~$cc.tile.core.reset")
+        } else {
+          xmrIO(d, s"${sink}_$n", s"${src}_$n")
+        }
+      })
       case v: Vec[Data] => v.zipWithIndex.foreach({case(d, i) => xmrIO(d, s"${sink}_$i", s"${src}_$i")})
       case _ => if(data.getWidth != 0) xmrQueue.addOne(paStr(sink, src))
     }
   }
-  for((n ,d) <- io.probe.elements) {
+  for((n, d) <- io.probe.elements) {
     d match {
       case v: Vec[Data] => v.zipWithIndex.foreach({ case(d, i) =>
         val srcKey = s"difftest${n.capitalize}_$i"
-        val srcName = CoreGateway.getOne(srcKey).pathName.replace(s"${xs.utils.GlobalData.prefix}CpuCluster", cc)
+        val srcName = CoreGateway.getOne(srcKey).pathName.replace("inner.", "inner_").replace(s"${xs.utils.GlobalData.prefix}CpuCluster", cc)
         val sinkName = s"probe_${n}_$i"
         xmrIO(d, sinkName, srcName)
       })
       case d: Data =>
         val srcKey = s"difftest${n.capitalize}"
-        val srcName = CoreGateway.getOne(srcKey).pathName.replace(s"${xs.utils.GlobalData.prefix}CpuCluster", cc)
+        val srcName = CoreGateway.getOne(srcKey).pathName.replace("inner.", "inner_").replace(s"${xs.utils.GlobalData.prefix}CpuCluster", cc)
         val sinkName = s"probe_$n"
         xmrIO(d, sinkName, srcName)
     }

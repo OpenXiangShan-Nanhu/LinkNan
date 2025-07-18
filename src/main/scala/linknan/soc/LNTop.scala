@@ -22,6 +22,7 @@ import xs.utils.sram.SramCtrlBundle
 import zhujiang.axi.AxiUtils
 import zhujiang.{NocIOHelper, ZJParametersKey, ZJRawModule}
 import linknan.utils.DifftestCoreGateWayCollector
+import difftest.gateway.Gateway
 
 
 object GlobalStaticParameters {
@@ -142,7 +143,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   linknan.devicetree.DeviceTreeGenerator.lnGenerate(clusterP)
 
   private val hasDifftest = (p(DebugOptionsKey).EnableDifftest || p(DebugOptionsKey).AlwaysBasicDiff) && !p(DebugOptionsKey).FPGAPlatform
-  private val gateways = Option.when(hasDifftest)(uncore.cluster.indices.map(idx => Module(new DifftestCoreGateWayCollector(idx, s"${xs.utils.GlobalData.prefix}LNTop"))))
+  private val gateways = Option.when(Gateway.needEndpoint)(uncore.cluster.indices.map(idx => Module(new DifftestCoreGateWayCollector(idx, s"${xs.utils.GlobalData.prefix}LNTop"))))
   gateways.foreach(_.zipWithIndex.foreach({case(g, i) =>
     g.suggestName(s"difftest_core_gateway_$i")
     dontTouch(g.io)
@@ -155,12 +156,10 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   private val probeSeq = gateways.map(_.flatMap(_.io.probe.getInstanceSeq).toSeq)
   val exit = WireInit(0.U(64.W))
   val step = WireInit(0.U(64.W))
-  if(hasDifftest) {
-    withClockAndReset(io.noc_clock, io.reset) {
-      val (_exit, _step) = DifftestModule.lntop_finish("XiangShan", difftestMacros, probeSeq.get)
-      exit := _exit.getOrElse(0.U)
-      step := _step.getOrElse(0.U)
-    }
+  withClockAndReset(io.noc_clock, io.reset) {
+    val (_exit, _step) = DifftestModule.lntop_finish("XiangShan", difftestMacros, probeSeq.getOrElse(Seq.empty))
+    exit := _exit.getOrElse(0.U)
+    step := _step.getOrElse(0.U)
   }
   dontTouch(exit)
   dontTouch(step)
