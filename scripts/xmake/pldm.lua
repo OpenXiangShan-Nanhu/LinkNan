@@ -216,9 +216,9 @@ function pldm_comp(num_cores)
     end
   end,{
     files = chisel_dep_srcs,
-    dependfile = path.join("out", "chisel.pldm.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
+    dependfile = path.join("out", "chisel.pldm.dep." .. (build_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = table.join2({build_dir, sim_dir}, xmake.argv())
+    values = table.join2({build_dir}, xmake.argv())
   })
 
   if option.get("lua_scoreboard") then
@@ -239,9 +239,11 @@ function pldm_comp(num_cores)
     v_incdir_flags = v_incdir_flags .. " -incdir " .. p
   end
 
+  local headers = {}
   local c_incdir_flags = ""
   for _, p in ipairs(cinc_dirs) do
     c_incdir_flags = c_incdir_flags .. " -I" .. p
+    table.join2(headers, os.files(path.join(p, "*.h")))
   end
 
   local vlan_flags = {
@@ -375,10 +377,22 @@ function pldm_comp(num_cores)
 
   table.join2(ixcom_flags, macro_flags)
 
+  local depend_srcs = vsrc
+  table.join2(depend_srcs, csrc)
+  table.join2(depend_srcs, headers)
+  table.join2(depend_srcs, { path.join(abs_dir, "scripts", "xmake", "pldm.lua") })
+
   os.cd(comp_dir)
-  os.exec("vlan " .. table.concat(vlan_flags, " "))
-  os.exec("ixcom " .. table.concat(ixcom_flags, " "))
-  log("[pldm_comp]", "pldm_comp success!")
+  depend.on_changed(function()
+    os.exec("vlan " .. table.concat(vlan_flags, " "))
+    os.exec("ixcom " .. table.concat(ixcom_flags, " "))
+    log("[pldm_comp]", "pldm_comp success!")
+  end, {
+    files = depend_srcs,
+    dependfile = path.join(comp_dir, "pldm.ln.dep." .. (sim_dir):gsub("/", "_"):gsub(" ", "_")),
+    dryrun = option.get("rebuild"),
+    values = table.join2({sim_dir}, xmake.argv())
+  })
 end
 
 function pldm_run()

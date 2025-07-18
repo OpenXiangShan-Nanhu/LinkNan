@@ -74,9 +74,9 @@ function simv_comp(num_cores)
     end
   end,{
     files = chisel_dep_srcs,
-    dependfile = path.join("out", "chisel.simv.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
+    dependfile = path.join("out", "chisel.simv.dep." .. (build_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = table.join2({build_dir, sim_dir}, xmake.argv())
+    values = table.join2({build_dir}, xmake.argv())
   })
 
   assert(#os.files(path.join(design_vsrc, "*v")) > 0, "[vcs.lua] [simv_comp] rtl dir(`%s`) is empty!", design_vsrc)
@@ -208,9 +208,9 @@ function simv_comp(num_cores)
     os.execv(os.shell(), { "vcs_cmd.sh" })
   end, {
     files = depend_srcs,
-    dependfile = path.join(comp_dir, "simv.ln.dep." .. (build_dir .. sim_dir):gsub("/", "_"):gsub(" ", "_")),
+    dependfile = path.join(comp_dir, "simv.ln.dep." .. (sim_dir):gsub("/", "_"):gsub(" ", "_")),
     dryrun = option.get("rebuild"),
-    values = table.join2({build_dir, sim_dir}, xmake.argv())
+    values = table.join2({sim_dir}, xmake.argv())
   })
 end
 
