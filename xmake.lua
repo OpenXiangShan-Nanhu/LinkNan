@@ -304,6 +304,7 @@ task("pldm-run", function ()
       {'i', "image", "kv", nil, "bin image bin name"},
       {'f', "flash", "kv", nil, "flash image bin name"},
       {'z', "imagez", "kv", nil, "gz image name"},
+      {'c', "cycles", "kv", "0", "max simulation cycles"},
       {'w', "workload", "kv", nil, "workload name(.bin/.gz)(fullpath)"},
       {'r', "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},

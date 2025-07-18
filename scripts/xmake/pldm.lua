@@ -441,6 +441,7 @@ function pldm_run()
     "-licqueue", -- waitting for license release
     "+diff=" .. path.join(abs_ref_base_dir, option.get("ref")),
     "+workload=" .. image_file,
+    "+max-cycles=" .. option.get("cycles"),
   }
   if flash_file ~= "" then table.insert(xsim_pre_flags, "+flash=" .. flash_file) end
 
