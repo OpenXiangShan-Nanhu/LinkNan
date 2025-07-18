@@ -26,7 +26,7 @@ class DifftestCoreGateWayCollector(ccid:Int, path:String) extends BlackBox with 
     data match {
       case b: Bundle => b.elements.foreach({case(n, d) => parseIO(s"${name}_$n", d)})
       case v: Vec[Data] => v.zipWithIndex.foreach({case(d, i) => parseIO(s"${name}_$i", d)})
-      case _ => portQueue.addOne(opStr(name, data))
+      case _ => if(data.getWidth != 0) portQueue.addOne(opStr(name, data))
     }
   }
   io.probe.elements.foreach({case(n, d) => parseIO(s"probe_$n", d)})
@@ -40,7 +40,7 @@ class DifftestCoreGateWayCollector(ccid:Int, path:String) extends BlackBox with 
     data match {
       case b: Bundle => b.elements.foreach({case(n, d) => xmrIO(d, s"${sink}_$n", s"${src}_$n")})
       case v: Vec[Data] => v.zipWithIndex.foreach({case(d, i) => xmrIO(d, s"${sink}_$i", s"${src}_$i")})
-      case _ => xmrQueue.addOne(paStr(sink, src))
+      case _ => if(data.getWidth != 0) xmrQueue.addOne(paStr(sink, src))
     }
   }
   for((n ,d) <- io.probe.elements) {
