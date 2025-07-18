@@ -1,0 +1,119 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  schedule:
+    # run at 6:00 UTC (14:00 UTC+8)
+    - cron: '0 6 * * *'
+
+jobs:
+  build-emu-simv:
+    runs-on: [ self-hosted, sz-open ]
+
+    strategy:
+      matrix:
+        scenario: [ 'emu', 'simv' ]
+        flag: [ '', '-ld', '-ldn']
+    
+    steps:
+      - name: Clean workspace
+        run: |
+          rm -rf ./*
+          git clean -fdx
+          git reset --hard
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Init project
+        run: |
+          git log -n 3
+          xmake init
+
+      - name: Build test (emu)
+        if: matrix.scenario == 'emu'
+        run: |
+          if [ "${{ matrix.scenario }}" == "emu" ]; then
+            EXTRA_FLAGS="-j64"
+          else
+            EXTRA_FLAGS=""
+          fi
+
+          source /nfs/share/home/zhengchuyu/verilua.sh
+          source /nfs/share/home/zhengchuyu/verilator.sh
+          xmake ${{ matrix.scenario }} -N small -L small ${{ matrix.flag }} $EXTRA_FLAGS
+          ls -l
+
+  build-with-custom-dir:
+    runs-on: [ self-hosted, sz-open ]
+
+    strategy:
+      matrix:
+        scenario: [ 'emu', 'simv' ]
+        flag: [ '', '--build_dir=./build_custom', '--sim_dir=./sim_custom', '--build_dir=./build_custom --sim_dir=./sim_custom' ]
+        use-env-dir: [ 'true', 'false' ]
+        exclude:
+          - flag: '--build_dir=./build_custom'
+            use-env-dir: 'true'
+          - flag: '--sim_dir=./sim_custom'
+            use-env-dir: 'true'
+          - flag: '--build_dir=./build_custom --sim_dir=./sim_custom'
+            use-env-dir: 'true'
+          - flag: ''
+            use-env-dir: 'false'
+
+    steps:
+      - name: Clean workspace
+        run: |
+          rm -rf ./*
+          git clean -fdx
+          git reset --hard
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Init project
+        run: |
+          git log -n 3
+          xmake init
+
+      - name: Build test
+        run: |
+          if [ "${{ matrix.scenario }}" == "emu" ]; then
+            EXTRA_FLAGS="-j64"
+          else
+            EXTRA_FLAGS=""
+          fi
+
+          if [ "${{ matrix.use-env-dir }}" == "true" ]; then
+            export BUILD_DIR=./build_custom
+            export SIM_DIR=./sim_custom
+          fi
+
+          source /nfs/share/home/zhengchuyu/verilua.sh
+          source /nfs/share/home/zhengchuyu/verilator.sh
+          xmake ${{ matrix.scenario }} -N small -L small ${{ matrix.flag }} $EXTRA_FLAGS
+          ls -l
+
+  build-jar:
+    runs-on: [ self-hosted, sz-open ]
+
+    steps:
+      - name: Clean workspace
+        run: |
+          rm -rf ./*
+          git clean -fdx
+          git reset --hard
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Init project
+        run: |
+          git log -n 3
+          xmake init
+
+      - name: Build jar
+        run: |
+          xmake comp
+          ls build
