@@ -213,6 +213,7 @@ task("simv", function()
       {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
+      {nil, "cov", "k", nil, "enable coverage collection"}
     }
   }
 
@@ -243,6 +244,7 @@ task("simv-run", function ()
       {nil, "case_name", "kv", nil, "user defined case name"},
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
+      {nil, "cov", "k", nil, "enable coverage collection"}
     }
   }
 

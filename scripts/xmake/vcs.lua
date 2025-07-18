@@ -4,6 +4,9 @@ import("core.base.option")
 import("core.project.depend")
 import("core.base.task")
 
+local tb_top = "tb_top"
+local cov_param = "line+cond+fsm+tgl"
+
 function simv_comp(num_cores)
   if not option.get("no_fsdb") then
     if not os.getenv("VERDI_HOME") then
@@ -66,7 +69,7 @@ function simv_comp(num_cores)
       table.join2(dpi_exp_opts, {"--work-dir", dpi_export_dir})
       table.join2(dpi_exp_opts, {"-I", design_gen_dir})
       table.join2(dpi_exp_opts, {"--quiet"})
-      table.join2(dpi_exp_opts, {"--top", "tb_top"})
+      table.join2(dpi_exp_opts, {"--top", tb_top})
       table.join2(dpi_exp_opts, vsrc)
       local cmd_file = path.join(comp_dir, "dpi_exp_cmd.sh")
       io.writefile(cmd_file, table.concat(dpi_exp_opts, " "))
@@ -147,10 +150,10 @@ function simv_comp(num_cores)
 
   local vcs_flags = "-cm_dir " .. path.join(comp_dir, "simv")
   vcs_flags = vcs_flags .. " -full64 +v2k -timescale=100ps/10ps -sverilog -j200"
-  vcs_flags = vcs_flags .. " -debug_access +lint=TFIPC-L -l vcs.log -top tb_top"
+  vcs_flags = vcs_flags .. " -debug_access +lint=TFIPC-L -l vcs.log -top " .. tb_top
   vcs_flags = vcs_flags .. " -fgp -lca -kdb +nospecify +notimingcheck -no_save"
   vcs_flags = vcs_flags .. " +define+PRINTF_COND=1 +define+VCS"
-  vcs_flags = vcs_flags .. " +define+CONSIDER_FSDB +define+SIM_TOP_MODULE_NAME=tb_top.sim"
+  vcs_flags = vcs_flags .. " +define+CONSIDER_FSDB +define+SIM_TOP_MODULE_NAME=" .. tb_top .. ".sim"
   if option.get("bypass_clockgate") then
         vcs_flags = vcs_flags .. "  +define+BYPASS_CLOCKGATE"
   end
@@ -184,6 +187,10 @@ function simv_comp(num_cores)
     else
       vcs_flags = vcs_flags .. " -xprop"
     end
+  end
+
+  if option.get("cov") then
+    vcs_flags = vcs_flags .. " -cm " .. cov_param
   end
 
   local cmd_file = path.join(comp_dir, "vcs_cmd.sh")
@@ -282,6 +289,9 @@ function simv_run()
   end
   if option.get("init_reg") ~= nil then
     sh_str = sh_str .. " +vcs+initreg+" .. option.get("init_reg")
+  end
+  if option.get("cov") then
+    sh_str = sh_str .. " -cm " .. cov_param
   end
   if(flash_file ~= "") then sh_str = sh_str .. " +flash=" .. flash_file end
   sh_str = sh_str .. " +diff=" .. ref_so
