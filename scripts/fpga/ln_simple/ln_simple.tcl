@@ -37,8 +37,6 @@ add_files -norecurse -scan_for_includes $cleaned_list
 
 set_property file_type Verilog [get_files XlnFpgaTop.sv]
 
-cd [join [list [pwd] $project_name] "/"]
-
 create_bd_design $project_name
 create_bd_cell -type module -reference XlnFpgaTop ln
 
@@ -178,8 +176,6 @@ regenerate_bd_layout -hierarchy [get_bd_cells u_peri_subsys]
 
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant boot_addr
 create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz in_mmcm
-create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz core_pll
-create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz noc_pll
 create_bd_cell -type ip -vlnv xilinx.com:ip:vio vio_0
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant intr_lo
 create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant intr_hi
@@ -222,129 +218,58 @@ set_property -dict [list \
 set_property -dict [list CONFIG.PRIM_IN_FREQ.VALUE_SRC USER] [get_bd_cells in_mmcm]
 set_property -dict [list \
   CONFIG.CLKIN1_JITTER_PS {200.0} \
-  CONFIG.CLKOUT1_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT1_JITTER {139.127} \
-  CONFIG.CLKOUT1_PHASE_ERROR {154.678} \
-  CONFIG.CLKOUT2_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT2_JITTER {265.122} \
-  CONFIG.CLKOUT2_PHASE_ERROR {154.678} \
-  CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {10.000} \
-  CONFIG.CLKOUT2_USED {true} \
-  CONFIG.CLKOUT3_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT4_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT5_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT6_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT7_DRIVES {BUFGCE} \
-  CONFIG.CLK_OUT1_PORT {sys_clk} \
-  CONFIG.CLK_OUT2_PORT {rtc_clk} \
-  CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
-  CONFIG.MMCM_CLKFBOUT_MULT_F {24.000} \
-  CONFIG.MMCM_CLKIN1_PERIOD {20.000} \
-  CONFIG.MMCM_CLKIN2_PERIOD {10.0} \
-  CONFIG.MMCM_CLKOUT1_DIVIDE {120} \
-  CONFIG.NUM_OUT_CLKS {2} \
-  CONFIG.PRIM_IN_FREQ {50} \
-  CONFIG.PRIM_SOURCE {Differential_clock_capable_pin} \
-  CONFIG.USE_LOCKED {false} \
-  CONFIG.USE_RESET {false} \
-  CONFIG.USE_SAFE_CLOCK_STARTUP {true} \
-] [get_bd_cells in_mmcm]
-
-set_property -dict [list \
-  CONFIG.CLKOUT1_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT1_JITTER {144.719} \
-  CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
-  CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {100} \
-  CONFIG.CLKOUT2_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT3_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT4_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT5_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT6_DRIVES {BUFGCE} \
-  CONFIG.CLKOUT7_DRIVES {BUFGCE} \
-  CONFIG.CLK_OUT1_PORT {core_clk} \
-  CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
-  CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
-  CONFIG.MMCM_CLKFBOUT_MULT_F {8} \
-  CONFIG.MMCM_CLKOUT0_DIVIDE_F {8} \
-  CONFIG.MMCM_COMPENSATION {AUTO} \
-  CONFIG.OPTIMIZE_CLOCKING_STRUCTURE_EN {true} \
-  CONFIG.PRIMITIVE {PLL} \
-  CONFIG.PRIM_SOURCE {Global_buffer} \
-  CONFIG.USE_LOCKED {false} \
-  CONFIG.USE_RESET {false} \
-  CONFIG.USE_SAFE_CLOCK_STARTUP {true} \
-] [get_bd_cells core_pll]
-
-set_property -dict [list \
   CONFIG.CLKOUT1_DRIVES {BUFG} \
-  CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
+  CONFIG.CLKOUT1_JITTER {129.582} \
+  CONFIG.CLKOUT1_PHASE_ERROR {150.621} \
+  CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {125} \
   CONFIG.CLKOUT2_DRIVES {BUFG} \
-  CONFIG.CLKOUT2_JITTER {167.017} \
-  CONFIG.CLKOUT2_PHASE_ERROR {114.212} \
+  CONFIG.CLKOUT2_JITTER {152.947} \
+  CONFIG.CLKOUT2_PHASE_ERROR {150.621} \
   CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {50} \
   CONFIG.CLKOUT2_USED {true} \
-  CONFIG.CLKOUT3_DRIVES {Buffer} \
-  CONFIG.CLKOUT4_DRIVES {Buffer} \
-  CONFIG.CLKOUT5_DRIVES {Buffer} \
-  CONFIG.CLKOUT6_DRIVES {Buffer} \
-  CONFIG.CLKOUT7_DRIVES {Buffer} \
-  CONFIG.CLK_OUT1_PORT {noc_clk} \
+  CONFIG.CLKOUT3_DRIVES {BUFG} \
+  CONFIG.CLKOUT3_JITTER {241.950} \
+  CONFIG.CLKOUT3_PHASE_ERROR {150.621} \
+  CONFIG.CLKOUT3_REQUESTED_OUT_FREQ {10} \
+  CONFIG.CLKOUT3_USED {true} \
+  CONFIG.CLK_OUT1_PORT {sys_clk} \
   CONFIG.CLK_OUT2_PORT {peri_clk} \
+  CONFIG.CLK_OUT3_PORT {rtc_clk} \
   CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
-  CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
-  CONFIG.MMCM_CLKFBOUT_MULT_F {8} \
-  CONFIG.MMCM_CLKOUT1_DIVIDE {16} \
-  CONFIG.MMCM_COMPENSATION {AUTO} \
-  CONFIG.NUM_OUT_CLKS {2} \
-  CONFIG.PRIMITIVE {PLL} \
-  CONFIG.PRIM_SOURCE {Global_buffer} \
+  CONFIG.MMCM_CLKFBOUT_MULT_F {25.000} \
+  CONFIG.MMCM_CLKIN1_PERIOD {20.000} \
+  CONFIG.MMCM_CLKIN2_PERIOD {10.0} \
+  CONFIG.MMCM_CLKOUT0_DIVIDE_F {10.000} \
+  CONFIG.MMCM_CLKOUT1_DIVIDE {25} \
+  CONFIG.MMCM_CLKOUT2_DIVIDE {125} \
+  CONFIG.NUM_OUT_CLKS {3} \
+  CONFIG.OPTIMIZE_CLOCKING_STRUCTURE_EN {true} \
+  CONFIG.PRIM_IN_FREQ {50} \
+  CONFIG.PRIM_SOURCE {Differential_clock_capable_pin} \
   CONFIG.USE_RESET {false} \
   CONFIG.USE_LOCKED {true} \
-] [get_bd_cells noc_pll]
-
-# 50 MHz 
-# set_property -dict [list \
-#   CONFIG.CLKOUT1_JITTER {167.017} \
-#   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {50} \
-#   CONFIG.MMCM_CLKOUT0_DIVIDE_F {16} \
-# ] [get_bd_cells noc_pll]
-
-# 80 MHz
-# set_property -dict [list \
-#   CONFIG.CLKOUT1_JITTER {151.652} \
-#   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {80} \
-#   CONFIG.MMCM_CLKOUT0_DIVIDE_F {10} \
-# ] [get_bd_cells noc_pll]
-
-# 100 MHz
-set_property -dict [list \
-  CONFIG.CLKOUT1_JITTER {144.719} \
-  CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {100} \
-  CONFIG.MMCM_CLKOUT0_DIVIDE_F {8} \
-] [get_bd_cells noc_pll]
+] [get_bd_cells in_mmcm]
 
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/OSC_SYS_CLK] [get_bd_intf_ports ddr]
 set_property CONFIG.FREQ_HZ 80000000 [get_bd_intf_ports /ddr]
 connect_bd_intf_net [get_bd_intf_pins in_mmcm/CLK_IN1_D] [get_bd_intf_ports core]
 set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_intf_pins in_mmcm/CLK_IN1_D]] [get_bd_intf_ports core]
 connect_bd_intf_net [get_bd_intf_pins u_jtag_ddr_subsys/DDR4] [get_bd_intf_ports DDR0]
-set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins noc_pll/noc_clk]] [get_bd_intf_pins ln/m_axi_cfg]
-set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins noc_pll/noc_clk]]  [get_bd_intf_pins ln/m_axi_mem_0]
-set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins noc_pll/noc_clk]] [get_bd_pins ln/io_aclk]
+set_property CONFIG.ASSOCIATED_BUSIF m_axi_cfg:m_axi_mem_0 [get_bd_pins /ln/io_aclk]
+set_property CONFIG.CLK_DOMAIN [get_property CONFIG.CLK_DOMAIN  [get_bd_pins in_mmcm/sys_clk]] [get_bd_pins ln/io_aclk]
+set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ  [get_bd_pins in_mmcm/sys_clk]] [get_bd_pins ln/io_aclk]
 
 connect_bd_intf_net [get_bd_intf_ports core] [get_bd_intf_pins in_mmcm/CLK_IN1_D]
-connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins core_pll/clk_in1]
-connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins noc_pll/clk_in1]
 connect_bd_net [get_bd_pins in_mmcm/rtc_clk] [get_bd_pins ln/io_rtc_clk]
-connect_bd_net [get_bd_pins core_pll/core_clk] [get_bd_pins ln/io_core_clk_0]
-connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins vio_0/clk]
-connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins ln/io_aclk]
-connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins u_peri_subsys/ACLK_NOC]
-connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ACLK]
-connect_bd_net [get_bd_pins noc_pll/peri_clk] [get_bd_pins u_peri_subsys/ACLK_PERI]
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins ln/io_aclk]
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins ln/io_core_clk_0]
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins vio_0/clk]
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins u_peri_subsys/ACLK_NOC]
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ACLK]
+connect_bd_net [get_bd_pins in_mmcm/peri_clk] [get_bd_pins u_peri_subsys/ACLK_PERI]
 
-connect_bd_net [get_bd_pins noc_pll/noc_clk] [get_bd_pins noc_reset_gen/slowest_sync_clk]
-connect_bd_net [get_bd_pins noc_pll/locked] [get_bd_pins noc_reset_gen/dcm_locked]
+connect_bd_net [get_bd_pins in_mmcm/sys_clk] [get_bd_pins noc_reset_gen/slowest_sync_clk]
+connect_bd_net [get_bd_pins in_mmcm/locked] [get_bd_pins noc_reset_gen/dcm_locked]
 connect_bd_net [get_bd_pins vio_0/probe_out0] [get_bd_pins noc_reset_gen/ext_reset_in]
 connect_bd_net [get_bd_pins noc_reset_gen/peripheral_aresetn] [get_bd_pins u_peri_subsys/ARESETN]
 connect_bd_net [get_bd_pins noc_reset_gen/peripheral_aresetn] [get_bd_pins u_jtag_ddr_subsys/S_AXI_MEM_ARSTN]
@@ -382,8 +307,8 @@ if {$tcl_platform(platform) eq "windows"} {
 }
 set wrp_name $project_name
 append wrp_name "_wrapper"
-set bd_file [file join [pwd] "$project_name.srcs" "sources_1" "bd" $project_name "$project_name.bd"]
-set bd_wrp_file [file join [pwd] "$project_name.gen" "sources_1" "bd" $project_name "hdl" "$wrp_name.v"]
+set bd_file [file join [pwd] $project_name "$project_name.srcs" "sources_1" "bd" $project_name "$project_name.bd"]
+set bd_wrp_file [file join [pwd] $project_name "$project_name.gen" "sources_1" "bd" $project_name "hdl" "$wrp_name.v"]
 make_wrapper -files [get_files $bd_file] -top
 add_files -norecurse $bd_wrp_file
 set_property top $wrp_name [current_fileset]
@@ -397,12 +322,13 @@ set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
 
 set_property CONSTRSET ln_occ_constr [get_runs ln_simple_ln_0_synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY none [get_runs ln_simple_ln_0_synth_1]
+set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-verilog_define __VIVADO__} -objects [get_runs ln_simple_ln_0_synth_1]
 set_property STEPS.INIT_DESIGN.TCL.POST [get_files $te_tcl -of [get_fileset utils_1]] [get_runs impl_*]
 
 launch_runs synth_1 -job 8
-# wait_on_runs synth_1
+wait_on_runs synth_1
 
 launch_runs impl_1 -job 8
-# wait_on_runs impl_1
+wait_on_runs impl_1
 
 # exit

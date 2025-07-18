@@ -64,9 +64,9 @@ resize_pblock [get_pblocks pblock_rs_0x48] -add {SLICE_S3X356Y476:SLICE_S3X415Y5
 create_pblock pblock_rs_0x50
 add_cells_to_pblock [get_pblocks pblock_rs_0x50] [get_cells -quiet [list ln_quad_i/ln/inst/soc/uncore/inst/noc/ccn_2_0x50 ln_quad_i/ln/inst/soc/uncore/inst/noc/dev_reset_cc_2_rst_sync ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_ccn_2_id_0x50 ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_ccn_2_id_0x50_reset_resetSync]]
 resize_pblock [get_pblocks pblock_rs_0x50] -add {SLICE_S3X356Y380:SLICE_S3X415Y427}
-create_pblock pblock_rs_0x58_0x60
-add_cells_to_pblock [get_pblocks pblock_rs_0x58_0x60] [get_cells -quiet [list ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_hni_id_0x60 ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_hni_id_0x60_reset_resetSync ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_rni_id_0x58 ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_rni_id_0x58_reset_resetSync]]
-resize_pblock [get_pblocks pblock_rs_0x58_0x60] -add {SLICE_S3X416Y380:SLICE_S3X467Y427}
+# create_pblock pblock_rs_0x58_0x60
+# add_cells_to_pblock [get_pblocks pblock_rs_0x58_0x60] [get_cells -quiet [list ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_hni_id_0x60 ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_hni_id_0x60_reset_resetSync ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_rni_id_0x58 ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_rni_id_0x58_reset_resetSync]]
+# resize_pblock [get_pblocks pblock_rs_0x58_0x60] -add {SLICE_S3X416Y380:SLICE_S3X467Y427}
 create_pblock pblock_rs_0x68
 add_cells_to_pblock [get_pblocks pblock_rs_0x68] [get_cells -quiet [list ln_quad_i/ln/inst/soc/uncore/inst/noc/hnf_2_rst_sync ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_hnf_2_id_0x68 ln_quad_i/ln/inst/soc/uncore/inst/noc/ring/ring_stop_hnf_2_id_0x68_reset_resetSync]]
 resize_pblock [get_pblocks pblock_rs_0x68] -add {SLICE_S3X416Y476:SLICE_S3X467Y522}

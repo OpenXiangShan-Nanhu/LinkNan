@@ -133,3 +133,4 @@ set_property IOSTANDARD LVDS [get_ports core_clk_n]
 set_property IOSTANDARD LVCMOS33 [get_ports uart0_sout]
 set_property IOSTANDARD LVCMOS33 [get_ports uart0_sin]
 
+
