@@ -293,7 +293,12 @@ function simv_run()
   if option.get("cov") then
     sh_str = sh_str .. " -cm " .. cov_param
   end
-  if(flash_file ~= "") then sh_str = sh_str .. " +flash=" .. flash_file end
+  if option.get("simv_args") then 
+    sh_str = sh_str .. " " .. option.get("simv_args")
+  end
+  if flash_file ~= "" then 
+    sh_str = sh_str .. " +flash=" .. flash_file 
+  end
   sh_str = sh_str .. " +diff=" .. ref_so
   sh_str = sh_str .. " +max-cycles=" .. option.get("cycles")
   sh_str = sh_str .. " +workload=" .. image_file

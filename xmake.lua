@@ -244,7 +244,8 @@ task("simv-run", function ()
       {nil, "case_name", "kv", nil, "user defined case name"},
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
-      {nil, "cov", "k", nil, "enable coverage collection"}
+      {nil, "cov", "k", nil, "enable coverage collection"},
+      {nil, "simv_args", "kv", nil, "additional arguments for simv"},
     }
   }
 
