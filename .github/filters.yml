@@ -1,0 +1,6 @@
+chisel:
+  - "!.gitignore"
+  - "!**/*.md"
+  - "!scripts/fpga/**"
+  - "!scripts/release/**"
+  - "!scripts/pldm/**"
