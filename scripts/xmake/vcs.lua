@@ -260,7 +260,7 @@ function simv_comp(num_cores)
   end, {
     files = depend_srcs,
     dependfile = path.join(comp_dir, "simv.ln.dep." .. (sim_dir):gsub("/", "_"):gsub(" ", "_")),
-    dryrun = option.get("rebuild"),
+    dryrun = option.get("rebuild_comp"),
     values = table.join2({sim_dir}, xmake.argv())
   })
 end

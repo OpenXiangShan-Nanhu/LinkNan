@@ -198,6 +198,7 @@ task("simv", function()
     description = "Compile with vcs",
     options = {
       {'b', "rebuild", "k", nil, "forcely rebuild"},
+      {'B', "rebuild_comp", "k", nil, "forcely rebuild vcs simv"},
       {'n', "no_diff", "k", nil, "disable difftest"},
       {'d', "no_fsdb", "k", nil, "do not dump wave"},
       {'x', "no_xprop", "k", nil, "do not set xprop"},
