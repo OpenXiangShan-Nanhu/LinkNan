@@ -239,6 +239,7 @@ task("simv-run", function ()
       {'f', "flash", "kv", nil, "flash image bin name"},
       {'z', "imagez", "kv", nil, "gz image name"},
       {'w', "workload", "kv", nil, "workload name(.bin/.gz)(fullpath)"},
+      {'b', "bootrom", "kv", nil, "bootrom-file/flash-file name(fullpath)"},
       {'c', "cycles", "kv", "0", "max simulation cycles"},
       {nil, "case_dir", "kv", "ready-to-run", "image base dir"},
       {'r', "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},

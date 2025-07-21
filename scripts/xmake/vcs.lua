@@ -289,13 +289,21 @@ function simv_run()
   if option.get("image") then image_file = path.join(abs_case_base_dir, option.get("image") .. ".bin") end
   if option.get("workload") then image_file = path.absolute(option.get("workload")) end
   if option.get("flash") then flash_file = path.join(abs_case_base_dir, option.get("flash") .. ".bin") end
-
+  if option.get("bootrom") then flash_file = path.absolute(option.get("bootrom")) end
+  
   local w_cnt = 0
   if option.get("image") then w_cnt = w_cnt + 1 end
   if option.get("imagez") then w_cnt = w_cnt + 1 end
   if option.get("workload") then w_cnt = w_cnt + 1 end
   if w_cnt ~= 1 then
     raise("[vcs.lua] [simv_run] `image(-i)`, `imagez(-z)` and `workload(-w)` cannot be both set")
+  end
+
+  local f_cnt = 0
+  if option.get("flash") then f_cnt = f_cnt + 1 end
+  if option.get("bootrom") then f_cnt = f_cnt + 1 end
+  if f_cnt ~= 1 then
+    raise("[vcs.lua] [simv_run] `flash(-f)` and `bootrom(-b)` cannot be both set")
   end
 
   local case_name = path.basename(image_file)
