@@ -9,7 +9,7 @@ import scala.collection.mutable
 import difftest.DifftestBaseBundle
 
 class DifftestCoreGateWayCollector(ccid:Int, path:String) extends BlackBox with HasBlackBoxInline {
-  override def desiredName = xs.utils.GlobalData.prefix + s"DifftestCoreGateWayCollector_cc_${ccid}"
+  override def desiredName = xs.utils.GlobalData.prefix + s"DifftestCoreGateWayCollector${ccid}"
   val io = IO(new Bundle {
     val probe = Output(new CoreGatewayBundle)
     val reset = Output(Bool())
