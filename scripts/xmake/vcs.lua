@@ -46,6 +46,51 @@ function simv_comp(num_cores)
   local difftest_csrc_vcs = path.join(difftest_csrc, "vcs")
   local difftest_config = path.join(difftest, "config")
 
+  ---------------------------------
+  -- Add verilog file paths
+  ---------------------------------
+  local vsrc = {}
+  local vsrc_dirs = {
+    design_vsrc,
+    difftest_vsrc_common,
+    difftest_vsrc_top,
+    -- Add more paths here
+  }
+  for _, p in ipairs(vsrc_dirs) do
+    table.join2(vsrc, os.files(path.join(p, "*v")))
+  end
+
+  ---------------------------------
+  -- Add c file paths
+  ---------------------------------
+  local csrc = {}
+  local csrc_dirs = {
+    design_gen_dir,
+    difftest_csrc_common,
+    difftest_csrc_spikedasm,
+    difftest_csrc_vcs,
+    -- Add more paths here
+  }
+  for _, p in ipairs(csrc_dirs) do
+    table.join2(csrc, os.files(path.join(p, "*.cpp")))
+    table.join2(csrc, os.files(path.join(p, "*.c")))
+  end
+
+  ---------------------------------
+  -- Add header file paths
+  ---------------------------------
+  local headers = {}
+  local headers_dirs = {
+    design_gen_dir,
+    difftest_csrc_common,
+    difftest_csrc_spikedasm,
+    difftest_csrc_vcs,
+    -- Add more paths here
+  }
+  for _, p in ipairs(headers_dirs) do
+    table.join2(headers, os.files(path.join(p, "*.h")))
+  end
+
   depend.on_changed(function ()
     if os.exists(build_dir) then os.rmdir(build_dir) end
     task.run("soc", {
@@ -55,9 +100,10 @@ function simv_comp(num_cores)
       legacy = option.get("legacy"), jar = option.get("jar"),
       build_dir = build_dir
     })
-    local vsrc = os.files(path.join(design_vsrc, "*v"))
-    table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
-    table.join2(vsrc, os.files(path.join(difftest_vsrc_top, "*v")))
+    vsrc = {}
+    for _, p in ipairs(vsrc_dirs) do
+      table.join2(vsrc, os.files(path.join(p, "*v")))
+    end
 
     if option.get("lua_scoreboard") then
       local dpi_cfg_lua = path.join(abs_base, "scripts", "verilua", "dpi_cfg.lua")
@@ -84,25 +130,10 @@ function simv_comp(num_cores)
 
   assert(#os.files(path.join(design_vsrc, "*v")) > 0, "[vcs.lua] [simv_comp] rtl dir(`%s`) is empty!", design_vsrc)
 
-  local vsrc = os.files(path.join(design_vsrc, "*v"))
-  table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
-  table.join2(vsrc, os.files(path.join(difftest_vsrc_top, "*v")))
   if option.get("lua_scoreboard") then
     vsrc = os.files(path.join(dpi_export_dir, "*v"))
-  end
-
-  local csrc = os.files(path.join(design_gen_dir, "*.cpp"))
-  table.join2(csrc, os.files(path.join(difftest_csrc_common, "*.cpp")))
-  table.join2(csrc, os.files(path.join(difftest_csrc_spikedasm, "*.cpp")))
-  table.join2(csrc, os.files(path.join(difftest_csrc_vcs, "*.cpp")))
-  if option.get("lua_scoreboard") then
     table.join2(csrc, path.join(dpi_export_dir, "dpi_func.cpp"))
   end
-
-  local headers = os.files(path.join(design_gen_dir, "*.h"))
-  table.join2(headers, os.files(path.join(difftest_csrc_common, "*.h")))
-  table.join2(headers, os.files(path.join(difftest_csrc_spikedasm, "*.h")))
-  table.join2(headers, os.files(path.join(difftest_csrc_vcs, "*.h")))
 
   if not option.get("no_diff") then
     table.join2(csrc, os.files(path.join(difftest_csrc_difftest, "*.cpp")))
@@ -191,6 +222,10 @@ function simv_comp(num_cores)
 
   if option.get("cov") then
     vcs_flags = vcs_flags .. " -cm " .. cov_param
+  end
+
+  if option.get("vcs_args") then
+    vcs_flags = vcs_flags .. " " .. option.get("vcs_args")
   end
 
   local cmd_file = path.join(comp_dir, "vcs_cmd.sh")

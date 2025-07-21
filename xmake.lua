@@ -213,7 +213,8 @@ task("simv", function()
       {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
-      {nil, "cov", "k", nil, "enable coverage collection"}
+      {nil, "cov", "k", nil, "enable coverage collection"},
+      {nil, "vcs_args", "kv", nil, "additional arguments for vcs"},
     }
   }
 
