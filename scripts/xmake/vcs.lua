@@ -38,6 +38,7 @@ function simv_comp(num_cores)
   local difftest = path.join(abs_base, "dependencies", "difftest")
   local difftest_vsrc = path.join(difftest, "src", "test", "vsrc")
   local difftest_vsrc_common = path.join(difftest_vsrc, "common")
+  local difftest_vsrc_st = path.join(difftest_vsrc, "st")
   local difftest_vsrc_top = path.join(difftest_vsrc, "vcs")
   local difftest_csrc = path.join(difftest, "src", "test", "csrc")
   local difftest_csrc_common = path.join(difftest_csrc, "common")
@@ -56,6 +57,9 @@ function simv_comp(num_cores)
     difftest_vsrc_top,
     -- Add more paths here
   }
+  if not option.get("extra_filelist") then
+    table.join2(vsrc_dirs, difftest_vsrc_st)
+  end
   for _, p in ipairs(vsrc_dirs) do
     table.join2(vsrc, os.files(path.join(p, "*v")))
   end
@@ -138,34 +142,6 @@ function simv_comp(num_cores)
   if not option.get("no_diff") then
     table.join2(csrc, os.files(path.join(difftest_csrc_difftest, "*.cpp")))
     table.join2(headers, os.files(path.join(difftest_csrc_difftest, "*.h")))
-  end
-
-  if option.get("extra_filelist") then
-    local filelist = option.get("extra_filelist")
-
-    -- Remove SystemExtensionWrapper.sv, use extra_filelist instead
-    local idx = 1
-    for i, f in ipairs(vsrc) do
-      if f:endswith("SystemExtensionWrapper.sv") then
-        idx = i
-        break
-      end
-    end
-    table.remove(vsrc, idx)
-
-    -- Check if extra_filelist contains SystemExtensionWrapper.sv
-    assert(os.isfile(filelist), "[vcs.lua] [simv_run] extra_filelist(`%s`) is not a file!", filelist)
-    local lines = io.lines(filelist)
-    local found = false
-    for line in lines do
-      if line:endswith("SystemExtensionWrapper.sv") then
-        found = true
-        break
-      end
-    end
-    if not found then
-      cprint("${yellow}[vcs.lua] [simv_comp] extra_filelist(`%s`) does not contain SystemExtensionWrapper.sv!${reset}", filelist)
-    end
   end
 
   local vsrc_filelist_path = path.join(comp_dir, "vsrc.f")
