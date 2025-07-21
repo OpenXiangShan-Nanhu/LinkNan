@@ -29,7 +29,9 @@ function emu_comp(num_cores)
   local comp_target = path.join(comp_dir, "emu")
   local design_gen_dir = path.join(build_dir, "generated-src")
   local design_vsrc = path.join(build_dir, "rtl")
-  local difftest_vsrc = path.join(difftest, "src", "test", "vsrc", "common")
+  local difftest_vsrc = path.join(difftest, "src", "test", "vsrc")
+  local difftest_vsrc_common = path.join(difftest_vsrc, "common")
+  local difftest_vsrc_st = path.join(difftest_vsrc, "st")
   local difftest_csrc = path.join(difftest, "src", "test", "csrc")
   local difftest_csrc_common = path.join(difftest_csrc, "common")
   local difftest_csrc_difftest = path.join(difftest_csrc, "difftest")
@@ -48,7 +50,8 @@ function emu_comp(num_cores)
       build_dir = build_dir
     })
     local vsrc = os.files(path.join(design_vsrc, "*v"))
-    table.join2(vsrc, os.files(path.join(difftest_vsrc, "*v")))
+    table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
+    table.join2(vsrc, os.files(path.join(difftest_vsrc_st, "*v")))
 
     if option.get("lua_scoreboard") then
       local dpi_cfg_lua = path.join(abs_base, "scripts", "verilua", "dpi_cfg.lua")
@@ -76,7 +79,8 @@ function emu_comp(num_cores)
   assert(#os.files(path.join(design_vsrc, "*v")) > 0, "[verilator.lua] [emu_comp] rtl dir(`%s`) is empty!", design_vsrc)
 
   local vsrc = os.files(path.join(design_vsrc, "*v"))
-  table.join2(vsrc, os.files(path.join(difftest_vsrc, "*v")))
+  table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
+  table.join2(vsrc, os.files(path.join(difftest_vsrc_st, "*v")))
   if option.get("lua_scoreboard") then
     vsrc = os.files(path.join(dpi_export_dir, "*v"))
   end
