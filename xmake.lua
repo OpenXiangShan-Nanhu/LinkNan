@@ -214,6 +214,7 @@ task("simv", function()
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
       {nil, "cov", "k", nil, "enable coverage collection"},
+      {'E', "extra_filelist", "kv", nil, "extra filelist"},
       {nil, "vcs_args", "kv", nil, "additional arguments for vcs"},
     }
   }
