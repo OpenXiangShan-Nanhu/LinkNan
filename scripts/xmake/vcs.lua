@@ -302,7 +302,7 @@ function simv_run()
   local f_cnt = 0
   if option.get("flash") then f_cnt = f_cnt + 1 end
   if option.get("bootrom") then f_cnt = f_cnt + 1 end
-  if f_cnt ~= 1 then
+  if f_cnt > 1 then
     raise("[vcs.lua] [simv_run] `flash(-f)` and `bootrom(-b)` cannot be both set")
   end
 
