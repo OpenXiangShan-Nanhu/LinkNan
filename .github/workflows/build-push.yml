@@ -1,0 +1,58 @@
+name: Build(on push)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches: 
+      - main
+
+jobs:
+  changes:
+    name: Changes Detection
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      chisel: ${{ steps.filter.outputs.chisel }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          predicate-quantifier: 'every'
+          filters: .github/filters.yml
+
+  build-simv:
+    runs-on: [ self-hosted ]
+    needs: changes
+    if: ${{ needs.changes.outputs.chisel == 'true' || github.event_name == 'workflow_dispatch' }} 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Init project
+        run: xmake init
+      
+      - name: Build simv
+        run: |
+          xmake simv
+
+  build-emu:
+    runs-on: [ self-hosted ]
+    needs: changes
+    if: ${{ needs.changes.outputs.chisel == 'true' || github.event_name == 'workflow_dispatch' }} 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Init project
+        run: xmake init
+      
+      - name: Build emu
+        run: |
+          xmake emu
+
+
