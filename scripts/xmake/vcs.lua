@@ -50,7 +50,6 @@ function simv_comp(num_cores)
   ---------------------------------
   -- Add verilog file paths
   ---------------------------------
-  local vsrc = {}
   local vsrc_dirs = {
     design_vsrc,
     difftest_vsrc_common,
@@ -60,14 +59,10 @@ function simv_comp(num_cores)
   if not option.get("extra_filelist") then
     table.join2(vsrc_dirs, difftest_vsrc_st)
   end
-  for _, p in ipairs(vsrc_dirs) do
-    table.join2(vsrc, os.files(path.join(p, "*v")))
-  end
 
   ---------------------------------
   -- Add c file paths
   ---------------------------------
-  local csrc = {}
   local csrc_dirs = {
     design_gen_dir,
     difftest_csrc_common,
@@ -75,15 +70,10 @@ function simv_comp(num_cores)
     difftest_csrc_vcs,
     -- Add more paths here
   }
-  for _, p in ipairs(csrc_dirs) do
-    table.join2(csrc, os.files(path.join(p, "*.cpp")))
-    table.join2(csrc, os.files(path.join(p, "*.c")))
-  end
 
   ---------------------------------
   -- Add header file paths
   ---------------------------------
-  local headers = {}
   local headers_dirs = {
     design_gen_dir,
     difftest_csrc_common,
@@ -91,9 +81,6 @@ function simv_comp(num_cores)
     difftest_csrc_vcs,
     -- Add more paths here
   }
-  for _, p in ipairs(headers_dirs) do
-    table.join2(headers, os.files(path.join(p, "*.h")))
-  end
 
   depend.on_changed(function ()
     if os.exists(build_dir) then os.rmdir(build_dir) end
@@ -104,7 +91,7 @@ function simv_comp(num_cores)
       legacy = option.get("legacy"), jar = option.get("jar"),
       build_dir = build_dir
     })
-    vsrc = {}
+    local vsrc = {}
     for _, p in ipairs(vsrc_dirs) do
       table.join2(vsrc, os.files(path.join(p, "*v")))
     end
@@ -134,9 +121,26 @@ function simv_comp(num_cores)
 
   assert(#os.files(path.join(design_vsrc, "*v")) > 0, "[vcs.lua] [simv_comp] rtl dir(`%s`) is empty!", design_vsrc)
 
+  local vsrc = {}
+  for _, p in ipairs(vsrc_dirs) do
+    table.join2(vsrc, os.files(path.join(p, "*v")))
+  end
   if option.get("lua_scoreboard") then
     vsrc = os.files(path.join(dpi_export_dir, "*v"))
+  end
+
+  local csrc = {}
+  for _, p in ipairs(csrc_dirs) do
+    table.join2(csrc, os.files(path.join(p, "*.cpp")))
+    table.join2(csrc, os.files(path.join(p, "*.c")))
+  end
+  if option.get("lua_scoreboard") then
     table.join2(csrc, path.join(dpi_export_dir, "dpi_func.cpp"))
+  end
+
+  local headers = {}
+  for _, p in ipairs(headers_dirs) do
+    table.join2(headers, os.files(path.join(p, "*.h")))
   end
 
   if not option.get("no_diff") then
