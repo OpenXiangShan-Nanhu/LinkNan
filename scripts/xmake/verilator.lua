@@ -175,7 +175,12 @@ function emu_comp(num_cores)
     verilator_flags = verilator_flags .. " --threads " .. option.get("threads") .. " --threads-dpi all"
   end
   if not option.get("fast") then
-    verilator_flags = verilator_flags .. " --trace"
+    if option.get("dump_fst") then
+      verilator_flags = verilator_flags .. " --trace-fst"
+      cxx_flags = cxx_flags .. " -DENABLE_FST"
+    else
+      verilator_flags = verilator_flags .. " --trace"
+    end
   end
   if not option.get("no_diff") then
     verilator_flags = verilator_flags .. " +define+DIFFTEST"
@@ -295,7 +300,12 @@ function emu_run()
   os.cd(emu_case_dir)
 
   local sh_str = "chmod +x emu" .. " && ( ./emu"
-  if option.get("dump") then
+  if option.get("jtag_debug") then
+    sh_str = sh_str .. " --enable-jtag " .. " --remote-jtag-port " .. option.get("jtag_debug")
+  end
+  if option.get("dump_wave_full") then
+    sh_str = sh_str .. " --dump-wave-full "
+  elseif option.get("dump") then
     sh_str = sh_str .. " --dump-wave"
     if(wave_begin ~= "0") then sh_str = sh_str .. " -b " .. wave_begin end
     if(wave_end ~= "0") then sh_str = sh_str .. " -e " .. wave_end end
@@ -308,11 +318,18 @@ function emu_run()
   if(cycles ~= "0") then sh_str = sh_str .. " -C " .. cycles end
   if(gcpt_restore ~= "") then sh_str = sh_str .. " -r " .. gcpt_restore end
   if(flash_file ~= "") then sh_str = sh_str .. " -F " .. flash_file end
-
-  sh_str = sh_str .. " --diff " .. ref_so
+  if not option.get("no_diff") then
+    sh_str = sh_str .. " --diff " .. ref_so
+  else
+    sh_str = sh_str .. " --no-diff"
+  end
   sh_str = sh_str .. " -i " .. image_file
   sh_str = sh_str .. " -s " .. option.get("seed")
-  sh_str = sh_str .. " --wave-path " .. case_name .. ".vcd"
+  if(option.get("dump_fst")) then
+    sh_str = sh_str .. " --wave-path " .. case_name .. ".fst"
+  else
+    sh_str = sh_str .. " --wave-path " .. case_name .. ".vcd"
+  end
   sh_str = sh_str .. " ) 2>assert.log |tee run.log"
 
   io.writefile("tmp.sh", sh_str)
