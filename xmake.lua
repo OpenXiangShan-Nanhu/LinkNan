@@ -135,6 +135,8 @@ task("emu", function()
       {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
+      {nil, "debug", "k", nil, "only debug need"},
+      {nil, "wave", "k", nil, "set --dump-wave-full xxx.fst"},
     }
   }
 
@@ -171,6 +173,8 @@ task("emu-run", function ()
       {nil, "case_name", "kv", nil, "user defined case name"},
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
+      {nil, "debug", "kv", nil, "set --remote-jtag-port={value} && --enable-jtag && --no-diff"},
+      {nil, "wave", "k", nil, "set --dump-wave-full"},
     }
   }
 
