@@ -248,6 +248,7 @@ task("simv-run", function ()
       {'b', "bootrom", "kv", nil, "bootrom-file/flash-file name(fullpath)"},
       {'c', "cycles", "kv", "0", "max simulation cycles"},
       {nil, "case_dir", "kv", "ready-to-run", "image base dir"},
+      {'n', "no_diff", "k", nil, "disable difftest"},
       {'r', "ref", "kv", "riscv64-nemu-interpreter-so", "reference model"},
       {nil, "ref_dir", "kv", "ready-to-run", "reference model base dir"},
       {nil, "case_name", "kv", nil, "user defined case name"},

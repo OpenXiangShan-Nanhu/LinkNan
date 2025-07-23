@@ -355,7 +355,11 @@ function simv_run()
   if flash_file ~= "" then 
     sh_str = sh_str .. " +flash=" .. flash_file 
   end
-  sh_str = sh_str .. " +diff=" .. ref_so
+  if not option.get("no_diff") then
+    sh_str = sh_str .. " +diff=" .. ref_so
+  else
+    sh_str = sh_str .. " +no-diff"
+  end
   sh_str = sh_str .. " +max-cycles=" .. option.get("cycles")
   sh_str = sh_str .. " +workload=" .. image_file
   sh_str = sh_str .. " -fgp=num_threads:4,num_fsdb_threads:4"
