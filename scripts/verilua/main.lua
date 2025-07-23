@@ -22,7 +22,22 @@ local l2_mon_out_vec = {}
 local hnf_mon_vec = {}
 local sn_mon_vec = {}
 
-local function init_components()
+local init_db = false
+local function init_database()
+    if init_db then
+        print("\n[main.lua] database has been initialized!")
+        return
+    end
+    init_db = true
+
+    local db_cfg = cfg.db_cfg
+    local db_path = db_cfg.db_path
+    local save_cnt_max = db_cfg.save_cnt_max
+    local size_limit = db_cfg.size_limit
+    local table_cnt_max = db_cfg.table_cnt_max
+    local no_check_bind_value = db_cfg.no_check_bind_value
+    local verbose = db_cfg.verbose
+
     local tl_db = LuaDataBase({
         table_name = "tl_db",
         elements = {
@@ -36,49 +51,14 @@ local function init_components()
             "data => TEXT",
             "others => TEXT",
         },
-        path = ".",
+        path = db_path,
         file_name = "tl_db.db",
-        save_cnt_max = 1000000 * 1,
-        verbose = false,
+        save_cnt_max = save_cnt_max,
+        size_limit = size_limit,
+        table_cnt_max = table_cnt_max,
+        no_check_bind_value = no_check_bind_value,
+        verbose = verbose,
     })
-
-    local chi_db = LuaDataBase({
-        table_name = "chi_db",
-        elements = {
-            "cycles => INTEGER",
-            "channel => TEXT",
-            "opcode => TEXT",
-            "address => TEXT",
-            "txn_id => INTEGER",
-            "src_id => INTEGER",
-            "tgt_id => INTEGER",
-            "db_id => INTEGER",
-            "resp => TEXT",
-            "data => TEXT",
-            "others => TEXT",
-        },
-        path = ".",
-        file_name = "chi_db.db",
-        save_cnt_max = 1000000 * 1,
-        verbose = false,
-    })
-
-    local axi_db = LuaDataBase {
-        table_name = "axi_db",
-        elements = {
-            "cycles => INTEGER",
-            "channel => TEXT",
-            "addr => TEXT",
-            "id => INTEGER",
-            "strb_hex_str => TEXT",
-            "data_hex_str => TEXT",
-            "others => TEXT",
-        },
-        save_cnt_max = 1000000 * 1,
-        path = ".",
-        file_name = "axi_db.db",
-        verbose = false
-    }
 
     local hnf_chi_db = LuaDataBase {
         table_name = "HNFChiDB",
@@ -95,11 +75,81 @@ local function init_components()
             "data => TEXT",
             "others => TEXT",
         },
-        path = ".",
+        path = db_path,
         file_name = "hnf_chi_db.db",
-        save_cnt_max = 1000000 * 1,
-        verbose = false,
+        save_cnt_max = save_cnt_max,
+        size_limit = size_limit,
+        table_cnt_max = table_cnt_max,
+        no_check_bind_value = no_check_bind_value,
+        verbose = verbose,
     }
+
+    local chi_db = LuaDataBase({
+        table_name = "chi_db",
+        elements = {
+            "cycles => INTEGER",
+            "channel => TEXT",
+            "opcode => TEXT",
+            "address => TEXT",
+            "txn_id => INTEGER",
+            "src_id => INTEGER",
+            "tgt_id => INTEGER",
+            "db_id => INTEGER",
+            "resp => TEXT",
+            "data => TEXT",
+            "others => TEXT",
+        },
+        path = db_path,
+        file_name = "chi_db.db",
+        save_cnt_max = save_cnt_max,
+        size_limit = size_limit,
+        table_cnt_max = table_cnt_max,
+        no_check_bind_value = no_check_bind_value,
+        verbose = verbose,
+    })
+
+    local axi_db = LuaDataBase {
+        table_name = "axi_db",
+        elements = {
+            "cycles => INTEGER",
+            "channel => TEXT",
+            "addr => TEXT",
+            "id => INTEGER",
+            "strb_hex_str => TEXT",
+            "data_hex_str => TEXT",
+            "others => TEXT",
+        },
+        path = db_path,
+        file_name = "axi_db.db",
+        save_cnt_max = save_cnt_max,
+        size_limit = size_limit,
+        table_cnt_max = table_cnt_max,
+        no_check_bind_value = no_check_bind_value,
+        verbose = verbose
+    }
+
+    for _, l2_mon_in in ipairs(l2_mon_in_vec) do
+        l2_mon_in:init_db(tl_db)
+    end
+
+    for _, l2_mon_out in ipairs(l2_mon_out_vec) do
+        l2_mon_out:init_db(chi_db)
+    end
+
+    for _, hnf_mon in ipairs(hnf_mon_vec) do
+        hnf_mon:init_db(hnf_chi_db)
+    end
+
+    for _, sn_mon in ipairs(sn_mon_vec) do
+        sn_mon:init_db(axi_db)
+    end
+end
+
+local function init_components()
+    local tl_db = nil
+    local chi_db = nil
+    local axi_db = nil
+    local hnf_chi_db = nil
 
     for i = 1, cfg.nr_l2 do
         local l2_id = i - 1
@@ -538,8 +588,8 @@ fork {
 
         clock:posedge()
         do
-            -- cfg.load_config_from_env()
             init_components()
+            init_database()
         end
 
         local nr_l2_mon_in = #l2_mon_in_vec

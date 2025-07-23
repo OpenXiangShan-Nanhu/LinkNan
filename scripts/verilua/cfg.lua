@@ -59,4 +59,24 @@ cfg.verbose_l2_mon_in = false
 cfg.verbose_hnf_mon = false
 cfg.verbose_sn_mon = false
 
+-- LuaDataBase configurations
+local _1_MILLION = 10000 * 100
+local _1_MB = 1024 * 1024
+local db_cfg = {}
+db_cfg.db_path = "./db"
+db_cfg.save_cnt_max = _1_MILLION * 1
+db_cfg.size_limit = 1.5 * 1024 * _1_MB
+db_cfg.table_cnt_max = 700000
+db_cfg.no_check_bind_value = true
+db_cfg.verbose = false
+cfg.db_cfg = db_cfg
+
+if os.getenv("LUA_SCB_VERBOSE") then
+    cfg.verbose_l2_mon_out = true
+    cfg.verbose_l2_mon_in = true
+    cfg.verbose_hnf_mon = true
+    cfg.verbose_sn_mon = true
+    cfg.db_cfg.verbose = true
+end
+
 return cfg
