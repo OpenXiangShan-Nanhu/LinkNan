@@ -13,6 +13,7 @@ VCS_CSRC_DIR 	  = $(ABS_WORK_DIR)/env/difftest/src/test/csrc/vcs
 GEN_CSRC_DIR      = $(ABS_WORK_DIR)/env/generated-src
 
 SIM_COMMON_DIR    = $(ABS_WORK_DIR)/env/difftest/src/test/vsrc/common
+SIM_ST_DIR        = $(ABS_WORK_DIR)/env/difftest/src/test/vsrc/st
 VCS_TOP_DIR       = $(ABS_WORK_DIR)/env/difftest/src/test/vsrc/vcs
 SIMTOP_DIR        = $(ABS_WORK_DIR)/env/sim
 
@@ -57,6 +58,7 @@ $(ENV_FILELIST): FORCE
 	@find $(GEN_CSRC_DIR) -name "*.cpp" >> $(ENV_FILELIST)
 	@find $(VCS_CSRC_DIR) -name "*.cpp" -or -name "*.c" >> $(ENV_FILELIST)
 	@find $(SIM_COMMON_DIR) -name "*.v" -or -name "*.sv" >> $(ENV_FILELIST)
+	@find $(SIM_ST_DIR) -name "*.v" -or -name "*.sv" >> $(ENV_FILELIST)
 	@find $(SIMTOP_DIR) -name "*.v" -or -name "*.sv" >> $(ENV_FILELIST)
 	@find $(VCS_TOP_DIR) -name "*.v" -or -name "*.sv" >> $(ENV_FILELIST)
 
