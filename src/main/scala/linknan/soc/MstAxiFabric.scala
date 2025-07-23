@@ -13,7 +13,7 @@ class MstAxiFabric(cfgP:AxiParams, datP:Option[AxiParams])(implicit p: Parameter
     val uc = datP.map(d => Flipped(new AxiBundle(d)))
   })
   private def ucMatcher(addr:UInt, uc:Boolean):Bool = {
-    val ucSetHitVec = AddrConfig.mem_uc.map(m => (m._2.U & addr) === m._1.U)
+    val ucSetHitVec = AddrConfig.mem_nc.map(m => (m._2.U & addr) === m._1.U)
     val hit = Cat(ucSetHitVec).orR
     if(uc) hit else !hit
   }
