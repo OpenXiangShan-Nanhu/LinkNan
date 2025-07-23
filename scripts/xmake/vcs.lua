@@ -190,11 +190,14 @@ function simv_comp(num_cores)
   local vcs_flags = "-cm_dir " .. path.join(comp_dir, "simv")
   vcs_flags = vcs_flags .. " -full64 +v2k -timescale=1ns/10ps -sverilog -j200"
   vcs_flags = vcs_flags .. " -debug_access +lint=TFIPC-L -l vcs.log -top " .. tb_top
-  vcs_flags = vcs_flags .. " -fgp -lca -kdb +nospecify +notimingcheck -no_save"
+  vcs_flags = vcs_flags .. " -lca -kdb +nospecify +notimingcheck -no_save"
   vcs_flags = vcs_flags .. " +define+PRINTF_COND=1 +define+VCS"
   vcs_flags = vcs_flags .. " +define+CONSIDER_FSDB +define+SIM_TOP_MODULE_NAME=" .. tb_top .. ".sim"
   if option.get("bypass_clockgate") then
-        vcs_flags = vcs_flags .. "  +define+BYPASS_CLOCKGATE"
+    vcs_flags = vcs_flags .. "  +define+BYPASS_CLOCKGATE"
+  end
+  if not option.get("no_fgp") then
+    vcs_flags = vcs_flags .. " -fgp"
   end
   if not option.get("no_fsdb") then
     novas = path.join(os.getenv("VERDI_HOME"), "share", "PLI", "VCS", "LINUX64")
@@ -360,9 +363,15 @@ function simv_run()
   else
     sh_str = sh_str .. " +no-diff"
   end
+  if not option.get("no_fgp") then
+    local num_threads = "4"
+    if option.get("fgp_threads") then
+      num_threads = option.get("fgp_threads")
+    end
+    sh_str = sh_str .. format(" -fgp=num_threads:%s,num_fsdb_threads:%s", num_threads, num_threads)
+  end
   sh_str = sh_str .. " +max-cycles=" .. option.get("cycles")
   sh_str = sh_str .. " +workload=" .. image_file
-  sh_str = sh_str .. " -fgp=num_threads:4,num_fsdb_threads:4"
   sh_str = sh_str .. " -assert finish_maxfail=30"
   sh_str = sh_str .. " -assert global_finish_maxfail=10000"
   sh_str = sh_str .. " ) 2>assert.log |tee run.log"

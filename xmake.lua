@@ -221,6 +221,7 @@ task("simv", function()
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
       {nil, "cov", "k", nil, "enable coverage collection"},
       {'E', "extra_filelist", "kv", nil, "extra filelist"},
+      {nil, "no_fgp", "k", nil, "disable fgp multithread"},
       {nil, "vcs_args", "kv", nil, "additional arguments for vcs"},
     }
   }
@@ -255,6 +256,8 @@ task("simv-run", function ()
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
       {nil, "cov", "k", nil, "enable coverage collection"},
+      {nil, "no_fgp", "k", nil, "disable fgp multithread"},
+      {nil, "fgp_threads", "kv", "4", "fgp threads"},
       {nil, "simv_args", "kv", nil, "additional arguments for simv"},
     }
   }
