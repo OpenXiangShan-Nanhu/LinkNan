@@ -288,6 +288,7 @@ task("pldm", function()
       {'b', "rebuild", "k", nil, "forcely rebuild"},
       {'n', "no_diff", "k", nil, "disable difftest"},
       {'d', "no_fsdb", "k", nil, "do not dump wave"},
+      {nil, "synthesis", "k", nil, "synthesis compilation mode"},
       -- {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'G', "bypass_clockgate", "k", nil, "force enable all clock gates"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
