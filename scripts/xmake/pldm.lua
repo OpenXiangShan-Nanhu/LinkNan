@@ -167,15 +167,6 @@ function pldm_comp(num_cores)
     path.join(difftest_csrc, "common"),
     path.join(difftest_csrc, "plugin", "spikedasm"),
   })
-  for _, p in ipairs(csrc_dirs) do
-    table.join2(csrc, os.files(path.join(p, "*.cpp")))
-    table.join2(csrc, os.files(path.join(p, "*.c")))
-  end
-
-  if not option.get("no_diff") and not debug then
-    local difftest_csrc_difftest = path.join(difftest_csrc, "difftest")
-    table.join2(csrc, os.files(path.join(difftest_csrc_difftest, "*.cpp")))
-  end
 
   depend.on_changed(function ()
     log("[pldm_comp]", "change detected! start compiling `soc`...")
@@ -190,13 +181,8 @@ function pldm_comp(num_cores)
     })
 
     vsrc = {}
-    csrc = {}
     for _, p in ipairs(vsrc_dirs) do
       table.join2(vsrc, os.files(path.join(p, "*v")))
-    end
-    for _, p in ipairs(csrc_dirs) do
-      table.join2(csrc, os.files(path.join(p, "*.cpp")))
-      table.join2(csrc, os.files(path.join(p, "*.c")))
     end
 
     if option.get("lua_scoreboard") then
@@ -221,6 +207,15 @@ function pldm_comp(num_cores)
     dryrun = option.get("rebuild"),
     values = table.join2({build_dir}, xmake.argv())
   })
+
+  for _, p in ipairs(csrc_dirs) do
+    table.join2(csrc, os.files(path.join(p, "*.cpp")))
+    table.join2(csrc, os.files(path.join(p, "*.c")))
+  end
+  if not option.get("no_diff") and not debug then
+    local difftest_csrc_difftest = path.join(difftest_csrc, "difftest")
+    table.join2(csrc, os.files(path.join(difftest_csrc_difftest, "*.cpp")))
+  end
 
   if option.get("lua_scoreboard") then
     vsrc = os.files(path.join(dpi_export_dir, "*v"))
