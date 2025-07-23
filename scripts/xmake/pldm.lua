@@ -146,7 +146,8 @@ function pldm_comp(num_cores)
   }, {
     path.join(build_dir, "rtl"),
     path.join(difftest_vsrc, "common"),
-    path.join(difftest_vsrc, "vcs")
+    path.join(difftest_vsrc, "vcs"),
+    path.join(difftest_vsrc, "st")
   })
   for _, p in ipairs(vsrc_dirs) do
     table.join2(vsrc, os.files(path.join(p, "*v")))
