@@ -93,6 +93,7 @@ local function load_pldm_z2env()
   set_env("WXE_HOME", "/nfs/tools/Cadence/WXE24.05.s001")
   add_env("PATH", envs.VXE_HOME .. "/bin")
   add_env("LD_LIBRARY_PATH", envs.VXE_HOME .. "/tools.lnx86/lib/64bit")
+  add_env("LD_LIBRARY_PATH", envs.VXE_HOME .. "/share/gift/fsdbWriter")
 
   -- license setup
   set_env("LM_LICENSE_FILE", "5280@node016")
