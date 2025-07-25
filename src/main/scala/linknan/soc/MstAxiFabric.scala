@@ -5,7 +5,7 @@ import chisel3.util._
 import linknan.generator.AddrConfig
 import org.chipsalliance.cde.config.Parameters
 import zhujiang.ZJModule
-import zhujiang.axi.{AxiBuffer, AxiBufferChain, AxiBundle, AxiParams, AxiWidthAdapter}
+import zhujiang.axi.{AxiBufferChain, AxiBundle, AxiParams, AxiWidthAdapter}
 
 class MstAxiFabric(cfgP:AxiParams, datP:Option[AxiParams])(implicit p: Parameters) extends ZJModule {
   val s_axi = IO(new Bundle {

@@ -3,15 +3,14 @@ package linknan.soc
 import chisel3._
 import chisel3.util.Cat
 import linknan.cluster.hub.interconnect.ClusterIcnBundle
-import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import linknan.soc.device.DevicesWrapper
 import linknan.utils.{BitSynchronizer, ClkDiv2}
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.ResetGen
 import xs.utils.sram.SramCtrlBundle
-import zhujiang.axi.{AxiBufferChain, AxiBundle, AxiParams, AxiUtils, AxiWidthAdapter, BaseAxiXbar}
-import zhujiang.chi.NodeIdBundle
 import zhujiang._
+import zhujiang.axi.{AxiParams, AxiUtils, BaseAxiXbar}
+import zhujiang.chi.NodeIdBundle
 
 class AxiNto1XBar(mst: Seq[AxiParams])(implicit val p: Parameters) extends BaseAxiXbar(mst) with HasZJParams {
   val slvMatchersSeq = Seq((_: UInt) => true.B)

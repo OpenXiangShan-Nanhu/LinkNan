@@ -1,11 +1,10 @@
 package linknan.soc
 
 import chisel3._
-import chisel3.util._
 import linknan.cluster.hub.peripheral.AclintAddrRemapper
 import org.chipsalliance.cde.config.Parameters
 import zhujiang.ZJModule
-import zhujiang.axi.{AxiBuffer, AxiBufferChain, AxiBundle, AxiParams, AxiWidthAdapter}
+import zhujiang.axi.{AxiBufferChain, AxiBundle, AxiParams, AxiWidthAdapter}
 
 class SlvAxiFabric(dmaP:AxiParams)(implicit p: Parameters) extends ZJModule {
   private val sbaP = dmaP.copy(attr = "sba", idBits = dmaP.idBits - 2)

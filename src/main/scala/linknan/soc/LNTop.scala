@@ -5,9 +5,10 @@ import chisel3.experimental.hierarchy.{Definition, Instance}
 import chisel3.util.{log2Ceil, log2Up}
 import coupledL2.tl2chi.{CHIAddrWidthKey, CHIIssue, DecoupledCHI, Issue}
 import difftest.DifftestModule
-import xs.utils.cache.{EnableCHI, L1Param, L2Param}
+import difftest.gateway.Gateway
 import freechips.rocketchip.tile.MaxHartIdBits
 import linknan.cluster.{BlockTestIO, CpuCluster}
+import linknan.utils.DifftestCoreGateWayCollector
 import org.chipsalliance.cde.config.{Config, Parameters}
 import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import org.chipsalliance.diplomacy.nodes.MonitorsEnabled
@@ -15,14 +16,13 @@ import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
 import xiangshan.{PMParameKey, XLen, XSCoreParameters, XSCoreParamsKey}
 import xijiang.NodeType
 import xs.utils.cache.common.{BankBitsKey, L2ParamKey}
+import xs.utils.cache.{EnableCHI, L1Param, L2Param}
 import xs.utils.debug.HardwareAssertionKey
 import xs.utils.dft.{BaseTestBundle, PowerDomainTestBundle}
 import xs.utils.perf.{DebugOptionsKey, LogUtilsOptionsKey, PerfCounterOptionsKey}
 import xs.utils.sram.SramCtrlBundle
 import zhujiang.axi.AxiUtils
 import zhujiang.{NocIOHelper, ZJParametersKey, ZJRawModule}
-import linknan.utils.DifftestCoreGateWayCollector
-import difftest.gateway.Gateway
 
 
 object GlobalStaticParameters {
@@ -142,7 +142,6 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   }
   linknan.devicetree.DeviceTreeGenerator.lnGenerate(clusterP)
 
-  private val hasDifftest = (p(DebugOptionsKey).EnableDifftest || p(DebugOptionsKey).AlwaysBasicDiff) && !p(DebugOptionsKey).FPGAPlatform
   private val gateways = Option.when(Gateway.needEndpoint)(uncore.cluster.indices.map(idx => Module(new DifftestCoreGateWayCollector(idx, s"${xs.utils.GlobalData.prefix}LNTop"))))
   gateways.foreach(_.zipWithIndex.foreach({case(g, i) =>
     g.suggestName(s"difftest_core_gateway_$i")

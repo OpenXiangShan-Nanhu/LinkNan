@@ -1,9 +1,9 @@
 package linknan.soc.device
 
 import chisel3._
-import freechips.rocketchip.devices.debug.{DebugCustomXbar, DebugIO, DebugModuleKey, DebugModuleParams, DebugTransportModuleJTAG, JtagDTMKeyDefault, ResetCtrlIO, SystemJTAGIO, TLDebugModule}
-import org.chipsalliance.diplomacy.lazymodule._
+import freechips.rocketchip.devices.debug._
 import org.chipsalliance.cde.config.Parameters
+import org.chipsalliance.diplomacy.lazymodule._
 
 class DebugModule(numCores: Int)(implicit p: Parameters) extends LazyModule {
   val debug = LazyModule(new TLDebugModule(8))
