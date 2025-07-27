@@ -14,6 +14,7 @@ class DebugModule(numCores: Int)(implicit p: Parameters) extends LazyModule {
 
 class DebugModuleIO(numCores: Int)(implicit p: Parameters) extends Bundle {
   val resetCtrl = new ResetCtrlIO(numCores)(p)
+  val hartAvail = Input(Vec(numCores, Bool()))
   val debugIO = new DebugIO()(p)
   val clock = Input(Bool())
   val reset = Input(Reset())
@@ -36,9 +37,7 @@ class DebugModuleImp(outer: DebugModule, numCores: Int) extends LazyRawModuleImp
   io.debugIO.dmactive := debug.io.ctrl.dmactive
   debug.io.ctrl.dmactiveAck := io.debugIO.dmactiveAck
   io.debugIO.extTrigger.foreach { x => debug.io.extTrigger.foreach { y => x <> y } }
-  debug.io.ctrl.debugUnavail.foreach {
-    _ := false.B
-  }
+  debug.io.ctrl.debugUnavail.zip(io.hartAvail).foreach({case(a, b) => a := !b})
 
   private val dtm = Module(new DebugTransportModuleJTAG(p(DebugModuleKey).get.nDMIAddrSize, new JtagDTMKeyDefault))
   dtm.io.jtag <> io.debugIO.systemjtag.get.jtag

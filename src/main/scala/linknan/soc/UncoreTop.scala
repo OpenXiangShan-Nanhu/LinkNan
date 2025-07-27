@@ -121,10 +121,11 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     ext.misc.rtc := RegNext(rtcClockGated)
     for(i <- 0 until node.cpuNum) {
       val cid = clusterId + i
-      ext.misc.meip(i) := devWrp.io.cpu.meip(cid)
-      ext.misc.seip(i) := devWrp.io.cpu.seip(cid)
-      ext.misc.dbip(i) := devWrp.io.cpu.dbip(cid)
-      devWrp.io.resetCtrl.hartIsInReset(cid) := ext.misc.resetState(i)
+      ext.misc.meip(i) := BitSynchronizer(devWrp.io.cpu.meip(cid))
+      ext.misc.seip(i) := BitSynchronizer(devWrp.io.cpu.seip(cid))
+      ext.misc.dbip(i) := BitSynchronizer(devWrp.io.cpu.dbip(cid))
+      devWrp.io.cpu.hartAvail(cid) := BitSynchronizer(ext.misc.avail(i))
+      devWrp.io.resetCtrl.hartIsInReset(cid) := BitSynchronizer(ext.misc.resetState(i))
     }
   }
 }

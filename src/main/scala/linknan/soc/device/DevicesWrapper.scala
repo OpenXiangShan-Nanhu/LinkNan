@@ -97,6 +97,7 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
       val meip = Output(UInt(coreNum.W))
       val seip = Output(UInt(coreNum.W))
       val dbip = Output(UInt(coreNum.W))
+      val hartAvail = Input(Vec(coreNum, Bool()))
     }
     val ci = Input(UInt(ciIdBits.W))
     val debug = pb.dev.debug.cloneType
@@ -135,11 +136,12 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
     io.mst.ar.bits.cache := Mux(sba.ar.bits.addr < AddrConfig.pmemRange.lower.U(raw.W), "b0000".U, "b0010".U)
   })
   pb.dfx := io.dft
-  io.cpu.meip := ShiftSync(pb.dev.meip)
-  io.cpu.seip := ShiftSync(pb.dev.seip)
-  io.cpu.dbip := ShiftSync(pb.dev.dbip)
+  io.cpu.meip := pb.dev.meip
+  io.cpu.seip := pb.dev.seip
+  io.cpu.dbip := pb.dev.dbip
   pb.dev.extIntr := io.ext.intr
   pb.dev.debug <> io.debug
-  io.resetCtrl.hartResetReq.foreach(_ := ShiftSync(pb.dev.resetCtrl.hartResetReq.get))
-  pb.dev.resetCtrl.hartIsInReset := ShiftSync(io.resetCtrl.hartIsInReset)
+  pb.dev.hartAvail := io.cpu.hartAvail
+  io.resetCtrl.hartResetReq.foreach(_ := pb.dev.resetCtrl.hartResetReq.get)
+  pb.dev.resetCtrl.hartIsInReset := io.resetCtrl.hartIsInReset
 }

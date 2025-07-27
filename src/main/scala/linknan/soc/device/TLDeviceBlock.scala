@@ -12,6 +12,7 @@ import freechips.rocketchip.tile.MaxHartIdBits
 import freechips.rocketchip.tilelink.{TLWidthWidget, _}
 import freechips.rocketchip.util.AsyncQueueParams
 import linknan.soc.LinkNanParamsKey
+import linknan.utils.BitSynchronizer
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.lazymodule._
 import xs.utils.dft.BaseTestBundle
@@ -23,6 +24,7 @@ class TLDeviceBlockIO(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) ext
   val meip = Output(UInt(coreNum.W))
   val seip = Output(UInt(coreNum.W))
   val dbip = Output(UInt(coreNum.W))
+  val hartAvail = Input(Vec(coreNum, Bool()))
   val resetCtrl = new ResetCtrlIO(coreNum)(p)
   val debug = new DebugIO()(p)
 }
@@ -85,6 +87,8 @@ class TLDeviceBlockInner(coreNum: Int, extIntrNum: Int)(implicit p: Parameters) 
     debug.module.io.clock := clock.asBool
     debug.module.io.reset := reset
     debug.module.io.resetCtrl <> io.resetCtrl
+    debug.module.io.resetCtrl.hartIsInReset.zip(io.resetCtrl.hartIsInReset).foreach({case(a, b) => a := BitSynchronizer(b)})
+    debug.module.io.hartAvail.zip(io.hartAvail).foreach({case(a, b) => a := BitSynchronizer(b)})
     debug.module.io.debugIO <> io.debug
     debug.module.io.debugIO.clock := clock
     debug.module.io.debugIO.reset := reset

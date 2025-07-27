@@ -9,6 +9,7 @@ import org.chipsalliance.cde.config.Parameters
 import xijiang.{Node, NodeType}
 import zhujiang.ZJRawModule
 import linknan.soc.LinkNanParamsKey
+import linknan.utils.BitSynchronizer
 import xs.utils.{ClockGate, ClockManagerWrapper, ResetGen}
 import zhujiang.device.socket.IcnSideAsyncModule
 
@@ -97,4 +98,5 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   cpuDev.dft.from(io.icn.dft)
   cpuDev.ramctl := io.icn.ramctl
   cpuCtl.coreId := cpuDev.mhartid.tail(ciIdBits)
+  io.icn.misc.avail(0) := BitSynchronizer(cpuCtl.pcsm.pwrReq)
 }
