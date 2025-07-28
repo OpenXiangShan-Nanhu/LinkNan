@@ -49,6 +49,8 @@ cfg.nr_sn = #cfg.soc_cfg.snf
 cfg.enable_scoreboard_db = false
 cfg.enable_scoreboard = true
 
+cfg.verbose_scoreboard = false
+
 cfg.enable_l2_mon_out = true
 cfg.enable_l2_mon_in = true
 cfg.enable_hnf_mon = true
@@ -72,6 +74,9 @@ db_cfg.verbose = false
 cfg.db_cfg = db_cfg
 
 if os.getenv("LUA_SCB_VERBOSE") then
+    cfg.verbose_scoreboard = true
+    cfg.enable_scoreboard_db = true
+
     cfg.verbose_l2_mon_out = true
     cfg.verbose_l2_mon_in = true
     cfg.verbose_hnf_mon = true
