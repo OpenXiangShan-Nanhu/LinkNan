@@ -4,6 +4,7 @@ local LuaDataBase = require "LuaDataBase"
 local L2TLMonitor
 do
     os.setenv("KMH", 1)
+    os.setenv("SCB_NO_ROLLBACK", 1)
     L2TLMonitor = require "L2TLMonitorV2"
 end
 local L2CHIMonitor = require "L2CHIMonitorV2"
