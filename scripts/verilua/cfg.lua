@@ -56,7 +56,8 @@ cfg.verbose_scoreboard = false
 cfg.enable_l2_mon_out = true
 cfg.enable_l2_mon_in = true
 cfg.enable_hnf_mon = true
-cfg.enable_sn_mon = false -- disable sn mon for now
+cfg.enable_sn_mon = true
+cfg.enable_sn_mon_scb = false
 
 cfg.verbose_l2_mon_out = false
 cfg.verbose_l2_mon_in = false

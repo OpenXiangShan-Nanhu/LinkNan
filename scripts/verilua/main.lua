@@ -114,7 +114,7 @@ local function init_database()
         elements = {
             "cycles => INTEGER",
             "channel => TEXT",
-            "addr => TEXT",
+            "address => TEXT",
             "id => INTEGER",
             "strb_hex_str => TEXT",
             "data_hex_str => TEXT",
@@ -406,7 +406,8 @@ local function init_components()
             cfg:get_or_else("verbose_sn_mon", true),
             cfg:get_or_else("enable_sn_mon", true),
             {
-                scb_rd_update_wr_check = true
+                scb_rd_update_wr_check = true,
+                scb_enable = cfg.enable_sn_mon_scb,
             }
         )
 
