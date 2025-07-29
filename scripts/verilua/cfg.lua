@@ -1,3 +1,5 @@
+local utils = require "LuaUtils"
+
 local cfg = {}
 
 cfg.mode = "step"
@@ -73,7 +75,7 @@ db_cfg.no_check_bind_value = true
 db_cfg.verbose = false
 cfg.db_cfg = db_cfg
 
-if os.getenv("LUA_SCB_VERBOSE") then
+if utils.get_env_or_else("LUA_SCB_VERBOSE", "boolean", false) then
     cfg.verbose_scoreboard = true
     cfg.enable_scoreboard_db = true
 
@@ -82,6 +84,10 @@ if os.getenv("LUA_SCB_VERBOSE") then
     cfg.verbose_hnf_mon = true
     cfg.verbose_sn_mon = true
     cfg.db_cfg.verbose = true
+end
+
+if utils.get_env_or_else("LUA_SCB_DISABLE", "boolean", false) then
+    cfg.enable_scoreboard = false
 end
 
 return cfg

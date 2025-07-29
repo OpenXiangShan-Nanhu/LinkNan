@@ -176,6 +176,7 @@ task("emu-run", function ()
       {nil, "dump_wave_full", "k", nil, "set --dump-wave-full"},
       {nil, "dump_fst", "k", nil, "set wave type xxx.fst"},
       {'n', "no_diff", "k", nil, "disable difftest"},
+      {nil, "no_scb", "k", nil, "disable lua scoreboard"},
     }
   }
 
@@ -191,6 +192,9 @@ task("emu-run", function ()
     local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
     if new_build_dir then
       os.setenv("SOC_CFG_FILE", path.absolute(path.join(new_build_dir, "generated-src", "soc.lua")))
+    end
+    if option.get("no_scb") then
+      os.setenv("LUA_SCB_DISABLE", 1)
     end
 
     import("scripts.xmake.verilator").emu_run()
@@ -259,6 +263,7 @@ task("simv-run", function ()
       {nil, "no_fgp", "k", nil, "disable fgp multithread"},
       {nil, "fgp_threads", "kv", "4", "fgp threads"},
       {nil, "simv_args", "kv", nil, "additional arguments for simv"},
+      {nil, "no_scb", "k", nil, "disable lua scoreboard"},
     }
   }
 
@@ -274,6 +279,9 @@ task("simv-run", function ()
     local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
     if new_build_dir then
       os.setenv("SOC_CFG_FILE", path.absolute(path.join(new_build_dir, "generated-src", "soc.lua")))
+    end
+    if option.get("no_scb") then
+      os.setenv("LUA_SCB_DISABLE", 1)
     end
 
     import("scripts.xmake.vcs").simv_run()
@@ -329,6 +337,7 @@ task("pldm-run", function ()
       {nil, "case_name", "kv", nil, "user defined case name"},
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
+      {nil, "no_scb", "k", nil, "disable lua scoreboard"},
     }
   }
 
@@ -344,6 +353,9 @@ task("pldm-run", function ()
     local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
     if new_build_dir then
       os.setenv("SOC_CFG_FILE", path.absolute(path.join(new_build_dir, "generated-src", "soc.lua")))
+    end
+    if option.get("no_scb") then
+      os.setenv("LUA_SCB_DISABLE", 1)
     end
 
     import("scripts.xmake.pldm").pldm_run()
