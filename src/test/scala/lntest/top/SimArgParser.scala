@@ -98,7 +98,7 @@ object SimArgParser {
             case LinkNanParamsKey => up(LinkNanParamsKey).copy(prefix = confString)
           }), tail)
 
-        case"--difftest-config" :: confString :: tail =>
+        case "--difftest-config" :: confString :: tail =>
           difftest.gateway.Gateway.setConfig(confString)
           parse(config, tail)
 

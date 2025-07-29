@@ -79,6 +79,10 @@ object ArgParser {
             case LinkNanParamsKey => up(LinkNanParamsKey).copy(prefix = confString)
           }), tail)
 
+        case "--difftest-config" :: confString :: tail =>
+          difftest.gateway.Gateway.setConfig(confString)
+          parse(config, tail)
+
         case option :: tail =>
           firrtlOpts :+= option
           parse(config, tail)
