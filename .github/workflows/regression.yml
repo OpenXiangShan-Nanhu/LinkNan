@@ -95,6 +95,41 @@ jobs:
         run: |
           xmake emu-run -i ${{ matrix.case }}
   
+  regression-self-hosted:
+    runs-on: self-hosted
+    needs: changes
+    if: ${{ needs.changes.outputs.chisel == 'true' || github.event_name == 'workflow_dispatch' }} 
+    name: Regression-self-hosted-${{ matrix.sim }}-${{ matrix.case }}
+    strategy:
+      matrix:
+        case: [ 'microbench', 'dhrystone' ]
+        sim: [ 'emu', 'simv' ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Init project
+        run: xmake init
+      
+      - name: Build emu
+        if: ${{ matrix.sim == 'emu' }}
+        run: |
+          xmake emu -N small -L small -ld
+
+      - name: Build simv
+        if: ${{ matrix.sim == 'simv' }}
+        run: |
+          xmake simv -N small -L small -ld
+
+      - name: Run emu
+        if: ${{ matrix.sim == 'emu' }}
+        run: |
+          xmake emu-run -i ${{ matrix.case }}
+
+      - name: Run simv
+        if: ${{ matrix.sim == 'simv' }}
+        run: |
+          xmake simv-run -i ${{ matrix.case }} --no_fgp
 
 
 
