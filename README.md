@@ -1,4 +1,7 @@
 # LinkNan
+
+[![Regression](https://github.com/OpenXiangShan-Nanhu/LinkNan/actions/workflows/regression.yml/badge.svg?branch=main)](https://github.com/OpenXiangShan-Nanhu/LinkNan/actions/workflows/regression.yml)
+
 `LinkNan` (岭南) is the SoC system integrating the [Nanhu](https://github.com/Siudya/Nanhu) high performance RISC-V core and [ZhuJiang](https://github.com/Siudya/ZhuJiang) NoC.
 
 # Compile source code
