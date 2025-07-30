@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-emu-simv:
-    runs-on: [ self-hosted, sz-open ]
+    runs-on: self-hosted
 
     strategy:
       matrix:

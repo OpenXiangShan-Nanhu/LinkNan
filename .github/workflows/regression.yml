@@ -114,21 +114,26 @@ jobs:
       - name: Build emu
         if: ${{ matrix.sim == 'emu' }}
         run: |
+          source /nfs/share/home/zhengchuyu/verilua.sh
           xmake emu -N small -L small -ld
 
       - name: Build simv
         if: ${{ matrix.sim == 'simv' }}
         run: |
+          source /nfs/share/home/zhengchuyu/verilua.sh
           xmake simv -N small -L small -ld
 
       - name: Run emu
         if: ${{ matrix.sim == 'emu' }}
         run: |
+          source /nfs/share/home/zhengchuyu/verilua.sh
+          source /nfs/share/home/zhengchuyu/verilator.sh
           xmake emu-run -i ${{ matrix.case }}
 
       - name: Run simv
         if: ${{ matrix.sim == 'simv' }}
         run: |
+          source /nfs/share/home/zhengchuyu/verilua.sh
           xmake simv-run -i ${{ matrix.case }} --no_fgp
 
 
