@@ -33,9 +33,9 @@ class BaseConfig extends Config((site, here, up) => {
   case PMParameKey => PMParameters(
     PmemRanges = Seq(AddrConfig.pmemRange),
     PMAConfigs = Seq(
-      PMAConfigEntry(AddrConfig.mem_nc.head._1 + 0x100_0000_0000L, a = 1, x = true, w = true, r = true),
+      PMAConfigEntry(AddrConfig.mem_nc.head._1 + 0x20_0000_0000L, a = 1, x = true, w = true, r = true),
       PMAConfigEntry(AddrConfig.mem_nc.head._1),
-      PMAConfigEntry(AddrConfig.pmemRange.upper, c = true, atomic = true, a = 1, x = true, w = true, r = true),
+      PMAConfigEntry(0x10_8000_0000L, c = true, atomic = true, a = 1, x = true, w = true, r = true),
       PMAConfigEntry(AddrConfig.pmemRange.lower, a = 1, w = true, r = true, x = true),
       PMAConfigEntry(0)
     )
@@ -44,7 +44,8 @@ class BaseConfig extends Config((site, here, up) => {
 
 object AddrConfig {
   // interleaving granularity: 64B
-  // DDR: 0x0_8000_0000 ~ 0x1F_FFFF_FFFF
+  // c*core require: 0x0_8000_0000 ~ 0x10_7FFF_FFFF
+  // MEM: 0x0_8000_0000 ~ 0x20_0000_0000
   val interleaveOffset = 6
   val pmemRange = MemoryRange(0x00_8000_0000L, 0x20_0000_0000L)
   private val interleaveBits = 1
@@ -52,7 +53,7 @@ object AddrConfig {
   private val memFullMask = (1L << log2Ceil(pmemRange.upper)) - 1
 
   private val memFullAddrSet = AddressSet(0x0L, memFullMask).subtract(AddressSet(0x0L, (1L << log2Ceil(pmemRange.lower)) - 1))
-  private val fullMask = (1L << 44) - 1
+  private val fullMask = (1L << 44) - 1 // 0xFFFF_FFFF_FFFF
 
   def memBank(bank: Long):Seq[(Long, Long)] = {
     require(bank < (0x1L << interleaveBits))
@@ -66,8 +67,11 @@ object AddrConfig {
   val mem0 = memBank(0)
   val mem1 = memBank(1)
 
+  // c*core require: 0x20_8000_0000 ~ 0x30_7FFF_FFFF
+  // HS: 0x20_0000_0000 ~ 0x3F_FFFF_FFFF
   val mem_nc = Seq(
-    (0x300_0000_0000L, 0xF00_0000_0000L),
+    (0x20_0000_0000L, 0xF0_0000_0000L),
+    (0x30_0000_0000L, 0xF0_0000_0000L),
   )
 }
 
