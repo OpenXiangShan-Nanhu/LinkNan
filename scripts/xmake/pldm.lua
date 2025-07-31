@@ -456,15 +456,24 @@ function pldm_run()
   }
   if flash_file ~= "" then table.insert(xsim_pre_flags, "+flash=" .. flash_file) end
 
-  local xsim_post_flags = {
-    "--",
-    "-input " .. path.join(pldm_scripts_dir, "run.tcl"),
-    "-l " .. path.join(pldm_case_dir, format("run-%s-%s.log", case_name, io_run("date +%Y%m%d-%H%M%S")))
-  }
+  local xsim_post_flags = {}
+  if option.get("dump") then
+    xsim_post_flags = {
+      "--",
+      "-fsdb",
+      "-input " .. path.join(pldm_scripts_dir, "run_debug.tcl"),
+    }
+  else
+    xsim_post_flags = {
+      "--",
+      "-input " .. path.join(pldm_scripts_dir, "run.tcl"),
+    }
+  end
 
   local xsim_flags = {}
   table.join2(xsim_flags, xsim_pre_flags)
   table.join2(xsim_flags, xsim_post_flags)
+  table.insert(xsim_flags, "-l " .. path.join(pldm_case_dir, format("run-%s-%s.log", case_name, io_run("date +%Y%m%d-%H%M%S"))))
 
   os.exec("xeDebug " .. table.concat(xsim_flags, " "))
 end

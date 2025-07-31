@@ -295,7 +295,6 @@ task("pldm", function()
     options = {
       {'b', "rebuild", "k", nil, "forcely rebuild"},
       {'n', "no_diff", "k", nil, "disable difftest"},
-      {'d', "no_fsdb", "k", nil, "do not dump wave"},
       {nil, "synthesis", "k", nil, "synthesis compilation mode"},
       -- {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'G', "bypass_clockgate", "k", nil, "force enable all clock gates"},
@@ -338,6 +337,7 @@ task("pldm-run", function ()
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
       {nil, "no_scb", "k", nil, "disable lua scoreboard"},
+      {'d', "dump", "k", nil, "dump fsdb waveform file"},
     }
   }
 
