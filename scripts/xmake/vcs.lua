@@ -370,6 +370,7 @@ function simv_run()
     end
     sh_str = sh_str .. format(" -fgp=num_threads:%s,num_fsdb_threads:%s", num_threads, num_threads)
   end
+  sh_str = sh_str .. " +vcs+lic+wait"
   sh_str = sh_str .. " +max-cycles=" .. option.get("cycles")
   sh_str = sh_str .. " +workload=" .. image_file
   sh_str = sh_str .. " -assert finish_maxfail=30"
