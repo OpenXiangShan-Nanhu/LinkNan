@@ -10,6 +10,7 @@ import("core.base.task")
 local debug = false
 local check_host_name = true
 local pldm_z2_host_prefix = "node016"
+local pldm_z1_host_prefix = "node011"
 
 if os.getenv("NO_CHECK_HOST") then
   check_host_name = false
@@ -50,8 +51,6 @@ local function io_run(cmd)
 end
 
 local function load_pldm_z2env()
-  -- TODO: load_pldm_z1env
-
   local host_name = os.getenv("HOSTNAME") or "<Undefined>"
   if check_host_name and not host_name:startswith(pldm_z2_host_prefix) then
     raise(format(
@@ -112,9 +111,81 @@ local function load_pldm_z2env()
   log("[load_pldm_z2env]", "finish")
 end 
 
+
+local function load_pldm_z1env()
+  local host_name = os.getenv("HOSTNAME") or "<Undefined>"
+  if check_host_name and not host_name:startswith(pldm_z1_host_prefix) then
+    raise(format(
+      "[pldm.lua] [load_pldm_z1env] you are not in the correct host, expect host name prefix: `%s`, but got host name: `%s`", 
+      pldm_z1_host_prefix,
+      host_name
+    ))
+  end
+
+  local envs = {}
+  local function set_env(key, value)
+    os.setenv(key, value)
+    envs[key] = value
+  end
+  local function add_env(key, value)
+    local new_value = value .. ":" .. assert(os.getenv(key), format("[pldm.lua] [load_pldm_z1env.add_env] key: %s is nil", key))
+    os.setenv(key, new_value)
+    envs[key] = new_value
+  end
+
+  set_env("BITMODE", "64")
+  set_env("CDS_INST_DIR", "ALL")
+
+  -- xcelium setup
+  set_env("XLM_HOME", "/nfs/tools/Cadence/XCELIUM24.03.005")
+  set_env("CDS_INST_DIR", envs.XLM_HOME)
+  add_env("PATH", envs.XLM_HOME .. "/bin")
+  add_env("PATH", envs.XLM_HOME .. "/tools.lnx86/bin")
+  add_env("PATH", envs.XLM_HOME .. "/tools/cdsgcc/gcc/bin")
+  add_env("LD_LIBRARY_PATH", envs.XLM_HOME .. "/tools.lnx86/lib/64bit")
+  add_env("LD_LIBRARY_PATH", envs.XLM_HOME .. "/tools.lnx86/inca/lib/64bit")
+  
+  -- HDLICE setup
+  set_env("HDLICE_HOME", "/nfs/tools/Cadence/HDLICE22.04.s003")
+  add_env("PATH", envs.HDLICE_HOME .. "/bin")
+
+  -- IXCOM setup
+  set_env("IXCOM_HOME", "/nfs/tools/Cadence/IXCOM24.05.s001")
+  add_env("PATH", envs.IXCOM_HOME .. "/bin")
+  add_env("LD_LIBRARY_PATH", envs.IXCOM_HOME .. "/tools.lnx86/lib/64bit")
+
+  -- VXE setup
+  set_env("VXE_HOME", "/nfs/tools/Cadence/VXE23.03.s004")
+  add_env("PATH", envs.VXE_HOME .. "/bin")
+  add_env("LD_LIBRARY_PATH", envs.VXE_HOME .. "/tools.lnx86/lib/64bit")
+
+  -- license setup
+  set_env("LM_LICENSE_FILE", "5280@node011")
+
+  set_env("VERDI_HOME", "/nfs/tools/synopsys/verdi/R-2020.12-SP1")
+  add_env("PATH", envs.VERDI_HOME .. "/bin")
+  add_env("LD_LIBRARY_PATH", envs.VERDI_HOME .. "/share/PLI/lib/linux64")
+  add_env("LD_LIBRARY_PATH", envs.VERDI_HOME .. "/share/VCS/lib/linux64")
+  add_env("LD_LIBRARY_PATH", envs.VERDI_HOME .. "/share/IUS/lib/linux64")
+  
+  set_env("VCS_HOME", "/nfs/tools/synopsys/vcs/Q-2020.03-SP2")
+  add_env("PATH", envs.VCS_HOME .. "/bin")
+
+  set_env("PLDM_HOST", "bjos_emu")
+
+  -- Fix `nemu-xx-so` error while searching for the GLIBCXX_3.4.29 symbol
+  set_env("LD_PRELOAD", "/nfs/tools/gcc/13.2/lib64/libstdc++.so.6")
+  
+  log("[load_pldm_z1env]", "finish")
+end 
+
 function pldm_comp(num_cores)
   assert(num_cores, "[pldm.lua] [pldm_comp] num_cores is required")
-  load_pldm_z2env()
+  if option.get("use_z1") then
+    load_pldm_z1env()
+  else
+    load_pldm_z2env()
+  end
 
   local abs_dir = os.curdir()
   local ixcom_dir = path.join(io_run("cds_root ixcom"), "share", "uxe", "etc", "ixcom")
@@ -399,7 +470,11 @@ function pldm_run()
       "[pldm.lua] [pldm_run] must set one of `image(-i)`, `imagez(-z)` or `workload(-w)`"
     )
   end
-  load_pldm_z2env()
+  if option.get("use_z1") then
+    load_pldm_z1env()
+  else
+    load_pldm_z2env()
+  end
 
   local abs_dir = os.curdir()
   local image_file = ""

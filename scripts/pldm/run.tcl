@@ -6,7 +6,7 @@ set DESIGN_DIR $env(PLDM_COMP_DIR)
 debug $DESIGN_DIR
 xeset designName $DESIGN_NAME
 
-# environment variable `PLDM_HOST` is set by pldm.lua(load_z2_env)
+# environment variable `PLDM_HOST` is set by pldm.lua(load_z2/z1_env)
 host $env(PLDM_HOST)
 
 # wait until resource available

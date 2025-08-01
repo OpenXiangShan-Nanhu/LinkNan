@@ -308,6 +308,7 @@ task("pldm", function()
       {'S', "socket", "kv", "sync", "define how cpu cluster connect to noc"},
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
+      {nil, "use_z1", "k", nil, "use Palladium Z1 environment"},
     }
   }
 
@@ -338,6 +339,7 @@ task("pldm-run", function ()
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
       {nil, "no_scb", "k", nil, "disable lua scoreboard"},
       {'d', "dump", "k", nil, "dump fsdb waveform file"},
+      {nil, "use_z1", "k", nil, "use Palladium Z1 environment"},
     }
   }
 
