@@ -506,3 +506,11 @@ task("clean", function()
     options = {}
   }
 end)
+
+target("init", function ()
+  set_kind("phony")
+  on_run(function (target)
+    import("core.base.task")
+    task.run("init")
+  end)
+end)
