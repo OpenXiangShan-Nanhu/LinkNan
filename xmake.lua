@@ -453,7 +453,9 @@ task("idea", function()
       os.execv("mill", {"-i", "mill.idea.GenIdea/idea"})
     end
   end)
-  set_menu {}
+  set_menu {
+    options = {}
+  }
 end)
 
 task("init", function()
@@ -463,7 +465,9 @@ task("init", function()
     os.cd(path.join(os.scriptdir(), "dependencies", "nanhu"))
     os.exec("git submodule update --init YunSuan")
   end)
-  set_menu {}
+  set_menu {
+    options = {} -- If no options required, just set it to {} and DO NOT remove this line. (`options` key is required)
+  }
 end)
 
 task("comp", function()
@@ -487,7 +491,9 @@ task("comp", function()
     os.mv(jar_path, path.join(build_dir, "linknan.jar"))
     os.mv(test_jar_path, path.join(build_dir, "linknan.test.jar"))
   end)
-  set_menu {}
+  set_menu {
+    options = {}
+  }
 end)
 
 task("clean", function()
@@ -496,5 +502,7 @@ task("clean", function()
     os.rmdir(path.join("build", "*"))
     os.rmdir(path.join("sim", "*"))
   end)
-  set_menu {}
+  set_menu {
+    options = {}
+  }
 end)
