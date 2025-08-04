@@ -320,12 +320,15 @@ function simv_run()
   local new_sim_dir = option.get("sim_dir") or os.getenv("SIM_DIR")
   if new_sim_dir then sim_dir = path.absolute(new_sim_dir) end
 
+  local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
   local simv_sim_dir = path.join(sim_dir, "simv")
   local simv_case_dir = path.join(simv_sim_dir, case_name)
   local simv_comp_dir = path.join(simv_sim_dir, "comp")
-  local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
-  local simv = path.join(simv_case_dir, "simv")
-  local daidir = path.join(simv_case_dir, "simv.daidir")
+  local simv_run_dir = simv_case_dir
+  if option.get("run_dir") then simv_run_dir = path.join(option.get("run_dir"), case_name) end
+
+  local simv = path.join(simv_run_dir, "simv")
+  local daidir = path.join(simv_run_dir, "simv.daidir")
 
   if not os.exists(simv_comp_dir) then 
     raise(format(
@@ -334,13 +337,13 @@ function simv_run()
     ))
   end
 
-  if not os.exists(simv_case_dir) then os.mkdir(simv_case_dir) end
+  if not os.exists(simv_run_dir) then os.mkdir(simv_run_dir) end
   if os.exists(simv) then os.rm(simv) end
   if os.exists(daidir) then os.rm(daidir) end
 
   os.ln(path.join(simv_comp_dir, "simv"), simv)
   os.ln(path.join(simv_comp_dir, "simv.daidir"), daidir)
-  os.cd(simv_case_dir)
+  os.cd(simv_run_dir)
 
   local sh_str = "chmod +x simv" .. " && ( ./simv"
   if not option.get("no_dump") then

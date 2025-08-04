@@ -510,6 +510,8 @@ function pldm_run()
   local pldm_case_dir = path.join(pldm_sim_dir, case_name)
   local pldm_comp_dir = path.join(pldm_sim_dir, "comp")
   local pldm_scripts_dir = path.join(abs_dir, "scripts", "pldm")
+  local pldm_run_dir = pldm_case_dir
+  if option.get("run_dir") then pldm_run_dir = path.join(option.get("run_dir"), case_name) end
 
   if not os.exists(pldm_comp_dir) then 
     raise(format(
@@ -517,9 +519,9 @@ function pldm_run()
       pldm_comp_dir
     ))
   end
-  if not os.exists(pldm_case_dir) then os.mkdir(pldm_case_dir) end
+  if not os.exists(pldm_run_dir) then os.mkdir(pldm_run_dir) end
 
-  os.cd(pldm_case_dir)
+  os.cd(pldm_run_dir)
   os.setenv("PLDM_COMP_DIR", pldm_comp_dir)
   local xsim_pre_flags = {
     "--xmsim", "-64", "+xcprof", "-profile", "-PROFTHREAD", 

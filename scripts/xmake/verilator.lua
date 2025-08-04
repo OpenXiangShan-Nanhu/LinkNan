@@ -281,11 +281,14 @@ function emu_run()
   local new_sim_dir = option.get("sim_dir") or os.getenv("SIM_DIR")
   if new_sim_dir then sim_dir = path.absolute(new_sim_dir) end
 
+  local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
   local emu_sim_dir = path.join(sim_dir, "emu")
   local emu_case_dir = path.join(emu_sim_dir, case_name)
   local emu_comp_dir = path.join(emu_sim_dir, "comp")
-  local ref_so = path.join(abs_ref_base_dir, option.get("ref"))
-  local sim_emu = path.join(emu_case_dir, "emu")
+  local emu_run_dir = emu_case_dir
+  if option.get("run_dir") then emu_run_dir = path.join(option.get("run_dir"), case_name) end
+
+  local sim_emu = path.join(emu_run_dir, "emu")
 
   if not os.exists(emu_comp_dir) then 
     raise(format(
@@ -294,10 +297,10 @@ function emu_run()
     ))
   end
 
-  if not os.exists(emu_case_dir) then os.mkdir(emu_case_dir) end
+  if not os.exists(emu_run_dir) then os.mkdir(emu_run_dir) end
   if os.exists(sim_emu) then os.rm(sim_emu) end
   os.ln(path.join(emu_comp_dir, "emu"), sim_emu)
-  os.cd(emu_case_dir)
+  os.cd(emu_run_dir)
 
   local sh_str = "chmod +x emu" .. " && ( ./emu"
   if option.get("jtag_debug") then
