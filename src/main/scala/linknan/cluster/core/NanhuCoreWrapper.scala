@@ -19,6 +19,7 @@ import xs.utils.IntBuffer
 import xs.utils.cache.common.L2ParamKey
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import xs.utils.sram.SramHelper
+import xs.utils.perf.PerfEvent
 import zhujiang.HasZJParams
 import zhujiang.chi.FlitHelper.{connIcn, hwaConn}
 import zhujiang.chi._
@@ -124,7 +125,7 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
     _core.io.perfEvents.zip(_l2.io_perf).foreach({case(a, b) => a := b})
     private val allPerfEvents = _l2.getPerfEvents
     for (((name, inc), i) <- allPerfEvents.zipWithIndex) {
-      println("L2 Cache perfEvents Set", name, inc, i)
+      println("L2 Cache perfEvents Set", name, inc, i + (3<<8))
     }
 
     _l2.io_nodeID := 0.U(7.W)
