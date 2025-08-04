@@ -51,6 +51,7 @@ object DeviceTreeGenerator {
       .withChildren(clintList)
       .withChild(PlicNode(cpuNum))
       .withChild(DebugModuleNode(cpuNum))
+      .withChild(PMUNode())
 
     FileRegisters.add("software", s"dtsi", s"/dts-v1/;\n\n${formatNode(root)}")
   }

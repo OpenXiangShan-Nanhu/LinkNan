@@ -53,6 +53,10 @@ case class FlagValue() extends DeviceTreeValue {
   override def toString: String = ""
 }
 
+case class RawValue(values: List[String]) extends DeviceTreeValue {
+  override def toString: String = values.mkString("<", " ", ">")
+}
+
 case class ReferenceValue(ref: String) extends DeviceTreeValue {
   override def toString: String = s"<&$ref>"
 }

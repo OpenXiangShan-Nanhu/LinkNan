@@ -237,6 +237,23 @@ final case class DebugModuleNode(
     )
   }
 )
+final case class PMUNode() extends DeviceNode(
+  name = s"pmu",
+  label = s"pmu",
+  children = Nil,
+  properties = List(
+    Property("compatible", StringValue("riscv,pmu")),
+	  Property("riscv,event-to-mhpmevent", PropertyValues(List())),
+	  Property("riscv,event-to-mhpmcounters", PropertyValues(List())),
+    Property("riscv,raw-event-to-mhpmcounters", PropertyValues(List(
+      RawValue(List("0x00000000", "0x00000000", "0xffffffff", "0xffffff00", "0x000007f8")),
+      RawValue(List("0x00000000", "0x00000100", "0xffffffff", "0xffffff00", "0x0007f800")),
+      RawValue(List("0x00000000", "0x00000200", "0xffffffff", "0xffffff00", "0x07f80000")),
+      RawValue(List("0x00000000", "0x00000300", "0xffffffff", "0xffffff00", "0xf8000000")),
+    ))),
+  )
+)
+
 
 final case class CpuNode(
   cpuCount: Int,
@@ -272,7 +289,7 @@ final case class SocNode(
         harts = 1
       )) ++ List(MswiNode(cpuCount), RefMtimerNode())
     }
-    ppuList ++ clintList ++ List(PlicNode(cpuCount) , DebugModuleNode(cpuCount))
+    ppuList ++ clintList ++ List(PlicNode(cpuCount) , DebugModuleNode(cpuCount), PMUNode())
   }
 )
 
