@@ -243,8 +243,12 @@ final case class PMUNode() extends DeviceNode(
   children = Nil,
   properties = List(
     Property("compatible", StringValue("riscv,pmu")),
-	  Property("riscv,event-to-mhpmevent", PropertyValues(List())),
-	  Property("riscv,event-to-mhpmcounters", PropertyValues(List())),
+    Property("riscv,event-to-mhpmevent", PropertyValues(List(
+      RawValue(List("0x8", "0x0", "0x15")),
+    ))),
+    Property("riscv,event-to-mhpmcounters", PropertyValues(List(
+      RawValue(List("0x8", "0x8", "0x000007f8")),
+    ))),
     Property("riscv,raw-event-to-mhpmcounters", PropertyValues(List(
       RawValue(List("0x00000000", "0x00000000", "0xffffffff", "0xffffff00", "0x000007f8")),
       RawValue(List("0x00000000", "0x00000100", "0xffffffff", "0xffffff00", "0x0007f800")),
