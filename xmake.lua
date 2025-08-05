@@ -116,6 +116,7 @@ task("emu", function()
     description = "Compile with verilator",
     options = {
       {'b', "rebuild", "k", nil, "forcely rebuild"},
+      {nil, "no_build_chisel", "k", nil, "do not build chisel code"},
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
       {'d', "dramsim3", "k", nil, "use dramsim3"},
       {'p', "no_perf", "k", nil, "disable perf counter"},
@@ -209,6 +210,7 @@ task("simv", function()
     options = {
       {'b', "rebuild", "k", nil, "forcely rebuild"},
       {'B', "rebuild_comp", "k", nil, "forcely rebuild vcs simv"},
+      {nil, "no_build_chisel", "k", nil, "do not build chisel code"},
       {'n', "no_diff", "k", nil, "disable difftest"},
       {'d', "no_fsdb", "k", nil, "do not dump wave"},
       {'x', "no_xprop", "k", nil, "do not set xprop"},
@@ -296,6 +298,7 @@ task("pldm", function()
     description = "Compile with pldm(Cadence Palladium)",
     options = {
       {'b', "rebuild", "k", nil, "forcely rebuild"},
+      {nil, "no_build_chisel", "k", nil, "do not build chisel code"},
       {'n', "no_diff", "k", nil, "disable difftest"},
       {nil, "synthesis", "k", nil, "synthesis compilation mode"},
       -- {'s', "sparse_mem", "k", nil, "use sparse mem"},

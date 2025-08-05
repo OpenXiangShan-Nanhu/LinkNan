@@ -240,45 +240,47 @@ function pldm_comp(num_cores)
     path.join(difftest_csrc, "plugin", "spikedasm"),
   })
 
-  depend.on_changed(function ()
-    log("[pldm_comp]", "change detected! start compiling `soc`...")
-    if os.exists(build_dir) then os.rmdir(build_dir) end
-    task.run("soc", {
-      vcs = true, sim = true, config = option.get("config"),
-      pldm_verilog = true,
-      socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
-      core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
-      legacy = option.get("legacy"), jar = option.get("jar"),
-      build_dir = build_dir
+  if not option.get("no_build_chisel") then
+    depend.on_changed(function ()
+      log("[pldm_comp]", "change detected! start compiling `soc`...")
+      if os.exists(build_dir) then os.rmdir(build_dir) end
+      task.run("soc", {
+        vcs = true, sim = true, config = option.get("config"),
+        pldm_verilog = true,
+        socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
+        core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
+        legacy = option.get("legacy"), jar = option.get("jar"),
+        build_dir = build_dir
+      })
+
+      vsrc = {}
+      for _, p in ipairs(vsrc_dirs) do
+        table.join2(vsrc, os.files(path.join(p, "*v")))
+      end
+
+      if option.get("lua_scoreboard") then
+        local dpi_cfg_lua = path.join(abs_dir, "scripts", "verilua", "dpi_cfg.lua")
+        if os.exists(dpi_export_dir) then os.rmdir(dpi_export_dir) end
+        os.mkdir(dpi_export_dir)
+        local dpi_exp_opts =  {"dpi_exporter"}
+        table.join2(dpi_exp_opts, {"--config", dpi_cfg_lua})
+        table.join2(dpi_exp_opts, {"--out-dir", dpi_export_dir})
+        table.join2(dpi_exp_opts, {"--work-dir", dpi_export_dir})
+        table.join2(dpi_exp_opts, {"-I", design_gen_dir})
+        table.join2(dpi_exp_opts, {"--quiet", "--pldm-gfifo-dpi"})
+        table.join2(dpi_exp_opts, {"--top", tb_top})
+        table.join2(dpi_exp_opts, vsrc)
+        local cmd_file = path.join(comp_dir, "dpi_exp_cmd.sh")
+        io.writefile(cmd_file, table.concat(dpi_exp_opts, " "))
+        os.execv(os.shell(), { cmd_file })
+      end
+    end,{
+      files = chisel_dep_srcs,
+      dependfile = path.join("out", "chisel.pldm.dep." .. (build_dir):gsub("/", "_"):gsub(" ", "_")),
+      dryrun = option.get("rebuild"),
+      values = table.join2({build_dir}, xmake.argv())
     })
-
-    vsrc = {}
-    for _, p in ipairs(vsrc_dirs) do
-      table.join2(vsrc, os.files(path.join(p, "*v")))
-    end
-
-    if option.get("lua_scoreboard") then
-      local dpi_cfg_lua = path.join(abs_dir, "scripts", "verilua", "dpi_cfg.lua")
-      if os.exists(dpi_export_dir) then os.rmdir(dpi_export_dir) end
-      os.mkdir(dpi_export_dir)
-      local dpi_exp_opts =  {"dpi_exporter"}
-      table.join2(dpi_exp_opts, {"--config", dpi_cfg_lua})
-      table.join2(dpi_exp_opts, {"--out-dir", dpi_export_dir})
-      table.join2(dpi_exp_opts, {"--work-dir", dpi_export_dir})
-      table.join2(dpi_exp_opts, {"-I", design_gen_dir})
-      table.join2(dpi_exp_opts, {"--quiet", "--pldm-gfifo-dpi"})
-      table.join2(dpi_exp_opts, {"--top", tb_top})
-      table.join2(dpi_exp_opts, vsrc)
-      local cmd_file = path.join(comp_dir, "dpi_exp_cmd.sh")
-      io.writefile(cmd_file, table.concat(dpi_exp_opts, " "))
-      os.execv(os.shell(), { cmd_file })
-    end
-  end,{
-    files = chisel_dep_srcs,
-    dependfile = path.join("out", "chisel.pldm.dep." .. (build_dir):gsub("/", "_"):gsub(" ", "_")),
-    dryrun = option.get("rebuild"),
-    values = table.join2({build_dir}, xmake.argv())
-  })
+  end
 
   for _, p in ipairs(csrc_dirs) do
     table.join2(csrc, os.files(path.join(p, "*.cpp")))
