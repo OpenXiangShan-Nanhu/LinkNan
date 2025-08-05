@@ -584,6 +584,9 @@ local print = function(...) print("[main.lua]", ...) end
 
 fork {
     function()
+        local DpiExporter = require("DpiExporter"):init()
+        local dpi_exporter_trigger = DpiExporter:fetch_trigger_func()
+
         local l2 = dut.soc.cc_0.tile.l2cache
         local clock = l2.clock:chdl()
         local timer = dut.difftest_timer:chdl()
@@ -602,9 +605,6 @@ fork {
         print("hello from main.lua")
 
         local cycles = tonumber(timer:get())
-
-        local DpiExporter = require("DpiExporter"):init()
-        local dpi_exporter_trigger = DpiExporter:fetch_trigger_func()
 
         while true do
             if dpi_exporter_trigger() then
