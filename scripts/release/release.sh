@@ -25,7 +25,8 @@ env_dir="$release_dir"/env
 mkdir -p "$release_dir"
 mkdir -p "$env_dir"
 
-# 2. get nexus-am and NEMU
+# 2. get nexus-am, NEMU and openocd
+[ $# -eq 0 ] && git clone --depth=1 -b LinkNan https://github.com/kong-ling-hui/riscv-openocd.git $release_dir/riscv-openocd
 git clone --depth=1 -b nact https://github.com/OpenXiangShan-Nanhu/nexus-am.git $am_dir
 git clone --depth=1 -b master https://github.com/OpenXiangShan-Nanhu/NEMU.git  $nemu_dir
 git clone --depth=1 -b master https://github.com/ucb-bar/berkeley-softfloat-3.git $nemu_dir/resource/softfloat/repo
