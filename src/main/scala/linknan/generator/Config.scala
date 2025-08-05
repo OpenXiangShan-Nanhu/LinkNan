@@ -303,15 +303,11 @@ class FullL3Config extends Config(
 )
 
 class MediumL3Config extends Config(
-  new LLCConfig(4 * 1024 * 1024, 8, 16, 64, 2)
+  new LLCConfig(4 * 1024 * 1024, 8, 16, 32 * 4, 2)
 )
 
 class SmallL3Config extends Config(
   new LLCConfig(2 * 1024 * 1024, 8, 8, 64, 2)
-)
-
-class QuadCoreL3Config extends Config(
-  new LLCConfig(1 * 1024 * 1024, 8, 8, 32, 2)
 )
 
 // use extreme l3 config require the number of HNF no more than 4 in NoC
@@ -338,7 +334,6 @@ object ConfigGenerater {
       case "full" => new FullL3Config
       case "medium" => new MediumL3Config
       case "small" => new SmallL3Config
-      case "fpga_4" => new QuadCoreL3Config
       case "extreme" => new ExtremeL3Config
       case _ =>
         require(requirement = false, s"not supported l3 config: $l3")
