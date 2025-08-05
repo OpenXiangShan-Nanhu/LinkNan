@@ -623,9 +623,10 @@ fork {
                 for i = 1, nr_sn_mon do
                     sn_mon_vec[i]:sample_all(cycles)
                 end
+
+                cycles = tonumber(timer:get())
             end
 
-            cycles = tonumber(timer:get())
             clock:posedge()
         end
     end
