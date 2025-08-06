@@ -135,6 +135,8 @@ class PowerController(tlParams:TilelinkParams) extends Module {
   private val modeUpdate = currentMode =/= nextMode && fsm(idleBit)
   private val modeUpdateReg = RegNext(modeUpdate, false.B)
   private val nextModeReg = RegEnable(nextMode, modeUpdate)
+  private val illegalTransition = currentMode === PowerMode.OFF && nextModeReg === PowerMode.RET || currentMode === PowerMode.RET && nextModeReg === PowerMode.OFF
+  private val notAllowTransition = io.deactivate || illegalTransition
   dontTouch(nextDynMode)
   when(tlSlv.ctl.dynamicEn) {
     assert(nextDynMode >= tlSlv.ctl.powerPolicy)
@@ -152,7 +154,7 @@ class PowerController(tlParams:TilelinkParams) extends Module {
   pcsmMst.io.p.active := DontCare
   pcsmMst.io.p.deny := false.B
   io.dev <> devMst.io.p
-  tlSlv.ctl.transResp.valid := fsm(denyBit) | fsm(compBit) | modeUpdateReg && io.deactivate
+  tlSlv.ctl.transResp.valid := fsm(denyBit) | fsm(compBit) | modeUpdateReg && notAllowTransition
   tlSlv.ctl.transResp.bits := fsm(compBit)
   pcsmMst.io.defaultPState := PowerMode.OFF
   devMst.io.defaultPState := PowerMode.OFF
@@ -175,7 +177,7 @@ class PowerController(tlParams:TilelinkParams) extends Module {
   private val upgrade = nextModeReg > currentMode
   private val fsmNext = WireInit(fsm)
   private val holdCnt = Reg(UInt(3.W))
-  private val start = modeUpdateReg && !io.deactivate
+  private val start = modeUpdateReg && !notAllowTransition
   when(start) {
     holdCnt := Fill(holdCnt.getWidth, true.B)
   }.elsewhen(holdCnt.orR) {
