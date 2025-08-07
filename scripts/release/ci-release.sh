@@ -40,14 +40,12 @@ for arg in "$@"; do
 
   # FPGA single core only need xmake soc target, xmmake options need grcY.
   if [ "$arg" = "FPGA_Single_Core" ]; then
-
-    xmake soc -grcY -N fpga_bosc_1 -L medium
+    xmake soc -grcY -N fpga_bosc_1 -L single
     mv $package_dir $release_dir
 
   # FPGA quad core only need xmake soc target, xmmake options need f(full sys) and grcY.
   elif [ "$arg" = "FPGA_Quad_Core" ]; then
-
-    xmake soc -fgrcY -N fpga_bosc_4 -L medium
+    xmake soc -fgrcY -N fpga_bosc_4 -L quad
     mv $package_dir $release_dir
     
   # ST single core release for EDA IT verification.
