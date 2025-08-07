@@ -302,8 +302,12 @@ class FullL3Config extends Config(
   new LLCConfig
 )
 
-class MediumL3Config extends Config(
-  new LLCConfig(4 * 1024 * 1024, 8, 16, 32 * 4, 2)
+class SingleCoreL3Config extends Config(
+  new LLCConfig(4 * 1024 * 1024, 8, 16, 64, 2)
+)
+
+class QuadCoreL3Config extends Config(
+  new LLCConfig(4 * 1024 * 1024, 16, 16, 128, 2)
 )
 
 class SmallL3Config extends Config(
@@ -332,9 +336,11 @@ object ConfigGenerater {
     }
     val l3Cfg = l3 match {
       case "full" => new FullL3Config
-      case "medium" => new MediumL3Config
+      case "medium" => new SingleCoreL3Config
       case "small" => new SmallL3Config
       case "extreme" => new ExtremeL3Config
+      case "single" => new SingleCoreL3Config
+      case "quad" => new QuadCoreL3Config
       case _ =>
         require(requirement = false, s"not supported l3 config: $l3")
         new ExtremeL3Config
