@@ -42,7 +42,9 @@ jobs:
             exit 1
           fi
           echo "Release successful, found $LATEST_TAR"
-          mv "$LATEST_TAR" /nfs/share/LN-release/
+          for f in $LATEST_TAR; do
+            mv "$f" /nfs/share/LN-release/
+          done
 
       - name: Build LinkNan jar from origin/main
         run: |
@@ -98,4 +100,4 @@ jobs:
         if: always()
         run: |
           echo "Cleaning generated files inside workspace..."
-          rm -rf build build.bak release_* out .xmake sim dependencies
+          rm -rf build build.bak release_* Release_* out .xmake sim dependencies
