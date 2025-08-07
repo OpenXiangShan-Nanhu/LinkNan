@@ -31,12 +31,12 @@ jobs:
       - name: Init project
         run: xmake init
         
-      - name: Make LN 1-core release
-        run: ./scripts/release/release.sh fpga_inno_1
+      - name: Make LN release
+        run: ./scripts/release/ci-release.sh FPGA_Single_Core FPGA_Quad_Core ST_Single_Core ST_Quad_Core
 
       - name: Move LN release
         run: |
-          LATEST_TAR=$(ls -t release_*.tar.gz 2>/dev/null | head -1)
+          LATEST_TAR=$(ls -t Release_*_Core.tar.gz 2>/dev/null | head -4)
           if [ -z "$LATEST_TAR" ]; then
             echo "Release tarball not found after release, aborting."
             exit 1
