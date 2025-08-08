@@ -227,7 +227,15 @@ function simv_comp(num_cores)
     vcs_flags = vcs_flags .. " +define+RANDOMIZE_REG_INIT +define+RANDOMIZE_MEM_INIT"
   else
     if option.get("no_xprop") then
-      vcs_flags = vcs_flags .. " +vcs+initreg+random"
+      if option.get("initreg_cfg") then
+        local cfg_file = option.get("initreg_cfg")
+        if not os.exists(cfg_file) then
+          raise("[vcs.lua] [simv_comp] initreg configuration file: `%s` does not exist", cfg_file)
+        end
+        vcs_flags = vcs_flags .. " +vcs+initreg+config+" .. cfg_file
+      else
+        vcs_flags = vcs_flags .. " +vcs+initreg+random"
+      end
     else
       vcs_flags = vcs_flags .. " -xprop"
     end
@@ -353,6 +361,14 @@ function simv_run()
   end
   if option.get("init_reg") ~= nil then
     sh_str = sh_str .. " +vcs+initreg+" .. option.get("init_reg")
+  end
+  if option.get("initreg_cfg") then
+    assert(not option.get("init_reg"), "[vcs.lua] [simv_run] `--init_reg/-I` and `--initreg_cfg` option cannot be both set")
+    local cfg_file = option.get("initreg_cfg")
+    if not os.exists(cfg_file) then
+      raise("[vcs.lua] [simv_run] initreg configuration file: `%s` does not exist", cfg_file)
+    end
+    sh_str = sh_str .. " +vcs+initreg+config+" .. cfg_file
   end
   if option.get("cov") then
     sh_str = sh_str .. " -cm " .. cov_param

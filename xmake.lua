@@ -230,6 +230,7 @@ task("simv", function()
       {'E', "extra_filelist", "kv", nil, "extra filelist"},
       {nil, "no_fgp", "k", nil, "disable fgp multithread"},
       {nil, "vcs_args", "kv", nil, "additional arguments for vcs"},
+      {nil, "initreg_cfg", "kv", nil, "initreg configuration file for `+vcs+initreg+config+` option"},
     }
   }
 
@@ -268,6 +269,7 @@ task("simv-run", function ()
       {nil, "fgp_threads", "kv", "4", "fgp threads"},
       {nil, "simv_args", "kv", nil, "additional arguments for simv"},
       {nil, "no_scb", "k", nil, "disable lua scoreboard"},
+      {nil, "initreg_cfg", "kv", nil, "initreg configuration file for `+vcs+initreg+config+` option"},
     }
   }
 
