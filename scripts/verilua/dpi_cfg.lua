@@ -36,7 +36,7 @@ for _, chnl in ipairs({ "tx_req", "tx_resp", "tx_data", "tx_snoop", "rx_req", "r
     add_pattern {
         module = "DongJiang",
         sensitive_signals = ".*valid",
-        signals = "io_lan_" .. chnl .. "(?!.*(Excl|RespErr|CBusy|DoNotGoToSD|.*Attr)).*"
+        signals = "io_lan_" .. chnl .. "(?!.*(Excl|QoS|RespErr|CBusy|DoNotGoToSD|.*Attr)).*"
     }
 end
 
