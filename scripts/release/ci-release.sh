@@ -29,7 +29,8 @@ done
 # generate releases by arguments
 for arg in "$@"; do
   suffix="$arg"
-  release_dir="$linknan_dir/Release_$(LC_TIME=en_US.UTF-8 date +"%b-%d-%Y")_${commit}_${suffix}"
+  release_name="Release_$(LC_TIME=en_US.UTF-8 date +"%b_%d_%Y")_${commit}_${suffix}"
+  release_dir="$linknan_dir/$release_name"
   env_dir="$release_dir/env"
   package_dir="$linknan_dir/Release-LinkNan-$(LC_TIME=en_US.UTF-8 date +"%b-%d-%Y")"
   nemu_dir="$release_dir/NEMU"
@@ -85,7 +86,8 @@ for arg in "$@"; do
   fi
 
   # package
-  tar -zcvf $release_dir.tar.gz $release_dir
+  cd "$linknan_dir"
+  tar -zcvf $release_name.tar.gz $release_name
   # clean up generate.
   rm -rf "$release_dir" "$package_dir"
 done
