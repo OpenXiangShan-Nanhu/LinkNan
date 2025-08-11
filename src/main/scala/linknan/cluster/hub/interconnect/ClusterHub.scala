@@ -28,6 +28,7 @@ class ClusterMiscWires(node: Node)(implicit p: Parameters) extends ZJBundle {
   val seip = Input(Vec(node.cpuNum, Bool()))
   val dbip = Input(Vec(node.cpuNum, Bool()))
   val defaultBootAddr = Input(UInt(raw.W))
+  val defaultEnable = Input(Bool())
   val resetState = Output(Vec(node.cpuNum, Bool()))
   val avail = Output(Vec(node.cpuNum, Bool()))
   val clusterId = Input(UInt(clusterIdBits.W))

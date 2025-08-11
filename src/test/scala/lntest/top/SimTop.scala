@@ -143,6 +143,12 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   soc.io.dft.lgc_rst_n := true.B
   soc.io.default_reset_vector := 0x10000000L.U
   soc.io.ci := 0.U
+  soc.io.default_cpu_enable.foreach(_ := false.B)
+  if(doBlockTest) {
+    soc.io.default_cpu_enable.foreach(_ := true.B)
+  } else {
+    soc.io.default_cpu_enable(0) := true.B
+  }
 
   if(doBlockTest) {
     soc.io.jtag.foreach( jtag => {

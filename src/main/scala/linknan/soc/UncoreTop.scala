@@ -72,6 +72,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val ext_intr = Input(UInt(p(LinkNanParamsKey).nrExtIntr.W))
     val ci = Input(UInt(ciIdBits.W))
     val ndreset = Output(Bool())
+    val default_cpu_enable = Input(Vec(clusterNum, Bool()))
     val default_reset_vector = Input(UInt(raw.W))
     val jtag = devWrp.io.debug.systemjtag.map(t => chiselTypeOf(t))
     val dft = new LnDftWires
@@ -119,6 +120,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     ext.misc.defaultBootAddr := io.default_reset_vector
     ext.misc.nodeNid := noc.node.nodeId.U.asTypeOf(new NodeIdBundle).nid
     ext.misc.rtc := RegNext(rtcClockGated)
+    ext.misc.defaultEnable := io.default_cpu_enable(clusterId)
     for(i <- 0 until node.cpuNum) {
       val cid = clusterId + i
       ext.misc.meip(i) := BitSynchronizer(devWrp.io.cpu.meip(cid))

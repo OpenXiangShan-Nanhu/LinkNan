@@ -64,11 +64,7 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   coreCg.io.E := clkEnSync & !io.icn.dft.core.clk_off
 
   cpuCtl.defaultBootAddr := io.icn.misc.defaultBootAddr
-  if(p(LinkNanParamsKey).removeCore) {
-    cpuCtl.defaultEnable := true.B
-  } else {
-    cpuCtl.defaultEnable := io.icn.misc.clusterId === 0.U
-  }
+  cpuCtl.defaultEnable := io.icn.misc.defaultEnable
 
   clusterHub.io.blockSnp := cpuCtl.blockReq
   private val intrPending = Cat(cpuDev.msip, cpuDev.mtip, cpuDev.meip, cpuDev.seip, cpuDev.dbip).orR
