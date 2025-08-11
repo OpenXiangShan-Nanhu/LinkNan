@@ -29,7 +29,7 @@ endif
 VCS_FLAGS += -full64 +v2k -timescale=1ns/10ps -sverilog -debug_access+all +lint=TFIPC-L
 VCS_FLAGS += -l vcs.log -top tb_top -fgp -lca -kdb +nospecify +notimingcheck -no_save -xprop
 VCS_FLAGS += +define+DIFFTEST +define+ASSERT_VERBOSE_COND_=1 +define+PRINTF_COND_=1
-VCS_FLAGS += +define+STOP_COND_=1 +define+VCS +incdir+$(GEN_CSRC_DIR)
+VCS_FLAGS += +define+ENABLE_INITIAL_REG_ +define+STOP_COND_=1 +define+VCS +incdir+$(GEN_CSRC_DIR)
 VCS_FLAGS += -CFLAGS "$(VCS_CXXFLAGS)" -LDFLAGS "$(VCS_LDFLAGS)" -j200
 VCS_FLAGS += $(EXTRA)
 

@@ -165,7 +165,7 @@ function emu_comp(num_cores)
   local ln_cfg_vlt = path.join(abs_base, "scripts", "linknan", "verilator.vlt")
   local verilator_flags = f("%s --exe --cc --top-module %s --assert --x-assign unique %s", verilator_bin, vtop, ln_cfg_vlt)
 
-  verilator_flags = verilator_flags .. " +define+VERILATOR=1 +define+PRINTF_COND=1"
+  verilator_flags = verilator_flags .. " +define+VERILATOR=1 +define+PRINTF_COND=1 +define+ENABLE_INITIAL_REG_"
   verilator_flags = verilator_flags .. " +define+RANDOMIZE_REG_INIT +define+RANDOMIZE_MEM_INIT"
   verilator_flags = verilator_flags .. " +define+RANDOMIZE_GARBAGE_ASSIGN +define+RANDOMIZE_DELAY=0"
   verilator_flags = verilator_flags .. " -Wno-UNOPTTHREADS -Wno-STMTDLY -Wno-WIDTH --no-timing"

@@ -332,7 +332,7 @@ function pldm_comp(num_cores)
   }
   local macro_flags = {
     "+define+PALLADIUM", "+define+RANDOMIZE_MEM_INIT", "+define+RANDOMIZE_REG_INIT", "+define+RANDOMIZE_DELAY=0",
-    "+define+SIM_TOP_MODULE_NAME=" .. tb_top .. ".sim"
+    "+define+ENABLE_INITIAL_REG_", "+define+SIM_TOP_MODULE_NAME=" .. tb_top .. ".sim"
   }
 
   if option.get("bypass_clockgate") then
