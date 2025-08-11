@@ -230,6 +230,7 @@ task("simv", function()
       {'E', "extra_filelist", "kv", nil, "extra filelist"},
       {nil, "no_fgp", "k", nil, "disable fgp multithread"},
       {nil, "vcs_args", "kv", nil, "additional arguments for vcs"},
+      {nil, "no_initreg_random", "k", nil, "do not add +vcs+initreg+random to vcs flags"},
       {nil, "initreg_cfg", "kv", nil, "initreg configuration file for `+vcs+initreg+config+` option"},
     }
   }
