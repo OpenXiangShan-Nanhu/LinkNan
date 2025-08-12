@@ -130,11 +130,30 @@ jobs:
           source /nfs/share/home/zhengchuyu/verilator.sh
           xmake emu-run -i ${{ matrix.case }}
 
+          # Check if there is error in lua_scb
+          rg "Error while executing task" ./sim/emu/${{ matrix.case }}/run.log
+          if [ $? -eq 0 ]; then
+              echo "Test Failed!"
+              exit 1
+          else
+              echo "Test Passed!"
+              exit 0
+          fi
+
       - name: Run simv
         if: ${{ matrix.sim == 'simv' }}
         run: |
           source /nfs/share/home/zhengchuyu/verilua.sh
           xmake simv-run -i ${{ matrix.case }} --no_fgp
 
+          # Check if there is error in lua_scb
+          rg "Error while executing task" ./sim/simv/${{ matrix.case }}/run.log
+          if [ $? -eq 0 ]; then
+              echo "Test Failed!"
+              exit 1
+          else
+              echo "Test Passed!"
+              exit 0
+          fi
 
 
