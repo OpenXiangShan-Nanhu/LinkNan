@@ -230,12 +230,13 @@ function simv_comp(num_cores)
     vcs_flags = vcs_flags .. " +define+RANDOMIZE_GARBAGE_ASSIGN +define+RANDOMIZE_DELAY=0"
     vcs_flags = vcs_flags .. " +define+RANDOMIZE_REG_INIT +define+RANDOMIZE_MEM_INIT"
   else
-    if not option.get("no_xprop") then
+    local has_xprop = not option.get("no_xprop")
+    local has_initreg_cfg = option.get("initreg_cfg")
+    local has_initreg_random = (not option.get("no_initreg_random")) and (not has_xprop) and (not has_initreg_cfg)
+
+    if has_xprop then
       vcs_flags = vcs_flags .. " -xprop"
     end
-
-    local has_initreg_random = not option.get("no_initreg_random")
-    local has_initreg_cfg = option.get("initreg_cfg")
 
     if has_initreg_cfg then
       local cfg_file = option.get("initreg_cfg")
@@ -246,9 +247,6 @@ function simv_comp(num_cores)
     end
 
     if has_initreg_random then
-      if has_initreg_cfg then
-        raise("[vcs.lua] [simv_comp] `initreg_cfg` and `initreg_random` option cannot be both set, consider remove `--initreg_cfg` or add `--no_initreg_random` to solve this.")
-      end
       vcs_flags = vcs_flags .. " +vcs+initreg+random"
     end
   end
