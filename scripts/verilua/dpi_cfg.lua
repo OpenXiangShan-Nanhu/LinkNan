@@ -5,7 +5,7 @@ add_pattern {
 
 add_pattern {
     module = "TL2CHICoupledL2",
-    signals = "clock"
+    signals = "(clock|reset)"
 }
 
 for _, chnl in ipairs({ "a", "b", "c", "d", "e" }) do

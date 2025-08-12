@@ -589,13 +589,21 @@ fork {
 
         local l2 = dut.soc.cc_0.tile.l2cache
         local clock = l2.clock:chdl()
+        local reset = l2.reset:chdl()
         local timer = dut.difftest_timer:chdl()
 
         clock:posedge()
-        do
-            init_components()
-            init_database()
+
+        -- Wait for reset to be deasserted
+        while true do
+            if reset:is(0) then
+                break
+            end
+            clock:posedge()
         end
+
+        init_components()
+        init_database()
 
         local nr_l2_mon_in = #l2_mon_in_vec
         local nr_l2_mon_out = #l2_mon_out_vec
