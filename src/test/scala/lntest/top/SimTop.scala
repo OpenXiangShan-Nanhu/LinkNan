@@ -52,13 +52,16 @@ class SimNto1Bridge(mstParams:Seq[AxiParams]) extends BaseAxiXbar(mstParams) {
   initialize()
 }
 
-class SystemExtensionWrapper(slvP:AxiParams, mstP:AxiParams) extends BlackBox {
+class SystemExtensionWrapper(slvP:AxiParams, mstP:AxiParams, core:Int) extends BlackBox(Map("NR_CC" -> core)) {
   val io = IO(new Bundle{
     val s_axi_cfg = Flipped(new AxiBundle(slvP))
     val m_axi_dma = new AxiBundle(mstP)
     val ext_intr = Output(UInt(256.W))
-    val clock = Input(Clock())
-    val reset = Input(AsyncReset())
+    val i_top_clk = Input(Clock())
+    val o_noc_clk = Output(Clock())
+    val o_cpu_clk = Output(UInt(core.W))
+    val i_top_rst = Input(AsyncReset())
+    val o_noc_rst = Output(AsyncReset())
   })
 }
 
@@ -92,12 +95,12 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   }
 
   private val dmaPort = soc.dmaIO.filter(_.params.dataBits >= 256).head
-  private val extraDev = if(doBlockTest) None else Some(Module(new SystemExtensionWrapper(extCfgPort.params, dmaPort.params)))
+  private val extraDev = if(doBlockTest) None else Some(Module(new SystemExtensionWrapper(extCfgPort.params, dmaPort.params, soc.io.cluster_clocks.size)))
   extraDev.foreach(d => {
     d.io.s_axi_cfg <> extCfgPort
     dmaPort <> d.io.m_axi_dma
-    d.io.clock := clock
-    d.io.reset := reset
+    d.io.i_top_clk := clock
+    d.io.i_top_rst := reset
   })
 
   runIOAutomation()
@@ -149,6 +152,11 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   } else {
     soc.io.default_cpu_enable(0) := true.B
   }
+  extraDev.foreach(d => {
+    soc.io.cluster_clocks.zip(d.io.o_cpu_clk.asBools).foreach({case(a, b) => a := b.asClock})
+    soc.io.noc_clock := d.io.o_noc_clk
+    soc.io.reset := (d.io.o_noc_rst.asBool || soc.io.ndreset).asAsyncReset
+  })
 
   if(doBlockTest) {
     soc.io.jtag.foreach( jtag => {
