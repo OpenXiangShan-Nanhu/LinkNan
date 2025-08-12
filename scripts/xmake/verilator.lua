@@ -133,6 +133,10 @@ function emu_comp(num_cores)
   if option.get("lua_scoreboard") then
       cxx_flags = cxx_flags .. " -DDUT_CLEAN"
       cxx_flags = cxx_flags .. " -DDPI_EXP_CALL_VERILUA_ENV_STEP"
+      if os.getenv("GITHUB_ACTIONS") then
+        -- Strict step mode: when error occurs in lua scripts, the entire simulation will be terminated immediately.
+        cxx_flags = cxx_flags .. " -DDPI_EXP_USE_STRICT_STEP"
+      end
   end
   if option.get("ref") == "Spike" then
     cxx_flags = cxx_flags .. " -DREF_PROXY=SpikeProxy"
