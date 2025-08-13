@@ -183,22 +183,7 @@ task("emu-run", function ()
   }
 
   on_run(function()
-    import("core.base.option")
-
-    -- Set verilua env
-    os.setenv("VERILUA_CFG", path.join(os.scriptdir(), "scripts", "verilua", "cfg.lua"))
-    os.setenv("LUA_SCRIPT", path.join(os.scriptdir(), "scripts", "verilua", "main.lua"))
-    os.setenv("SIM", "verilator")
-    os.setenv("PRJ_TOP", os.scriptdir())
-    os.setenv("SOC_CFG_FILE", path.join(os.scriptdir(), "build", "generated-src", "soc.lua"))
-    local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
-    if new_build_dir then
-      os.setenv("SOC_CFG_FILE", path.absolute(path.join(new_build_dir, "generated-src", "soc.lua")))
-    end
-    if option.get("no_scb") then
-      os.setenv("LUA_SCB_DISABLE", 1)
-    end
-
+    import("scripts.xmake.verilua").setup_env("verilator")
     import("scripts.xmake.verilator").emu_run()
   end)
 end)
@@ -275,22 +260,7 @@ task("simv-run", function ()
   }
 
   on_run(function()
-    import("core.base.option")
-
-    -- Set verilua env
-    os.setenv("VERILUA_CFG", path.join(os.scriptdir(), "scripts", "verilua", "cfg.lua"))
-    os.setenv("LUA_SCRIPT", path.join(os.scriptdir(), "scripts", "verilua", "main.lua"))
-    os.setenv("SIM", "vcs")
-    os.setenv("PRJ_TOP", os.scriptdir())
-    os.setenv("SOC_CFG_FILE", path.join(os.scriptdir(), "build", "generated-src", "soc.lua"))
-    local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
-    if new_build_dir then
-      os.setenv("SOC_CFG_FILE", path.absolute(path.join(new_build_dir, "generated-src", "soc.lua")))
-    end
-    if option.get("no_scb") then
-      os.setenv("LUA_SCB_DISABLE", 1)
-    end
-
+    import("scripts.xmake.verilua").setup_env("vcs")
     import("scripts.xmake.vcs").simv_run()
   end)
 end)
@@ -353,22 +323,7 @@ task("pldm-run", function ()
   }
 
   on_run(function()
-    import("core.base.option")
-
-    -- Set verilua env
-    os.setenv("VERILUA_CFG", path.join(os.scriptdir(), "scripts", "verilua", "cfg.lua"))
-    os.setenv("LUA_SCRIPT", path.join(os.scriptdir(), "scripts", "verilua", "main.lua"))
-    os.setenv("SIM", "vcs")
-    os.setenv("PRJ_TOP", os.scriptdir())
-    os.setenv("SOC_CFG_FILE", path.join(os.scriptdir(), "build", "generated-src", "soc.lua"))
-    local new_build_dir = option.get("build_dir") or os.getenv("BUILD_DIR")
-    if new_build_dir then
-      os.setenv("SOC_CFG_FILE", path.absolute(path.join(new_build_dir, "generated-src", "soc.lua")))
-    end
-    if option.get("no_scb") then
-      os.setenv("LUA_SCB_DISABLE", 1)
-    end
-
+    import("scripts.xmake.verilua").setup_env("pldm")
     import("scripts.xmake.pldm").pldm_run()
   end)
 end)
