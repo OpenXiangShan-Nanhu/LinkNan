@@ -75,6 +75,11 @@ object SimArgParser {
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDebug = true)
           }), tail)
 
+        case "--no-extra-nc-mem" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case LinkNanParamsKey => up(LinkNanParamsKey).copy(extraNcMem = false)
+          }), tail)
+
         case "--lua-scoreboard" :: tail =>
           parse(config.alter((site, here, up) => {
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDebug = true, EnableLuaScoreBoard = true, FPGAPlatform = true)

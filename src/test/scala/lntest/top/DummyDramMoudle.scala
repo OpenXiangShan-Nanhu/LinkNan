@@ -15,7 +15,7 @@ import zhujiang.axi.AxiParams
 
 class DummyDramMoudle(memParams: AxiParams)(implicit p: Parameters) extends LazyModule{
   private val maw = p(ZJParametersKey).requestAddrBits - 1
-
+  private val enablePciMem = p(LinkNanParamsKey).extraNcMem
   private val memDplmcMstParams = AXI4MasterPortParameters(
     masters = Seq(
       AXI4MasterParameters(
@@ -40,8 +40,8 @@ class DummyDramMoudle(memParams: AxiParams)(implicit p: Parameters) extends Lazy
     beatBytes = memParams.dataBits / 8
   )
 
-  private val pciMemSize = 64L * 1024 * 1024
-  private val pciDplmcSlvParams = AXI4SlavePortParameters (
+  private val pciMemSize = 1L * 1024 * 1024 * 1024 * 1024
+  private val pciDplmcSlvParams = Option.when(enablePciMem)(AXI4SlavePortParameters (
     slaves = Seq(
       AXI4SlaveParameters(
         address = Seq(AddressSet(AddrConfig.mem_nc.head._1, pciMemSize - 1)),
@@ -54,15 +54,15 @@ class DummyDramMoudle(memParams: AxiParams)(implicit p: Parameters) extends Lazy
       )
     ),
     beatBytes = memParams.dataBits / 8
-  )
+  ))
 
   private val mstNode = AXI4MasterNode(Seq(memDplmcMstParams))
   private val memNode = AXI4SlaveNode(Seq(memDplmcSlvParams))
-  private val pciNode = AXI4SlaveNode(Seq(pciDplmcSlvParams))
+  private val pciNode = pciDplmcSlvParams.map(pm => AXI4SlaveNode(Seq(pm)))
   private val xbar = LazyModule(new AXI4Xbar)
   xbar.node :=* mstNode
   memNode :*= xbar.node
-  pciNode :*= xbar.node
+  pciNode.foreach(_ :*= xbar.node)
   lazy val module = new Impl
 
   class Impl extends LazyModuleImp(this) {
@@ -76,15 +76,14 @@ class DummyDramMoudle(memParams: AxiParams)(implicit p: Parameters) extends Lazy
       dynamicLatency = p(DebugOptionsKey).UseDRAMSim,
       pureDram = p(LinkNanParamsKey).removeCore
     )
-    private val extraMem = LazyModule(new AXI4RAMWrapper(
-      slave = pciNode,
+    private val extraMem = pciNode.map(n => LazyModule(new AXI4RAMWrapper(
+      slave = n,
       memByte = pciMemSize,
       useBlackBox = false
-    ))
-
+    )))
     private val simAXIMem = Module(l_simAXIMem.module)
-    private val simAXIPci = Module(extraMem.module)
+    private val simAXIPci = extraMem.map(m => Module(m.module))
     l_simAXIMem.io_axi4.head <> memNode.in.head._1
-    extraMem.io_axi4.head <> pciNode.in.head._1
+    extraMem.foreach(_.io_axi4.head <> pciNode.get.in.head._1)
   }
 }

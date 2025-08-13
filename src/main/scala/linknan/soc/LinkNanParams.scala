@@ -17,6 +17,7 @@ case class LinkNanParams(
   removeCore: Boolean = false,
   keepL1c: Boolean = false,
   useClint:Boolean = true,
+  extraNcMem:Boolean = true,
   prefix:String = "",
   iodChipId:Int = 6,
   nrExtIntr: Int = 256,

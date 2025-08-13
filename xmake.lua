@@ -53,6 +53,7 @@ task("soc" , function()
     if option.get("mbist") then table.join2(chisel_opts, {"--enable-mbist"}) end
     if option.get("legacy") then table.join2(chisel_opts, {"--legacy"}) end
     if not option.get("with_tfb") then table.join2(chisel_opts, {"--no-tfb"}) end
+
     if not option.get("clean_difftest") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--basic-difftest"}) end
     if not option.get("clean_difftest") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--difftest-config", "EBINH"}) end
     if not option.get("clean_difftest") and not option.get("pldm_verilog") then table.join2(chisel_opts, {"--enable-difftest"}) end
@@ -60,6 +61,7 @@ task("soc" , function()
     if option.get("lua_scoreboard") then table.join2(chisel_opts, {"--lua-scoreboard"}) end
     if option.get("hardware_assertion") then table.join2(chisel_opts, {"--enable-hardware-assertion"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
+    if option.get("sim") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--no-extra-nc-mem"}) end
     if option.get("prefix") ~= "" then table.join2(chisel_opts, {"--prefix", option.get("prefix")}) end
     os.setenv("NOOP_HOME", os.curdir())
 

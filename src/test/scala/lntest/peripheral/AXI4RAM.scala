@@ -35,7 +35,7 @@ class AXI4RAM
 )(implicit p: Parameters)
   extends AXI4SlaveModule(address, executable, beatBytes, burstLen)
 {
-  override lazy val module = new AXI4SlaveModuleImp(this){
+  override lazy val module = new AXI4SlaveModuleImp(this) {
 
     val offsetBits = log2Up(memByte)
 
@@ -53,7 +53,7 @@ class AXI4RAM
 
     val rdata = if (useBlackBox) {
       val mem = DifftestMem(memByte, beatBytes)
-      when (wen) {
+      when(wen) {
         mem.write(
           addr = wIdx,
           data = in.w.bits.data.asTypeOf(Vec(beatBytes, UInt(8.W))),
@@ -63,17 +63,57 @@ class AXI4RAM
       val raddr = Mux(in.r.fire && !rLast, rIdx + 1.U, rIdx)
       mem.readAndHold(raddr, in.ar.fire || in.r.fire).asUInt
     } else {
-      val mem = Mem(memByte / beatBytes, Vec(beatBytes, UInt(8.W)))
-
-      val wdata = VecInit.tabulate(beatBytes) { i => in.w.bits.data(8 * (i + 1) - 1, 8 * i) }
-      when(wen) {
-        mem.write(wIdx, wdata, in.w.bits.strb.asBools)
-      }
-
-      Cat(mem.read(rIdx).reverse)
+      val mem = Module(new SparseMem(log2Ceil(memByte / beatBytes), beatBytes * 8, beatBytes))
+      mem.io.i_ck := clock
+      mem.io.i_ra := rIdx
+      mem.io.i_wa := wIdx
+      mem.io.i_wd := in.w.bits.data
+      mem.io.i_wm := in.w.bits.strb
+      mem.io.i_we := wen
+      mem.io.o_rd
     }
     in.r.bits.data := rdata
   }
+}
+
+class SparseMem(aw:Int, dw:Int, mw:Int) extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val i_ck = Input(Clock())
+    val i_ra = Input(UInt(aw.W))
+    val i_wa = Input(UInt(aw.W))
+    val i_wd = Input(UInt(dw.W))
+    val i_wm = Input(UInt(mw.W))
+    val i_we = Input(Bool())
+    val o_rd = Output(UInt(dw.W))
+  })
+  setInline("SparseMem.sv",
+    s"""// VCS coverage exclude_file
+       |module SparseMem (
+       |  input  logic          i_ck,
+       |  input  logic [${aw - 1}: 0] i_ra,
+       |  input  logic [${aw - 1}: 0] i_wa,
+       |  input  logic [${dw - 1}: 0] i_wd,
+       |  input  logic [${mw - 1}: 0] i_wm,
+       |  input  logic         i_we,
+       |  output logic [${dw - 1}: 0] o_rd
+       |);
+       |  bit   [${dw - 1}: 0] mem [bit[${aw - 1}: 0]];
+       |  logic [${dw - 1}: 0] mask;
+       |
+       |  generate
+       |    for (genvar i = 0; i < $mw; i++) begin
+       |      assign mask[i * 8 +: 8] = {8{i_wm[${mw - 1} - i]}};
+       |    end
+       |  endgenerate
+       |
+       |  always_ff @(posedge i_ck) begin
+       |    if(i_we) mem[i_wa] = (i_wd & mask) | (mem[i_wa] & ~mask);
+       |  end
+       |
+       |  always_comb begin
+       |    o_rd = mem[i_ra];
+       |  end
+       |endmodule""".stripMargin)
 }
 
 class AXI4RAMWrapper (
