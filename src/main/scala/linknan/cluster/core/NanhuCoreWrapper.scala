@@ -98,7 +98,6 @@ class NanhuCoreWrapper(node:Node)(implicit p:Parameters) extends BaseCoreWrapper
 
     _core.io.power.wfiCtrRst := cpc.io.wfiCtrRst
     _core.io.power.flushSb := cpc.io.flushSb
-    _core.io.power.fencei := cpc.io.fencei
     cpc.io.cpuHalt := _core.io.cpu_halt
     cpc.io.timeout := _core.io.power.timeout
     cpc.io.sbIsEmpty := _core.io.power.sbIsEmpty

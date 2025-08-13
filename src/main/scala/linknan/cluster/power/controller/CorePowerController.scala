@@ -18,7 +18,6 @@ class CoreStateController extends Module {
 
     val flushSb     = Output(Bool())
     val sbIsEmpty   = Input(Bool())
-    val fencei      = Output(Bool())
     val l2Flush     = Output(Bool())
     val l2FlushDone = Input(Bool())
   })
@@ -28,12 +27,10 @@ class CoreStateController extends Module {
   private val (sIdle, idleBit) = genState(0)
   private val (sFlushSb, flushSbBit) = genState(1)
   private val (sWaitFlushSb, waitFlushSbBit) = genState(2)
-  private val (sFencei, fenceiBit) = genState(3)
-  private val (sWaitFencei, waitFenceiBit) = genState(4)
-  private val (sL2Flush, l2FlushBit) = genState(5)
-  private val (sWaitL2Flush, waitL2FlushBit) = genState(6)
-  private val (sFenceFinish, fenceFinishBit) = genState(7)
-  private val (sFlushFinish, flushFinishBit) = genState(8)
+  private val (sL2Flush, l2FlushBit) = genState(3)
+  private val (sWaitL2Flush, waitL2FlushBit) = genState(4)
+  private val (sFenceFinish, fenceFinishBit) = genState(5)
+  private val (sFlushFinish, flushFinishBit) = genState(6)
   private val fsm = RegInit(sIdle)
 
   private val fsmNext = WireInit(fsm)
@@ -48,13 +45,7 @@ class CoreStateController extends Module {
       fsmNext := Mux(io.timeout, sIdle, sWaitFlushSb)
     }
     is(sWaitFlushSb) {
-      fsmNext := Mux(io.timeout, sIdle, Mux(io.sbIsEmpty, sFencei, sWaitFlushSb))
-    }
-    is(sFencei) {
-      fsmNext := Mux(io.timeout, sIdle, sWaitFencei)
-    }
-    is(sWaitFencei){
-      fsmNext := Mux(io.timeout, sIdle, sFenceFinish)
+      fsmNext := Mux(io.timeout, sIdle, Mux(io.sbIsEmpty, sFenceFinish, sWaitFlushSb))
     }
     is(sL2Flush) {
       fsmNext := Mux(io.timeout, sIdle, sWaitL2Flush)
@@ -71,7 +62,6 @@ class CoreStateController extends Module {
   }
 
   io.flushSb := fsmNext === sFlushSb && fsm =/= sFlushSb
-  io.fencei  := fsmNext === sFencei && fsm =/= sFencei
   io.l2Flush := fsmNext === sL2Flush && fsm =/= sL2Flush
   io.fenceFinish := fsm(fenceFinishBit)
   io.flushFinish := fsm(flushFinishBit)
@@ -87,7 +77,6 @@ class CorePowerController extends Module {
 
     val flushSb     = Output(Bool())
     val sbIsEmpty   = Input(Bool())
-    val fencei      = Output(Bool())
     val l2Flush     = Output(Bool())
     val l2FlushDone = Input(Bool())
   })
@@ -134,7 +123,6 @@ class CorePowerController extends Module {
   csCtl.io.flush := fsm(flushBit)
   csCtl.io.timeout := fsmNext === sTimeout && fsm =/= sTimeout
   io.flushSb := csCtl.io.flushSb
-  io.fencei  := csCtl.io.fencei
   io.l2Flush := csCtl.io.l2Flush
   csCtl.io.sbIsEmpty := io.sbIsEmpty
   csCtl.io.l2FlushDone := io.l2FlushDone
