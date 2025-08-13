@@ -365,7 +365,13 @@ function simv_run()
   os.ln(path.join(simv_comp_dir, "simv.daidir"), daidir)
   os.cd(simv_run_dir)
 
-  local sh_str = "chmod +x simv" .. " && ( ./simv"
+  -- Run simulation with prefix command
+  -- e.g. 
+  --    RUN_PREFIX="gdb --args" xmake simv-run <...>
+  --    RUN_PREFIX="numactl -m 0 -C 0-15" xmake simv-run <...>
+  local run_prefix = os.getenv("RUN_PREFIX") or ""
+
+  local sh_str = "chmod +x simv" .. format(" && ( %s ./simv", run_prefix)
   if not option.get("no_dump") then
     sh_str = sh_str .. " +dump-wave=fsdb"
   end

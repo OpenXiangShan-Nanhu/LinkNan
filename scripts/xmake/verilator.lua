@@ -308,7 +308,13 @@ function emu_run()
   os.ln(path.join(emu_comp_dir, "emu"), sim_emu)
   os.cd(emu_run_dir)
 
-  local sh_str = "chmod +x emu" .. " && ( ./emu"
+  -- Run simulation with prefix command
+  -- e.g. 
+  --    RUN_PREFIX="gdb --args" xmake emu-run <...>
+  --    RUN_PREFIX="numactl -m 0 -C 0-15" xmake emu-run <...>
+  local run_prefix = os.getenv("RUN_PREFIX") or ""
+
+  local sh_str = "chmod +x emu" .. format(" && (%s ./emu", run_prefix)
   if option.get("jtag_debug") then
     sh_str = sh_str .. " --enable-jtag " .. " --remote-jtag-port " .. option.get("jtag_debug")
   end
