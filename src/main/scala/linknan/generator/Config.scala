@@ -51,7 +51,7 @@ object AddrConfig {
   private val interleaveMask = ((0x1L << interleaveBits) - 1) << interleaveOffset
   private val memFullMask = (1L << log2Ceil(pmemRange.upper)) - 1
 
-  private val memFullAddrSet = AddressSet(0x0L, memFullMask).subtract(AddressSet(0x0L, (1L << log2Ceil(pmemRange.lower)) - 1))
+  val memFullAddrSet = AddressSet(0x0L, memFullMask).subtract(AddressSet(0x0L, (1L << log2Ceil(pmemRange.lower)) - 1))
   private val fullMask = (1L << 44) - 1
 
   def memBank(bank: Long):Seq[(Long, Long)] = {
