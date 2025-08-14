@@ -86,9 +86,10 @@ class SparseMem(aw:Int, dw:Int, mw:Int) extends BlackBox with HasBlackBoxInline 
     val i_we = Input(Bool())
     val o_rd = Output(UInt(dw.W))
   })
-  setInline("SparseMem.sv",
+  private val modName = s"SparseMemA${aw}D${dw}M${mw}"
+  setInline(s"$modName.sv",
     s"""// VCS coverage exclude_file
-       |module SparseMem (
+       |module $modName (
        |  input  logic          i_ck,
        |  input  logic [${aw - 1}: 0] i_ra,
        |  input  logic [${aw - 1}: 0] i_wa,
