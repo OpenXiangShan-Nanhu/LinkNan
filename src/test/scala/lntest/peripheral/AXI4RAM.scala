@@ -104,7 +104,7 @@ class SparseMem(aw:Int, dw:Int, mw:Int) extends BlackBox with HasBlackBoxInline 
        |
        |  generate
        |    for (genvar i = 0; i < $mw; i++) begin
-       |      assign mask[i * 8 +: 8] = {8{i_wm[${mw - 1} - i]}};
+       |      assign mask[i * 8 +: 8] = {8{i_wm[i]}};
        |    end
        |  endgenerate
        |
