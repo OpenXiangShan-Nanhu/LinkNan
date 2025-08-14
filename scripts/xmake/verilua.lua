@@ -8,6 +8,10 @@ function setup_env(sim)
   os.setenv("VERILUA_CFG", path.join(verilua_dir, "cfg.lua"))
   os.setenv("LUA_SCRIPT", path.join(verilua_dir, "main.lua"))
 
+  if sim == "pldm" then
+    -- Reuse vcs configurations in verilua
+    sim = "vcs"
+  end
   os.setenv("SIM", sim)
   os.setenv("PRJ_TOP", os.projectdir())
   os.setenv("SOC_CFG_FILE", path.join(os.projectdir(), "build", "generated-src", "soc.lua"))
