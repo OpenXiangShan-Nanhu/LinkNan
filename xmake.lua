@@ -144,6 +144,7 @@ task("emu", function()
 
   on_run(function()
     import("core.base.option")
+    import("scripts.xmake.verilua").setup_env("verilator")
     local num_cores = "1"
     if option.get("noc") == "full" then num_cores = 4 end
     if option.get("noc") == "reduced" then num_cores = 2 end
@@ -224,6 +225,7 @@ task("simv", function()
 
   on_run(function()
     import("core.base.option")
+    import("scripts.xmake.verilua").setup_env("vcs")
     local num_cores = "1"
     if option.get("noc") == "full" then num_cores = 4 end
     if option.get("noc") == "reduced" then num_cores = 2 end
@@ -294,6 +296,7 @@ task("pldm", function()
 
   on_run(function()
     import("core.base.option")
+    import("scripts.xmake.verilua").setup_env("pldm")
     local num_cores = "1"
     if option.get("noc") == "full" then num_cores = 4 end
     if option.get("noc") == "reduced" then num_cores = 2 end
