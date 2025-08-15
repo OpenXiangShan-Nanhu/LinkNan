@@ -372,6 +372,9 @@ task("view_db", function ()
     assert(db_files, "[view_db] db_file is required, use `--db_file` to specify it")
 
     _db_files = _db_files:split(",", {plain = true})
+    for i, db_file in ipairs(_db_files) do
+      _db_files[i] = path.absolute(db_file, os.workingdir())
+    end
 
     local should_remove_idx = {}
     for i, db_file in ipairs(_db_files) do
@@ -390,12 +393,12 @@ task("view_db", function ()
 
     db_files = table.unique(db_files)
 
+    print("[view_db] addr:", addr)
+    print("[view_db] all files:", db_files)
+
     for _, db_file in ipairs(db_files) do
       assert(os.isfile(db_file), "[view_db] " .. db_file .. " is not a file")
     end
-
-    print("[view_db] addr:", addr)
-    print("[view_db] all files:", db_files)
 
     for _, db_file in ipairs(db_files) do
       local tables = os.iorun([[sqlite3 "%s" "SELECT name FROM sqlite_master WHERE type='table';"]], db_file)
