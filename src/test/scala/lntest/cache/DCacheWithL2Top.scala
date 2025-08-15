@@ -96,18 +96,18 @@ class SplitCHISNP(reverse: Boolean = false)(implicit p: Parameters) extends TL2C
 }
 
 class SimpleEndpointCHI()(implicit p: Parameters) extends TL2CHIL2Module {
-    val io = IO(new Bundle {
-        val chi = Flipped(new PortIO(splitFlit = true))
-    })
+  val io = IO(new Bundle {
+    val chi = Flipped(new PortIO(splitFlit = true))
+  })
 
-    val fakeCHIBundle = WireInit(0.U.asTypeOf(new PortIO(splitFlit = true)))
-    io.chi <> fakeCHIBundle
+  val fakeCHIBundle = WireInit(0.U.asTypeOf(new PortIO(splitFlit = true)))
+  io.chi <> fakeCHIBundle
 
-    // Keep clock and reset
-    val (_, cnt) = Counter(true.B, 10)
-    dontTouch(cnt)
+  // Keep clock and reset
+  val (_, cnt) = Counter(true.B, 10)
+  dontTouch(cnt)
 
-    dontTouch(io)
+  dontTouch(io)
 }
 
 class CHIEmptyShell(splitFlit: Boolean = false)(implicit p: Parameters) extends  TL2CHIL2Module {
@@ -139,7 +139,7 @@ class DCacheWithL2Top()(implicit p: Parameters) extends LazyModule {
     masterNode
   }
 
-  val nrBank = 2
+  val nrBank = p(XSCoreParamsKey).L2NBanks
   val BlockSize = 64
   val bankBinder = BankBinder(nrBank, BlockSize)
 
@@ -201,7 +201,7 @@ class DCacheWithL2Top()(implicit p: Parameters) extends LazyModule {
     out_rx.dat.flit := splitRXDAT.io.mergedFlit
     splitRXDAT.io.splitFlit := in_rx.dat.flit
 
-    
+
     in_rx.snp.flitpend <> out_rx.snp.flitpend
     in_rx.snp.flitv <> out_rx.snp.flitv
     in_rx.snp.lcrdv <> out_rx.snp.lcrdv
@@ -239,13 +239,31 @@ class DCacheWithL2Top()(implicit p: Parameters) extends LazyModule {
 
 // mill -i linknan.test.runMain lntest.cache.DCacheWithL2Top -td build/DCacheWithL2Top
 object DCacheWithL2Top extends App {
-  val xsCoreParams = XSCoreParameters()
+  val sizeInKiB = 64
+  val ways = 4
+  val xsCoreParams = XSCoreParameters(
+    L2NBanks = 2,
+    dcacheParametersOpt = Some(DCacheParameters(
+      nSets = sizeInKiB * 1024 / ways / 64,
+      nWays = ways,
+      tagECC = Some("none"),
+      dataECC = Some("parity"),
+      replacer = Some("setplru"),
+      nMissEntries = 32,
+      nProbeEntries = 4,
+      nReleaseEntries = 4,
+      nMaxPrefetchEntry = 6,
+      enableDataEcc = true,
+      enableTagEcc = false
+    ))
+  )
   val dcacheParams = xsCoreParams.dcacheParametersOpt.get
   val config = new Config((_, _, _) => {
+    case XSCoreParamsKey => xsCoreParams
     case L2ParamKey => L2Param(
       clientCaches = Seq(L1Param(
-        sets = 128,
-        ways = 4,
+        sets = dcacheParams.nSets / xsCoreParams.L2NBanks,
+        ways = dcacheParams.nWays,
         vaddrBitsOpt = Some(48),
         aliasBitsOpt = dcacheParams.aliasBitsOpt
       )),
@@ -254,8 +272,7 @@ object DCacheWithL2Top extends App {
     case CHIIssue => Issue.Eb
     case EnableCHI => true
     case DecoupledCHI => false // TODO
-    case XSCoreParamsKey => xsCoreParams
-    case BankBitsKey => 2
+    case BankBitsKey => log2Ceil(xsCoreParams.L2NBanks)
     case MaxHartIdBits => 1
     case LogUtilsOptionsKey => LogUtilsOptions(false, false, true)
     case DebugOptionsKey => DebugOptions(EnablePerfDebug = false, EnableHWMoniter = false)
