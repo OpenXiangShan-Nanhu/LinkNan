@@ -110,19 +110,19 @@ class SparseMem(aw:Int, dw:Int, mw:Int) extends BlackBox with HasBlackBoxInline 
        |
        |  always @(posedge i_ck) begin
        |    if(i_we) begin
-       |      if(mem.exists(i_wa)) begin
+       |      if(mem.exists(i_wa) == 1) begin
        |        mem[i_wa] = (i_wd & mask) | (mem[i_wa] & ~mask);
        |      end else begin
-       |        mem[i_wa] = (i_wd & mask) | ({$dw{1'b1}} & ~mask);;
+       |        mem[i_wa] = (i_wd & mask) | ($dw'b0 & ~mask);;
        |      end
        |    end
        |  end
        |
        |  always @(negedge i_ck) begin
-       |    if(mem.exists(i_ra)) begin
+       |    if(mem.exists(i_ra) == 1) begin
        |      o_rd <= mem[i_ra];
        |    end else begin
-       |      o_rd <= {$dw{1'b1}};
+       |      o_rd <= $dw'b0;
        |    end
        |  end
        |endmodule""".stripMargin)
