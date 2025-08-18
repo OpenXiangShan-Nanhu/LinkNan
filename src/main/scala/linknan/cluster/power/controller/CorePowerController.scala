@@ -62,7 +62,7 @@ class CoreStateController extends Module {
   }
 
   io.flushSb := fsmNext === sFlushSb && fsm =/= sFlushSb
-  io.l2Flush := fsmNext === sL2Flush && fsm =/= sL2Flush
+  io.l2Flush := fsm(waitL2FlushBit)
   io.fenceFinish := fsm(fenceFinishBit)
   io.flushFinish := fsm(flushFinishBit)
 }
