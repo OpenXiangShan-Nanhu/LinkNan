@@ -53,7 +53,7 @@ for arg in "$@"; do
   elif [ "$arg" = "ST_Single_Core" ]; then
     mkdir -p "$release_dir"
     mkdir -p "$env_dir"
-    xmake soc -sgr -x bosc_ -N fpga_bosc_1 -L medium
+    xmake soc -sgr -x bosc_ -N fpga_inno_1 -L medium
     cd "$package_dir"/software && dtc -I dts -O dtb -o LNSim.dtb LNSim.dts
     cd "$linknan_dir"
     mv "$package_dir"/generated-src "$package_dir"/sim "$env_dir"
