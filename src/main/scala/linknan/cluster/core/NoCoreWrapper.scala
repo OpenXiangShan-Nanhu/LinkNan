@@ -14,7 +14,7 @@ import org.chipsalliance.diplomacy.lazymodule.LazyModule
 import xiangshan.{HasXSParameter, XSCoreParamsKey}
 import xijiang.Node
 import xs.utils.cache.common._
-import xs.utils.cache.{MemBackTypeMMField, MemPageTypeNCField}
+import xs.utils.cache.{DeviceType, DeviceTypeField}
 import xs.utils.debug.{HardwareAssertion, HardwareAssertionKey}
 import xs.utils.tl.ReqSourceField
 import zhujiang.HasZJParams
@@ -59,7 +59,7 @@ class NoCoreWrapper (node:Node)(implicit p:Parameters) extends BaseCoreWrapper w
       "uncache",
       sourceId = IdRange(0, 1 << mmioSourceBits)
     )),
-    requestFields = Seq(MemBackTypeMMField(), MemPageTypeNCField())
+    requestFields = Seq(DeviceTypeField())
   )))
 
 
