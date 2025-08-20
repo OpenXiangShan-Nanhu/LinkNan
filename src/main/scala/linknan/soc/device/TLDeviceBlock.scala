@@ -142,20 +142,20 @@ class TLDeviceBlock(coreNum: Int, extIntrNum: Int, cfgIdBits: Int, cfgDataBits: 
     val sba = sbaNode.makeIOs()
     val dfx = IO(new BaseTestBundle)
     val dev = IO(new TLDeviceBlockIO(coreNum, extIntrNum)(innerP))
-    val full_clock = IO(Input(Clock()))
-    val div2_clock = IO(Input(Clock()))
+    val sys_clk = IO(Input(Clock()))
+    val dev_clk = IO(Input(Clock()))
     val reset = IO(Input(AsyncReset()))
 
-    val implicitClock = full_clock
+    val implicitClock = sys_clk
     val implicitReset = reset
-    childClock := full_clock
+    childClock := sys_clk
     childReset := reset
 
     private val rstSync = Module(new ResetGen(2))
     rstSync.dft := dfx.toResetDftBundle
     rstSync.reset := reset
 
-    inner.module.clock := div2_clock
+    inner.module.clock := dev_clk
     inner.module.reset := rstSync.o_reset
     inner.module.dfx := dfx
     inner.module.io <> dev

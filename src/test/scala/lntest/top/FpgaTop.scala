@@ -91,6 +91,7 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
 
   soc.io.cluster_clocks := io.core_clk
   soc.io.noc_clock := io.aclk
+  soc.io.dev_clock := io.aclk
   soc.io.rtc_clock := rtc_div.io.Q.asBool
   soc.io.ext_intr := io.ext_intr
   soc.io.default_reset_vector := io.reset_vector

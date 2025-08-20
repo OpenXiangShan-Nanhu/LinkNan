@@ -72,6 +72,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
     val reset = Input(AsyncReset())
     val cluster_clocks = Input(Vec(clusterNum, Clock()))
     val noc_clock = Input(Clock())
+    val dev_clock = Input(Clock())
     val rtc_clock = Input(Bool())
     val ext_intr = Input(UInt(p(LinkNanParamsKey).nrExtIntr.W))
     val ci = Input(UInt(ciIdBits.W))
@@ -93,6 +94,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
 
   uncore.io.reset := io.reset
   uncore.io.noc_clock := io.noc_clock
+  uncore.io.dev_clock := io.dev_clock
   uncore.io.rtc_clock := io.rtc_clock
   uncore.io.ext_intr := io.ext_intr
   uncore.io.ci := io.ci

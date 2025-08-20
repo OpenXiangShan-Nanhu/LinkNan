@@ -136,9 +136,13 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   val tick = cnt < (cntDiv / 2).U
   cnt := Mux(cnt === 0.U, (cntDiv - 1).U, cnt - 1.U)
 
+  private val devDiv = RegInit(false.B)
+  devDiv := !devDiv
+
   private val socReset = reset.asAsyncReset.asBool || soc.io.ndreset
   soc.io.rtc_clock := tick
   soc.io.noc_clock := clock
+  soc.io.dev_clock := devDiv.asClock
   soc.io.cluster_clocks.foreach(_ := clock)
   soc.io.reset := socReset.asAsyncReset
   soc.io.dft := DontCare

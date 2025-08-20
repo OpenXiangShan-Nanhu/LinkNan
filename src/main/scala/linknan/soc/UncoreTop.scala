@@ -68,6 +68,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val reset = Input(AsyncReset())
     val cluster_clocks = Input(Vec(clusterNum, Clock()))
     val noc_clock = Input(Clock())
+    val dev_clock = Input(Clock())
     val rtc_clock = Input(Bool())
     val ext_intr = Input(UInt(p(LinkNanParamsKey).nrExtIntr.W))
     val ci = Input(UInt(ciIdBits.W))
@@ -79,10 +80,9 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val ramctl = Input(new SramCtrlBundle)
   })
   val cluster = noc.ccnIO.map(ccn => IO(new ClusterIcnBundle(ccn.node)))
-  private val crg = Module(new LnCrg)
-  crg.io.in_clk := io.noc_clock
+
   cluster.foreach(c => dontTouch(c))
-  implicitClock := crg.io.out_clk_full
+  implicitClock := io.noc_clock
   implicitReset := withReset(io.reset){ResetGen(dft = Some(io.dft.toResetDftBundle))}
 
   private val rtcSync = BitSynchronizer(io.rtc_clock)
@@ -98,8 +98,8 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
   devWrp.io.debug.dmactiveAck := devWrp.io.debug.dmactive
   devWrp.io.debug.clock := DontCare
   devWrp.io.debug.reset := DontCare
-  devWrp.full_clock := crg.io.out_clk_full
-  devWrp.div2_clock := crg.io.out_clk_div2
+  devWrp.sys_clk := io.noc_clock
+  devWrp.dev_clk := io.dev_clock
   devWrp.reset := implicitReset
   io.ndreset := devWrp.io.debug.ndreset
   noc.io.ci := io.ci
@@ -111,7 +111,7 @@ class UncoreTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper
     val node = ext.socket.node
     val clusterId = node.clusterId
     ext.cpu_clock := io.cluster_clocks(clusterId)
-    ext.noc_clock := crg.io.out_clk_full
+    ext.noc_clock := io.noc_clock
     ext.dft.from(io.dft)
     ext.dft.core <> io.dft.core(clusterId)
     ext.ramctl := io.ramctl
