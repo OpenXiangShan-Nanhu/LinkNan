@@ -263,10 +263,6 @@ function simv_comp(num_cores)
     vcs_flags = vcs_flags .. " -cm " .. cov_param
   end
 
-  if option.get("vcs_args") then
-    vcs_flags = vcs_flags .. " " .. option.get("vcs_args")
-  end
-
   local cmd_file = path.join(comp_dir, "vcs_cmd.sh")
   if os.exists(cmd_file) then
     local fileStr = io.readfile(cmd_file)
