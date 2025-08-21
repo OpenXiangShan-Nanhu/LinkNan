@@ -9,7 +9,7 @@ import org.chipsalliance.cde.config.Parameters
 import xijiang.{Node, NodeType}
 import zhujiang.ZJRawModule
 import linknan.soc.LinkNanParamsKey
-import linknan.utils.BitSynchronizer
+import linknan.utils.{BitSynchronizer, SchmittDelayer}
 import xs.utils.{ClockGate, ClockManagerWrapper, ResetGen}
 import zhujiang.device.socket.IcnSideAsyncModule
 
@@ -69,11 +69,11 @@ class AlwaysOnDomain(node: Node)(implicit p: Parameters) extends ZJRawModule
   clusterHub.io.blockSnp := cpuCtl.blockReq
   private val intrPending = Cat(cpuDev.msip, cpuDev.mtip, cpuDev.meip, cpuDev.seip, cpuDev.dbip).orR
   private val reqToOn = RegNext(intrPending) || RegNext(clusterHub.io.snpPending)
-
+  private val reqToOnD = SchmittDelayer(reqToOn, 255)
   cpuDev.clock := coreCg.io.Q
   cpuDev.reset := (resetSync.asBool || cpuCtl.pcsm.reset).asAsyncReset
   cpuDev.pchn <> cpuCtl.pchn
-  cpuCtl.pchn.active := Cat(reqToOn, false.B, false.B) | RegNext(cpuDev.pchn.active)
+  cpuCtl.pchn.active := Cat(reqToOnD, false.B, false.B) | RegNext(cpuDev.pchn.active)
   cpuDev.pwrEnReq := Mux(io.icn.dft.mode, io.icn.dft.core.pwr_req.getOrElse(false.B), cpuCtl.pcsm.pwrReq)
   cpuCtl.pcsm.pwrResp := cpuDev.pwrEnAck
   io.icn.dft.core.pwr_ack.foreach(_ := cpuDev.pwrEnAck)
