@@ -19,7 +19,7 @@ class SchmittDelayer(threshold:Int) extends Module {
 
 object SchmittDelayer {
   def apply(in:Bool, threshold: Int): Bool = {
-    val sd = new SchmittDelayer(threshold)
+    val sd = Module(new SchmittDelayer(threshold))
     sd.io.in := in
     sd.io.out
   }
