@@ -153,7 +153,7 @@ class LNTop(implicit p:Parameters) extends ZJRawModule with NocIOHelper {
   }))
   private val difftestMacros = Seq(
     s"DEBUG_MEM_BASE 0x${p(LinkNanParamsKey).debugBase.toHexString}",
-    s"DEFAULT_EMU_RAM_SIZE 0x${(8L * 1024 * 1024 * 1024).toHexString}UL",
+    s"DEFAULT_EMU_RAM_SIZE 0x${(16L * 1024 * 1024 * 1024).toHexString}UL",
     s"NUM_CORES ${uncore.cluster.length}"
   )
   private val probeSeq = gateways.map(_.flatMap(_.io.probe.getInstanceSeq).toSeq)

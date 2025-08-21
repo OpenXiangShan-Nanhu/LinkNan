@@ -71,7 +71,7 @@ class DummyDramMoudle(memParams: AxiParams)(implicit p: Parameters) extends Lazy
 
     private val l_simAXIMem = AXI4MemorySlave(
       memNode,
-      8L * 1024 * 1024 * 1024,
+      16L * 1024 * 1024 * 1024,
       useBlackBox = true,
       dynamicLatency = p(DebugOptionsKey).UseDRAMSim,
       pureDram = p(LinkNanParamsKey).removeCore
