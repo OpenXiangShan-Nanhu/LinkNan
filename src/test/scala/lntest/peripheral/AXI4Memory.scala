@@ -24,6 +24,7 @@ import org.chipsalliance.diplomacy.lazymodule._
 import freechips.rocketchip.diplomacy.AddressSet
 import xs.utils._
 import xs.utils.perf.XSError
+import difftest.common.DifftestMem
 
 class MemoryRWHelper extends ExtModule with HasExtModuleInline {
   val DataBits = 64
@@ -106,12 +107,6 @@ class MemoryRequestHelper(requestType: Int)
   })
 
   val verilogLines = Seq(
-    "import \"DPI-C\" function bit memory_request (",
-    "  input longint address,",
-    "  input int id,",
-    "  input bit isWrite",
-    ");",
-    "",
     "module MemoryRequestHelper #(",
     "  parameter REQUEST_TYPE",
     ")(",
@@ -121,6 +116,12 @@ class MemoryRequestHelper(requestType: Int)
     "  input      [63:0] io_req_bits_addr,",
     "  input      [31:0] io_req_bits_id,",
     "  output reg        io_response",
+    ");",
+    "",
+    "import \"DPI-C\" function bit memory_request (",
+    "  input longint address,",
+    "  input int id,",
+    "  input bit isWrite",
     ");",
     "",
     "always @(posedge clock or posedge reset) begin",
@@ -150,10 +151,6 @@ class MemoryResponseHelper(requestType: Int)
   val response = IO(Output(UInt(64.W)))
 
   val verilogLines = Seq(
-    "import \"DPI-C\" function longint memory_response (",
-    "  input bit isWrite",
-    ");",
-    "",
     "module MemoryResponseHelper #(",
     "  parameter REQUEST_TYPE",
     ")(",
@@ -161,6 +158,9 @@ class MemoryResponseHelper(requestType: Int)
     "  input             reset,",
     "  input             enable,",
     "  output reg [63:0] response",
+    ");",
+    "import \"DPI-C\" function longint memory_response (",
+    "  input bit isWrite",
     ");",
     "",
     "always @(posedge clock or posedge reset) begin",
@@ -209,15 +209,15 @@ trait MemoryHelper { this: Module =>
 }
 
 class AXI4MemoryImp[T <: Data](outer: AXI4Memory) extends AXI4SlaveModuleImp(outer) with MemoryHelper {
-  val ramWidth = 8
-  val ramSplit = outer.beatBytes / ramWidth
   val ramBaseAddr = outer.address.head.base
   val ramOffsetBits = log2Ceil(outer.memByte)
-  def ramIndex(addr: UInt) = ((addr - ramBaseAddr.U)(ramOffsetBits - 1, 0) >> log2Ceil(ramWidth)).asUInt
-  val ramHelper = Seq.fill(ramSplit)(MemoryRWHelper(clock, reset))
+
+  def ramIndex(addr: UInt) = ((addr - ramBaseAddr.U)(ramOffsetBits - 1, 0) >> log2Ceil(outer.beatBytes)).asUInt
+
+  val ramHelper = DifftestMem(outer.memByte, outer.beatBytes, 8, singlePort = false)
 
   val numOutstanding = 1 << in.ar.bits.id.getWidth
-  val addressMem = Mem(numOutstanding, UInt((in.ar.bits.addr.getWidth - log2Ceil(ramWidth)).W))
+  val addressMem = Mem(numOutstanding, UInt((in.ar.bits.addr.getWidth - log2Ceil(outer.beatBytes)).W))
   val arlenMem = Mem(numOutstanding, UInt(in.ar.bits.len.getWidth.W))
 
   // accept a read request and send it to the external model
@@ -242,7 +242,6 @@ class AXI4MemoryImp[T <: Data](outer: AXI4Memory) extends AXI4SlaveModuleImp(out
   val pending_write_req_valid = RegInit(VecInit.fill(2)(false.B))
   val pending_write_req_bits  = RegEnable(in.aw.bits, in.aw.fire)
   val pending_write_req_data  = RegEnable(in.w.bits, in.w.fire)
-  XSError(in.aw.fire && in.aw.bits.len === 0.U, "data must have more than one beat now")
   val pending_write_req_ready = Wire(Bool())
   val pending_write_need_req = pending_write_req_valid.last && !pending_write_req_ready
   val write_req_valid = pending_write_req_valid.head && (pending_write_need_req || in.w.valid && in.w.bits.last)
@@ -265,13 +264,9 @@ class AXI4MemoryImp[T <: Data](outer: AXI4Memory) extends AXI4SlaveModuleImp(out
   // ram is written when write data fire
   val wdata_cnt = Counter(outer.burstLen)
   val write_req_addr = Mux(in.aw.fire, in.aw.bits.addr, pending_write_req_bits.addr)
-  val write_req_index = ramIndex(write_req_addr) + Cat(wdata_cnt.value, 0.U(log2Ceil(ramSplit).W))
-  for ((ram, i) <- ramHelper.zipWithIndex) {
-    val enable = in.w.fire
-    val address = write_req_index + i.U
-    val data = in.w.bits.data(ramWidth * 8 * i + 63, ramWidth * 8 * i)
-    val mask = MaskExpand(in.w.bits.strb(i * 8 + 7, i * 8))
-    ram.write(enable, address, data, mask)
+  val write_req_index = ramIndex(write_req_addr) + wdata_cnt.value
+  when(in.w.fire) {
+    ramHelper.write(write_req_index, in.w.bits.data.asTypeOf(Vec(outer.beatBytes, UInt(8.W))), in.w.bits.strb.asBools)
   }
   when (write_req_last) {
     wdata_cnt.reset()
@@ -287,12 +282,13 @@ class AXI4MemoryImp[T <: Data](outer: AXI4Memory) extends AXI4SlaveModuleImp(out
   val (read_resp_valid, read_resp_id) = readResponse(!has_read_resp || read_resp_last)
   has_read_resp := (read_resp_valid && !read_resp_last) || pending_read_resp_valid
   val rdata_cnt = Counter(outer.burstLen)
-  val read_resp_addr = addressMem(in.r.bits.id) + Cat(rdata_cnt.value, 0.U(log2Ceil(ramSplit).W))
+  val read_resp_addr = addressMem(in.r.bits.id) + rdata_cnt.value
   val read_resp_len = arlenMem(in.r.bits.id)
-  in.r.valid := read_resp_valid || pending_read_resp_valid
+  in.r.valid := RegNext(read_resp_valid, false.B) || pending_read_resp_valid
   in.r.bits.id := Mux(pending_read_resp_valid, pending_read_resp_id, read_resp_id)
-  val rdata = ramHelper.zipWithIndex.map{ case (ram, i) => ram.read(in.r.valid, read_resp_addr + i.U) }
-  in.r.bits.data := VecInit(rdata).asUInt
+
+  val rdata = ramHelper.readAndHold(Mux(!read_resp_last && !read_resp_valid, read_resp_addr + 1.U, read_resp_addr), read_resp_valid || in.r.fire)
+  in.r.bits.data := rdata.asUInt
   in.r.bits.resp := AXI4Parameters.RESP_OKAY
   in.r.bits.last := (rdata_cnt.value === read_resp_len)
 
