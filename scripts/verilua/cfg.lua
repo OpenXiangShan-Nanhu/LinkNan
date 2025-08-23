@@ -3,7 +3,7 @@ local utils = require "LuaUtils"
 local cfg = {}
 
 cfg.mode = "step"
-cfg.attach = true
+cfg.is_hse = true
 
 cfg.simulator = assert(os.getenv("SIM"))
 
