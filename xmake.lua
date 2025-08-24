@@ -206,6 +206,8 @@ task("simv", function()
       {'d', "no_fsdb", "k", nil, "do not dump wave"},
       {'x', "no_xprop", "k", nil, "do not set xprop"},
       {'s', "sparse_mem", "k", nil, "use sparse mem"},
+      {nil, "dramsim3", "k", nil, "use dramsim3"},
+      {nil, "dramsim3_home", "kv", path.join(os.curdir(), "dependencies", "dramsim"), "dramsim3 home dir"},
       {'G', "bypass_clockgate", "k", nil, "force enable all clock gates"},
       {'l', "lua_scoreboard", "k", nil, "use lua scoreboard for cache debug"},
       {'J', "jar", "kv", "", "use jar to generate artifacts"},

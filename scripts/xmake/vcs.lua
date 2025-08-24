@@ -89,7 +89,7 @@ function simv_comp(num_cores)
         vcs = true, sim = true, config = option.get("config"),
         socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
         core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
-        legacy = option.get("legacy"), jar = option.get("jar"),
+        dramsim3 = option.get("dramsim3"), legacy = option.get("legacy"), jar = option.get("jar"),
         fake_dram_latency = option.get("fake_dram_latency"), build_dir = build_dir
       })
       local vsrc = {}
@@ -193,6 +193,13 @@ function simv_comp(num_cores)
 
   local cxx_ldflags = "-Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz -lzstd"
 
+  local dramsim_so = ""
+  if option.get("dramsim3") then
+    local ds_cxx_flags, dramsim_so = import("dramsim").dramsim(option.get("dramsim3_home"), build_dir)
+    cxx_flags = cxx_flags .. ds_cxx_flags
+    cxx_ldflags = cxx_ldflags .. " -L" .. path.directory(dramsim_so) .. " -Wl,-rpath," .. path.directory(dramsim_so) .. " -ldramsim3"
+  end
+
   local vcs_flags = "-cm_dir " .. path.join(comp_dir, "simv")
   vcs_flags = vcs_flags .. " -full64 +v2k -timescale=1ns/10ps -sverilog -j200"
   vcs_flags = vcs_flags .. " -debug_access +lint=TFIPC-L -l vcs.log -top " .. tb_top
@@ -215,6 +222,9 @@ function simv_comp(num_cores)
   end
   if not option.get("no_diff") then
     vcs_flags = vcs_flags .. " +define+DIFFTEST"
+  end
+  if option.get("dramsim3") then
+    vcs_flags = vcs_flags .. " +define+WITH_DRAMSIM3"
   end
   vcs_flags = vcs_flags .. " -CFLAGS \"" .. cxx_flags .. "\""
   vcs_flags = vcs_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""
@@ -277,7 +287,7 @@ function simv_comp(num_cores)
   table.join2(depend_srcs, csrc)
   table.join2(depend_srcs, headers)
   table.join2(depend_srcs, { path.join(abs_base, "scripts", "xmake", "vcs.lua") })
-  table.join2(depend_srcs, { cmd_file })
+  table.join2(depend_srcs, { cmd_file, dramsim_so })
 
   os.cd(comp_dir)
   depend.on_changed(function()

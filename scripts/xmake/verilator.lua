@@ -146,12 +146,11 @@ function emu_comp(num_cores)
   if option.get("sparse_mem") then
     cxx_flags = cxx_flags .. " -DCONFIG_USE_SPARSEMM"
   end
-  local dramsim_a = ""
+  local dramsim_so = ""
   if option.get("dramsim3") then
-    local ds_cxx_flags, ds_cxx_ldflags = import("dramsim").dramsim(option.get("dramsim3_home"), build_dir)
+    local ds_cxx_flags, dramsim_so = import("dramsim").dramsim(option.get("dramsim3_home"), build_dir)
     cxx_flags = cxx_flags .. ds_cxx_flags
-    dramsim_a = ds_cxx_ldflags
-    cxx_ldflags = cxx_ldflags .. ds_cxx_ldflags
+    cxx_ldflags = cxx_ldflags .. " -L" .. path.directory(dramsim_so) .. " -Wl,-rpath," .. path.directory(dramsim_so) .. " -ldramsim3"
   end
   if option.get("threads") then
     cxx_flags = cxx_flags .. " -DEMU_THREAD=" .. option.get("threads")
@@ -230,7 +229,7 @@ function emu_comp(num_cores)
   local gmake_depend_files = csrc
   local vmk = f("V%s.mk", vtop)
   table.join2(gmake_depend_files, headers)
-  table.join2(gmake_depend_files, {path.join(comp_dir, vmk), dramsim_a})
+  table.join2(gmake_depend_files, {path.join(comp_dir, vmk), dramsim_so})
 
   depend.on_changed(function()
     local make_opts = {"VM_PARALLEL_BUILDS=1",  "OPT_FAST=-O3"}
