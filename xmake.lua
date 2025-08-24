@@ -11,6 +11,7 @@ task("soc" , function()
       {'k', "keep_l1", "k", nil, "keep dcache interfaces to the top"},
       {'c', "clean_difftest", "k", nil, "generate verilog without any difftest components"},
       {'d', "dramsim3", "k", nil, "use dramsim3 as simulation main memory"},
+      {nil, "fake_dram_latency", "k", nil, "use pseudo dynamic dram latency"},
       {'e', "enable_perf", "k", nil, "generate verilog with perf debug components"},
       {'g', "vcs", "k", nil, "alter assertions info to be vcs style"},
       {'r', "release", "k", nil, "export release pack"},
@@ -62,6 +63,7 @@ task("soc" , function()
     if option.get("hardware_assertion") then table.join2(chisel_opts, {"--enable-hardware-assertion"}) end
     if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, {"--dramsim3"}) end
     if option.get("sim") and option.get("pldm_verilog") then table.join2(chisel_opts, {"--no-extra-nc-mem"}) end
+    if option.get("sim") and option.get("fake_dram_latency") then table.join2(chisel_opts, {"--pseudo-dynamic-dram-latency"}) end
     if option.get("prefix") ~= "" then table.join2(chisel_opts, {"--prefix", option.get("prefix")}) end
     os.setenv("NOOP_HOME", os.curdir())
 
@@ -139,6 +141,7 @@ task("emu", function()
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
       {nil, "dump_fst", "k", nil, "set wave type xxx.fst"},
+      {nil, "fake_dram_latency", "k", nil, "use pseudo dynamic dram latency"},
     }
   }
 
@@ -220,6 +223,7 @@ task("simv", function()
       {nil, "vcs_args", "kv", nil, "additional arguments for vcs"},
       {nil, "no_initreg_random", "k", nil, "do not add +vcs+initreg+random to vcs flags"},
       {nil, "initreg_cfg", "kv", nil, "initreg configuration file for `+vcs+initreg+config+` option"},
+      {nil, "fake_dram_latency", "k", nil, "use pseudo dynamic dram latency"},
     }
   }
 
@@ -291,6 +295,7 @@ task("pldm", function()
       {'o', "build_dir", "kv", nil, "assign build dir"},
       {nil, "sim_dir", "kv", nil, "assign simulation dir"},
       {nil, "use_z1", "k", nil, "use Palladium Z1 environment"},
+      {nil, "fake_dram_latency", "k", nil, "use pseudo dynamic dram latency"},
     }
   }
 

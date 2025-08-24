@@ -90,7 +90,7 @@ function simv_comp(num_cores)
         socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
         core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
         legacy = option.get("legacy"), jar = option.get("jar"),
-        build_dir = build_dir
+        fake_dram_latency = option.get("fake_dram_latency"), build_dir = build_dir
       })
       local vsrc = {}
       for _, p in ipairs(vsrc_dirs) do

@@ -1,8 +1,9 @@
 package lntest.top
 
 import chisel3.Module
-import freechips.rocketchip.amba.axi4.{AXI4MasterNode, AXI4MasterParameters, AXI4MasterPortParameters, AXI4SlaveNode, AXI4SlaveParameters, AXI4SlavePortParameters, AXI4Xbar}
-import freechips.rocketchip.diplomacy.{AddressSet, IdRange, RegionType, TransferSizes}
+import freechips.rocketchip.amba.axi4.{AXI4MasterNode, AXI4MasterParameters, AXI4MasterPortParameters, AXI4SlaveNode, AXI4SlaveParameters, AXI4SlavePortParameters}
+import freechips.rocketchip.amba.axi4.{AXI4Xbar, AXI4Buffer, AXI4Delayer}
+import freechips.rocketchip.diplomacy.{AddressSet, IdRange, RegionType, TransferSizes, BufferParams}
 import freechips.rocketchip.resources.MemoryDevice
 import linknan.generator.AddrConfig
 import org.chipsalliance.diplomacy.lazymodule._
@@ -61,7 +62,15 @@ class DummyDramMoudle(memParams: AxiParams)(implicit p: Parameters) extends Lazy
   private val pciNode = pciDplmcSlvParams.map(pm => AXI4SlaveNode(Seq(pm)))
   private val xbar = LazyModule(new AXI4Xbar)
   xbar.node :=* mstNode
-  memNode :*= xbar.node
+  if (p(LinkNanParamsKey).pseudoDynamicDramLatency) {
+    memNode :*= 
+      AXI4Buffer.chainNode(60) :*= 
+      AXI4Delayer(0.25) :*= 
+      AXI4Buffer.chainNode(60) :*= 
+      xbar.node
+  } else {
+    memNode :*= xbar.node
+  }
   pciNode.foreach(_ :*= xbar.node)
   lazy val module = new Impl
 

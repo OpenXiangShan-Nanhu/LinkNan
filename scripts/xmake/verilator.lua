@@ -48,7 +48,7 @@ function emu_comp(num_cores)
         socket = option.get("socket"), lua_scoreboard = option.get("lua_scoreboard"),
         core = option.get("core"), l3 = option.get("l3"), noc = option.get("noc"),
         legacy = option.get("legacy"), jar = option.get("jar"),
-        build_dir = build_dir
+        fake_dram_latency = option.get("fake_dram_latency"), build_dir = build_dir
       })
       local vsrc = os.files(path.join(design_vsrc, "*v"))
       table.join2(vsrc, os.files(path.join(difftest_vsrc_common, "*v")))
