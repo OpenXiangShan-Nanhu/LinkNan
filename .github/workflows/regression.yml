@@ -25,75 +25,75 @@ jobs:
           predicate-quantifier: 'every'
           filters: .github/filters.yml
 
-  regression:
-    runs-on: ubuntu-latest
-    needs: changes
-    if: ${{ needs.changes.outputs.chisel == 'true' || github.event_name == 'workflow_dispatch' }} 
+  # regression:
+  #   runs-on: ubuntu-latest
+  #   needs: changes
+  #   if: ${{ needs.changes.outputs.chisel == 'true' || github.event_name == 'workflow_dispatch' }} 
 
-    name: Regression-${{ matrix.case }}
+  #   name: Regression-${{ matrix.case }}
 
-    strategy:
-      matrix:
-        case: [ 'microbench', 'dhrystone', 'coremark' ]
+  #   strategy:
+  #     matrix:
+  #       case: [ 'microbench', 'dhrystone', 'coremark' ]
 
-    steps:
-      - name: Manually install mill
-        run: |
-          curl -L https://github.com/com-lihaoyi/mill/releases/download/0.11.2/0.11.2 > mill
-          chmod +x mill
-          sudo mv mill /usr/local/bin
-      - run: |
-          mill --version
-          which mill
+  #   steps:
+  #     - name: Manually install mill
+  #       run: |
+  #         curl -L https://github.com/com-lihaoyi/mill/releases/download/0.11.2/0.11.2 > mill
+  #         chmod +x mill
+  #         sudo mv mill /usr/local/bin
+  #     - run: |
+  #         mill --version
+  #         which mill
 
-      - uses: cachix/install-nix-action@v31
-        with:
-          nix_path: nixpkgs=channel:nixos-25.05
-      - run: nix profile install nixpkgs#xmake
-      - run: nix profile install nixpkgs#verilator
-      # - run: NIXPKGS_ALLOW_UNFREE=1 nix profile install nixpkgs#espresso --impure
+  #     - uses: cachix/install-nix-action@v31
+  #       with:
+  #         nix_path: nixpkgs=channel:nixos-25.05
+  #     - run: nix profile install nixpkgs#xmake
+  #     - run: nix profile install nixpkgs#verilator
+  #     # - run: NIXPKGS_ALLOW_UNFREE=1 nix profile install nixpkgs#espresso --impure
 
-      - name: Install espresso
-        run: |
-          git clone https://github.com/chipsalliance/espresso.git
-          cd espresso
-          mkdir build
-          cd build
-          cmake .. -DBUILD_DOC=off
-          make
-          sudo mv espresso /usr/local/bin
-          which espresso
+  #     - name: Install espresso
+  #       run: |
+  #         git clone https://github.com/chipsalliance/espresso.git
+  #         cd espresso
+  #         mkdir build
+  #         cd build
+  #         cmake .. -DBUILD_DOC=off
+  #         make
+  #         sudo mv espresso /usr/local/bin
+  #         which espresso
 
-      # - name: Setup xmake
-      #   uses: xmake-io/github-action-setup-xmake@v1
+  #     # - name: Setup xmake
+  #     #   uses: xmake-io/github-action-setup-xmake@v1
 
-      # - name: Setup Verilator
-      #   run: |
-      #     sudo apt-get install -y --no-install-recommends help2man make g++ perl python3 autoconf flex bison libfl2 libfl-dev zlib1g zlib1g-dev
-      #     git clone https://github.com/verilator/verilator.git
-      #     cd verilator
-      #     git reset --hard v5.032
-      #     autoconf
-      #     ./configure
-      #     make -j $(nproc)
-      #     sudo make install
+  #     # - name: Setup Verilator
+  #     #   run: |
+  #     #     sudo apt-get install -y --no-install-recommends help2man make g++ perl python3 autoconf flex bison libfl2 libfl-dev zlib1g zlib1g-dev
+  #     #     git clone https://github.com/verilator/verilator.git
+  #     #     cd verilator
+  #     #     git reset --hard v5.032
+  #     #     autoconf
+  #     #     ./configure
+  #     #     make -j $(nproc)
+  #     #     sudo make install
 
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Init project
-        run: xmake init
+  #     - name: Init project
+  #       run: xmake init
       
-      - name: Build emu
-        run: |
-          export JAVA_OPTS="-Xms10g -Xmx12g -XX:+UseG1GC"
-          export CFLAGS="-Wall"
-          export CXXFLAGS="-Wall"
-          xmake emu -N small -L small -C minimal --threads=4
+  #     - name: Build emu
+  #       run: |
+  #         export JAVA_OPTS="-Xms10g -Xmx12g -XX:+UseG1GC"
+  #         export CFLAGS="-Wall"
+  #         export CXXFLAGS="-Wall"
+  #         xmake emu -N small -L small -C minimal --threads=4
 
-      - name: Run emu
-        run: |
-          xmake emu-run -i ${{ matrix.case }}
+  #     - name: Run emu
+  #       run: |
+  #         xmake emu-run -i ${{ matrix.case }}
   
   regression-self-hosted:
     runs-on: self-hosted
