@@ -86,7 +86,7 @@ jobs:
       
       - name: Build emu
         run: |
-          export JAVA_OPTS="-Xms4g -Xmx8g -XX:+UseG1GC"
+          export JAVA_OPTS="-Xms10g -Xmx12g -XX:+UseG1GC"
           export CFLAGS="-Wall"
           export CXXFLAGS="-Wall"
           xmake emu -N small -L small -C minimal --threads=4
