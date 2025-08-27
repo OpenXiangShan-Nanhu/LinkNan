@@ -1,0 +1,53 @@
+name: Weely LN Tar Release
+description: |
+  This workflow is triggered on a schedule or manually to run the Weely LN Release Job.
+  It is designed to run on a self-hosted runner tagged with 'sz-open'.
+
+on:
+  workflow_dispatch: # Enable manual web testing
+  # push:
+  #   branches: [main]
+  schedule:
+    # run at 21:00 UTC (5:00 UTC+8) on Monday
+    - cron: '0 21 * * 0'
+    # # run at 21:00 UTC (5:00 UTC+8) on Thursday
+    - cron: '0 21 * * 3'
+
+
+jobs:
+  run:
+    name: Weely LN Release Job
+    runs-on: [self-hosted, sz-open] 
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Show time
+        run: |
+          echo "Running Weely LN Release Job"
+          echo "Time: $(date)"
+
+      - name: Init project
+        run: xmake init
+        
+      - name: Make LN release
+        run: ./scripts/release/ci-release.sh FPGA_Single_Core FPGA_Quad_Core ST_Single_Core
+
+      - name: Move LN release
+        run: |
+          LATEST_TAR=$(ls -t Release_*_Core.tar.gz 2>/dev/null | head -3)
+          if [ -z "$LATEST_TAR" ]; then
+            echo "Release tarball not found after release, aborting."
+            exit 1
+          fi
+          echo "Release successful, found $LATEST_TAR"
+          for f in $LATEST_TAR; do
+            mv "$f" /nfs/share/LN-release/
+          done
+
+      - name: Cleanup work dir
+        if: always()
+        run: |
+          echo "Cleaning generated files inside workspace..."
+          rm -rf build build.bak release_* Release_* out .xmake sim dependencies

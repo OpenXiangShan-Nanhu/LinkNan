@@ -1,0 +1,82 @@
+name: Manually LN Jar Release
+description: |
+  This workflow is triggered on manually to run the LN Jar Release Job.
+  It is designed to run on a self-hosted runner tagged with 'sz-open'.
+
+on:
+  workflow_dispatch: # Enable manual release
+  # push:
+  #   branches: [main]
+
+jobs:
+  run:
+    name: Manually LN Jar Release Job
+    runs-on: [self-hosted, sz-open] 
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Show time
+        run: |
+          echo "Running Manually LN Jar Release Job"
+          echo "Time: $(date)"
+
+      - name: Init project
+        run: xmake init
+        
+      - name: Build LinkNan jar from origin/main
+        run: |
+          xmake comp
+          date_str=$(date +"%Y%m%d")
+          ln_commit=$(git rev-parse --short HEAD)
+          mv "$GITHUB_WORKSPACE/build/linknan.test.jar" \
+          "$GITHUB_WORKSPACE/release_ln_${date_str}_${ln_commit}.jar"
+
+      - name: Move LinkNan jar
+        run: |
+          JAR_FILE=$(ls -t release_ln_*.jar 2>/dev/null | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "Jar file not found after build, aborting."
+            exit 1
+          fi
+          echo "Jar file found: $JAR_FILE"
+          mv "$JAR_FILE" /nfs/share/LN-release/
+
+      - name: Build NanHu jar from origin/main
+        run: |
+          set -e
+          nh_dir="$GITHUB_WORKSPACE/dependencies/nanhu"
+          cd "$nh_dir"
+
+          git fetch origin
+          git checkout -B __tmp_build origin/main
+
+          echo "init nanhu dependencies"
+          make init
+
+          echo "Build jar..."
+          export NOOP_HOME="$nh_dir"
+          make test-jar
+
+          nanhu_commit=$(git rev-parse --short HEAD)
+          date_str=$(date +"%Y%m%d")
+
+          mv "$nh_dir/out/xiangshan/test/assembly.dest/out.jar" \
+          "$GITHUB_WORKSPACE/release_nh_${date_str}_${nanhu_commit}.jar"
+
+      - name: Move nanhu jar
+        run: |
+          JAR_FILE=$(ls -t release_nh_*.jar 2>/dev/null | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "Jar file not found after build, aborting."
+            exit 1
+          fi
+          echo "Jar file found: $JAR_FILE"
+          mv "$JAR_FILE" /nfs/share/LN-release/
+
+      - name: Cleanup work dir
+        if: always()
+        run: |
+          echo "Cleaning generated files inside workspace..."
+          rm -rf build build.bak release_* Release_* out .xmake sim dependencies
