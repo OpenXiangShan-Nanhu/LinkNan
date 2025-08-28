@@ -82,6 +82,27 @@ function simv_comp(num_cores)
     -- Add more paths here
   }
 
+  local function replace_from_extra_filelist(_vsrc, filename)
+    if option.get("extra_filelist") then
+      local ef = option.get("extra_filelist")
+      if not os.isfile(ef) then raise("[vcs.lua] [simv_comp] extra filelist(`%s`) does not exist!", ef) end
+      for line in io.lines(ef) do
+        local maybe_file = line:trim()
+        if os.isfile(maybe_file) and path.filename(maybe_file) == filename then
+          local idx = nil
+          for i, _ in ipairs(_vsrc) do
+            if path.filename(_vsrc[i]) == filename then
+              assert(idx == nil, "[vcs.lua] [simv_comp] extra filelist(`%s`) contains multiple files with name `%s`!", ef, filename)
+              idx = i
+            end
+          end
+          assert(idx ~= nil, "[vcs.lua] [simv_comp] extra filelist(`%s`) does not contain file `%s`!", ef, filename)
+          _vsrc[idx] = maybe_file
+        end
+      end
+    end
+  end
+
   if not option.get("no_build_chisel") then
     depend.on_changed(function ()
       if os.exists(build_dir) then os.rmdir(build_dir) end
@@ -96,6 +117,9 @@ function simv_comp(num_cores)
       for _, p in ipairs(vsrc_dirs) do
         table.join2(vsrc, os.files(path.join(p, "*v")))
       end
+      -- When `extra_filelist` is set, replace `top.v` and `SimTop.v` with the files in `extra_filelist`
+      replace_from_extra_filelist(vsrc, "top.v")
+      replace_from_extra_filelist(vsrc, "SimTop.v")
 
       if option.get("lua_scoreboard") then
         local dpi_cfg_lua = path.join(abs_base, "scripts", "verilua", "dpi_cfg.lua")
@@ -129,6 +153,9 @@ function simv_comp(num_cores)
   end
   if option.get("lua_scoreboard") then
     vsrc = os.files(path.join(dpi_export_dir, "*v"))
+  else
+    replace_from_extra_filelist(vsrc, "top.v")
+    replace_from_extra_filelist(vsrc, "SimTop.v")
   end
 
   local csrc = {}
