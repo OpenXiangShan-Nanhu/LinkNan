@@ -1,16 +1,20 @@
-name: Manually LN Jar Release
+name: Weely LN FPGA Release
 description: |
-  This workflow is triggered on manually to run the LN Jar Release Job.
+  This workflow is triggered on a schedule or manually to run the Weely LN FPGA Release Job.
   It is designed to run on a self-hosted runner tagged with 'sz-open'.
 
 on:
   workflow_dispatch: # Enable manual release
   # push:
   #   branches: [main]
+  schedule:
+    # run at 21:00 UTC (5:00 UTC+8) on Wednesday
+    - cron: '0 21 * * 2'
+
 
 jobs:
   run:
-    name: Manually LN Jar Release Job
+    name: Weely LN FPGA Release
     runs-on: [self-hosted, sz-open] 
     steps:
 
@@ -19,29 +23,26 @@ jobs:
 
       - name: Show time
         run: |
-          echo "Running Manually LN Jar Release Job"
+          echo "Running Weely LN FPGA Release"
           echo "Time: $(date)"
 
       - name: Init project
         run: xmake init
         
-      - name: Build LinkNan jar from origin/main
-        run: |
-          xmake comp
-          date_str=$(date +"%Y%m%d")
-          ln_commit=$(git rev-parse --short HEAD)
-          mv "$GITHUB_WORKSPACE/build/linknan.test.jar" \
-          "$GITHUB_WORKSPACE/release_ln_${date_str}_${ln_commit}.jar"
+      - name: Make LN release
+        run: ./scripts/release/ci-release.sh FPGA_Single_Core FPGA_Quad_Core
 
-      - name: Move LinkNan jar
+      - name: Move LN release
         run: |
-          JAR_FILE=$(ls -t release_ln_*.jar 2>/dev/null | head -1)
-          if [ -z "$JAR_FILE" ]; then
-            echo "Jar file not found after build, aborting."
+          LATEST_TAR=$(ls -t Release_*_Core.tar.gz 2>/dev/null | head -3)
+          if [ -z "$LATEST_TAR" ]; then
+            echo "Release tarball not found after release, aborting."
             exit 1
           fi
-          echo "Jar file found: $JAR_FILE"
-          mv "$JAR_FILE" /nfs/share/LN-release/
+          echo "Release successful, found $LATEST_TAR"
+          for f in $LATEST_TAR; do
+            mv "$f" /nfs/share/LN-release/
+          done
 
       - name: Build NanHu jar from origin/main
         run: |

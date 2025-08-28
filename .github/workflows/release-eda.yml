@@ -1,22 +1,23 @@
-name: Weely LN Tar Release
+name: Weekly LN EDA Release
 description: |
-  This workflow is triggered on a schedule or manually to run the Weely LN Release Job.
+  This workflow is triggered on a schedule or manually to run the Weely LN EDA Release Job.
   It is designed to run on a self-hosted runner tagged with 'sz-open'.
 
 on:
-  workflow_dispatch: # Enable manual web testing
+  workflow_dispatch: # Enable manual release
   # push:
   #   branches: [main]
   schedule:
     # run at 21:00 UTC (5:00 UTC+8) on Monday
     - cron: '0 21 * * 0'
-    # # run at 21:00 UTC (5:00 UTC+8) on Thursday
-    - cron: '0 21 * * 3'
-
+    # run at 21:00 UTC (5:00 UTC+8) on Wednesday
+    - cron: '0 21 * * 2'
+    # run at 21:00 UTC (5:00 UTC+8) on Friday
+    - cron: '0 21 * * 4'
 
 jobs:
   run:
-    name: Weely LN Release Job
+    name: Weekly LN EDA Release
     runs-on: [self-hosted, sz-open] 
     steps:
 
@@ -25,14 +26,14 @@ jobs:
 
       - name: Show time
         run: |
-          echo "Running Weely LN Release Job"
+          echo "Running Weekly LN EDA Release"
           echo "Time: $(date)"
 
       - name: Init project
         run: xmake init
-        
+      
       - name: Make LN release
-        run: ./scripts/release/ci-release.sh FPGA_Single_Core FPGA_Quad_Core ST_Single_Core
+        run: ./scripts/release/ci-release.sh ST_Single_Core
 
       - name: Move LN release
         run: |
@@ -45,6 +46,24 @@ jobs:
           for f in $LATEST_TAR; do
             mv "$f" /nfs/share/LN-release/
           done
+
+      - name: Build LinkNan jar from origin/main
+        run: |
+          xmake comp
+          date_str=$(date +"%Y%m%d")
+          ln_commit=$(git rev-parse --short HEAD)
+          mv "$GITHUB_WORKSPACE/build/linknan.test.jar" \
+          "$GITHUB_WORKSPACE/release_ln_${date_str}_${ln_commit}.jar"
+
+      - name: Move LinkNan jar
+        run: |
+          JAR_FILE=$(ls -t release_ln_*.jar 2>/dev/null | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "Jar file not found after build, aborting."
+            exit 1
+          fi
+          echo "Jar file found: $JAR_FILE"
+          mv "$JAR_FILE" /nfs/share/LN-release/
 
       - name: Cleanup work dir
         if: always()
