@@ -98,7 +98,7 @@ jobs:
   regression-self-hosted:
     runs-on: self-hosted
     needs: changes
-    if: ${{ needs.changes.outputs.chisel == 'true' || github.event_name == 'workflow_dispatch' }} 
+    if: ${{ (needs.changes.outputs.chisel == 'true' || github.event_name == 'workflow_dispatch') && !contains(github.event.head_commit.message, '[skip-ci]') }} 
     name: Regression-self-hosted-${{ matrix.sim }}-${{ matrix.case }}
     strategy:
       matrix:
