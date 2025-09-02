@@ -132,8 +132,8 @@ class DevicesWrapper(cfgParams: AxiParams, dmaParams: AxiParams)(implicit p: Par
     connectByName(sba.r, io.mst.r)
     io.mst.aw.bits.addr := AclintAddrRemapper(sba.aw.bits.addr)
     io.mst.ar.bits.addr := AclintAddrRemapper(sba.ar.bits.addr)
-    io.mst.aw.bits.cache := Mux(sba.aw.bits.addr < AddrConfig.pmemRange.lower.U(raw.W), "b0000".U, "b0010".U)
-    io.mst.ar.bits.cache := Mux(sba.ar.bits.addr < AddrConfig.pmemRange.lower.U(raw.W), "b0000".U, "b0010".U)
+    io.mst.aw.bits.cache := Mux(sba.aw.bits.addr < AddrConfig.pmemRange.lower.U(raw.W), "b0000".U, "b1010".U)
+    io.mst.ar.bits.cache := Mux(sba.ar.bits.addr < AddrConfig.pmemRange.lower.U(raw.W), "b0000".U, "b1010".U)
   })
   pb.dfx := io.dft
   io.cpu.meip := pb.dev.meip
