@@ -294,6 +294,10 @@ class FullCoreConfig extends Config(
   new L1IConfig ++ new L1DConfig ++ new L2Config
 )
 
+class ExtremeCoreConfig extends Config(
+  new L1IConfig ++ new L1DConfig ++ new L2Config(128, 4)
+)
+
 class MinimalCoreConfig extends Config(
   new MinimalNanhuConfig ++ new L2Config(64, 8, 2, 8)
 )
@@ -329,6 +333,7 @@ object ConfigGenerater {
          |""".stripMargin)
     val coreCfg = core match {
       case "full" => new FullCoreConfig
+      case "extreme" => new ExtremeCoreConfig
       case "minimal" => new MinimalCoreConfig
       case _ =>
         require(requirement = false, s"not supported core config: $core")
