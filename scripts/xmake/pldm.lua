@@ -88,8 +88,8 @@ local function load_pldm_z2env()
   add_env("PATH", envs.HDLICE_HOME .. "/bin")
 
   -- IXCOM setup
-  set_env("VXE_HOME", "/nfs/tools/Cadence/WXE24.05.s001")
-  set_env("WXE_HOME", "/nfs/tools/Cadence/WXE24.05.s001")
+  set_env("VXE_HOME", "/nfs/tools/Cadence/WXE24.05.s005")
+  set_env("WXE_HOME", "/nfs/tools/Cadence/WXE24.05.s005")
   add_env("PATH", envs.VXE_HOME .. "/bin")
   add_env("LD_LIBRARY_PATH", envs.VXE_HOME .. "/tools.lnx86/lib/64bit")
   add_env("LD_LIBRARY_PATH", envs.VXE_HOME .. "/share/gift/fsdbWriter")
