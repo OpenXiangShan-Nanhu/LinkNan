@@ -216,7 +216,7 @@ class FpgaBoscQuadNocConfig(socket: String) extends Config((site, here, up) => {
       NodeParam(nodeType = NodeType.HF, bankId = 0, hfpId = 0),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 0),
       NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "mem"))),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(3, 32, "mem", "mem_0"))),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(32, 32, "mem", "mem_0"))),
       NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.P),
 
