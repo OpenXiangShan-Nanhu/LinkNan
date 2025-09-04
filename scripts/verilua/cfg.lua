@@ -1,5 +1,6 @@
 local utils = require "LuaUtils"
 
+---@class LinkNan.cfg
 local cfg = {}
 
 cfg.mode = "step"
@@ -65,16 +66,29 @@ cfg.verbose_hnf_mon = false
 cfg.verbose_sn_mon = false
 
 -- LuaDataBase configurations
-local _1_MILLION = 10000 * 100
-local _1_MB = 1024 * 1024
-local db_cfg = {}
-db_cfg.db_path = "./db"
-db_cfg.save_cnt_max = _1_MILLION * 1
-db_cfg.size_limit = 1.5 * 1024 * _1_MB
-db_cfg.table_cnt_max = 700000
-db_cfg.no_check_bind_value = true
-db_cfg.verbose = false
-cfg.db_cfg = db_cfg
+do
+    local _1_MILLION = 10000 * 100
+    local _1_MB = 1024 * 1024
+
+    ---@diagnostic disable-next-line: missing-fields
+    ---@type LuaDataBaseV2.params
+    local db_cfg = {}
+    db_cfg.path = "./db"
+    db_cfg.save_cnt_max = _1_MILLION * 1
+    db_cfg.size_limit = (1.5 * 1024 * _1_MB) --[[@as integer]]
+    db_cfg.table_cnt_max = 700000
+    db_cfg.no_check_bind_value = true
+    db_cfg.verbose = false
+    db_cfg.backend = "sqlite3"
+
+    cfg.use_duckdb = utils.get_env_or_else("LUA_SCB_USE_DUCKDB", "boolean", false)
+    if cfg.use_duckdb then
+        db_cfg.backend = "duckdb"
+        db_cfg.lib_name = "/nfs/share/zhengchuyu/duckdb/libduckdb.so"
+    end
+
+    cfg.db_cfg = db_cfg
+end
 
 if utils.get_env_or_else("LUA_SCB_VERBOSE", "boolean", false) then
     cfg.verbose_scoreboard = true

@@ -408,9 +408,21 @@ task("view_db", function ()
     end
 
     for _, db_file in ipairs(db_files) do
-      local tables = os.iorun([[sqlite3 "%s" "SELECT name FROM sqlite_master WHERE type='table';"]], db_file)
-      for _, t in ipairs(tables:split("\n")) do
-        local result = os.iorun([[sqlite3 -header "%s" "SELECT * FROM '%s' WHERE address like '%s';"]], db_file, t, addr)
+      local is_duckdb = db_file:endswith(".duckdb")
+      local tables_ret
+      if is_duckdb then
+        tables_ret = os.iorun([[duckdb %s -list -noheader -c "SELECT table_name FROM duckdb_tables;"]], db_file)
+      else
+        tables_ret = os.iorun([[sqlite3 "%s" "SELECT name FROM sqlite_master WHERE type='table';"]], db_file)
+      end
+      local tables = tables_ret:split("\n", {plain = true})
+      for _, t in ipairs(tables) do
+        local result
+        if is_duckdb then
+          result = os.iorun([[duckdb %s -header -list -c "SELECT * FROM '%s' WHERE address like '%s';"]], db_file, t, addr)
+        else
+          result = os.iorun([[sqlite3 -header "%s" "SELECT * FROM '%s' WHERE address like '%s';"]], db_file, t, addr)
+        end
         if result and result ~= "" then
           print("----------------------------------------------------------")
           print("| file: <%s>, table: <%s>", db_file, t)

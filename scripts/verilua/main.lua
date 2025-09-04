@@ -1,6 +1,16 @@
 ---@diagnostic disable: undefined-field, undefined-global
 
-local LuaDataBase = require "LuaDataBase"
+local cfg = _G.cfg
+---@cast cfg +LinkNan.cfg
+
+local LuaDataBase 
+do
+    if cfg.use_duckdb then
+        LuaDataBase = require "LuaDataBaseV2"
+    else
+        LuaDataBase = require "LuaDataBase"
+    end
+end
 local L2TLMonitor
 do
     os.setenv("KMH", 1)
@@ -23,6 +33,8 @@ local l2_mon_out_vec = {}
 local hnf_mon_vec = {}
 local sn_mon_vec = {}
 
+---@cast LuaDataBase LuaDataBaseV2
+
 local init_db = false
 local function init_database()
     if init_db then
@@ -32,12 +44,20 @@ local function init_database()
     init_db = true
 
     local db_cfg = cfg.db_cfg
-    local db_path = db_cfg.db_path
+    local path = db_cfg.path
+    local backend = db_cfg.backend
     local save_cnt_max = db_cfg.save_cnt_max
     local size_limit = db_cfg.size_limit
     local table_cnt_max = db_cfg.table_cnt_max
     local no_check_bind_value = db_cfg.no_check_bind_value
+    local lib_name = db_cfg.lib_name
+    local lib_path = db_cfg.lib_path
     local verbose = db_cfg.verbose
+
+    local file_ext = ".db"
+    if backend == "duckdb" then
+        file_ext = ".duckdb"
+    end
 
     local tl_db = LuaDataBase({
         table_name = "tl_db",
@@ -52,12 +72,15 @@ local function init_database()
             "data => TEXT",
             "others => TEXT",
         },
-        path = db_path,
-        file_name = "tl_db.db",
+        path = path,
+        file_name = "tl_db" .. file_ext,
         save_cnt_max = save_cnt_max,
         size_limit = size_limit,
         table_cnt_max = table_cnt_max,
         no_check_bind_value = no_check_bind_value,
+        backend = backend,
+        lib_name = lib_name,
+        lib_path = lib_path,
         verbose = verbose,
     })
 
@@ -76,12 +99,15 @@ local function init_database()
             "data => TEXT",
             "others => TEXT",
         },
-        path = db_path,
-        file_name = "hnf_chi_db.db",
+        path = path,
+        file_name = "hnf_chi_db" .. file_ext,
         save_cnt_max = save_cnt_max,
         size_limit = size_limit,
         table_cnt_max = table_cnt_max,
         no_check_bind_value = no_check_bind_value,
+        backend = backend,
+        lib_name = lib_name,
+        lib_path = lib_path,
         verbose = verbose,
     }
 
@@ -100,12 +126,15 @@ local function init_database()
             "data => TEXT",
             "others => TEXT",
         },
-        path = db_path,
-        file_name = "chi_db.db",
+        path = path,
+        file_name = "chi_db" .. file_ext,
         save_cnt_max = save_cnt_max,
         size_limit = size_limit,
         table_cnt_max = table_cnt_max,
         no_check_bind_value = no_check_bind_value,
+        backend = backend,
+        lib_name = lib_name,
+        lib_path = lib_path,
         verbose = verbose,
     })
 
@@ -120,12 +149,15 @@ local function init_database()
             "data_hex_str => TEXT",
             "others => TEXT",
         },
-        path = db_path,
-        file_name = "axi_db.db",
+        path = path,
+        file_name = "axi_db" .. file_ext,
         save_cnt_max = save_cnt_max,
         size_limit = size_limit,
         table_cnt_max = table_cnt_max,
         no_check_bind_value = no_check_bind_value,
+        backend = backend,
+        lib_name = lib_name,
+        lib_path = lib_path,
         verbose = verbose
     }
 
