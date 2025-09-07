@@ -240,7 +240,7 @@ function pldm_comp(num_cores)
     path.join(difftest_csrc, "plugin", "spikedasm"),
   })
 
-  if not option.get("no_build_chisel") then
+  if not option.get("no_build_chisel") and not debug then
     depend.on_changed(function ()
       log("[pldm_comp]", "change detected! start compiling `soc`...")
       if os.exists(build_dir) then os.rmdir(build_dir) end
@@ -293,6 +293,11 @@ function pldm_comp(num_cores)
 
   if option.get("lua_scoreboard") then
     vsrc = os.files(path.join(dpi_export_dir, "*v"))
+  end
+  if debug then
+    for _, p in ipairs(vsrc_dirs) do
+      table.join2(vsrc, os.files(path.join(p, "*v")))
+    end
   end
   assert(#vsrc > 0, "[pldm.lua] [pldm_comp] vsrc is empty")
 

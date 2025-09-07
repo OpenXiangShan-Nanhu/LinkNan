@@ -16,8 +16,8 @@ reg         reset;
 `ifndef WIRE_CLK
 initial begin
   clock = 0;
-  #2.5ns;
-  forever #0.25ns clock = ~clock;
+  #25;
+  forever #2.5 clock = ~clock;
 end
 `endif // WIRE_CLK
 

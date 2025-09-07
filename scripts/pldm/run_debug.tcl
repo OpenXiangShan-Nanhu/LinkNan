@@ -1,6 +1,9 @@
 # TODO:
 
-debug .
+
+set DESIGN_DIR $env(PLDM_COMP_DIR)
+debug $DESIGN_DIR
+
 host $env(PLDM_HOST)
 xc xt0 zt0 on -tbrun
 database -open pldm_db
