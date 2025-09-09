@@ -400,6 +400,22 @@ object ConfigGenerater {
 
   def parse(args: List[String]):(Parameters, Array[String]) = {
     doParse(args)
-    (generate(core, l3, noc, socket), opts)
+    val resP = generate(core, l3, noc, socket)
+    if(noc.contains("fpga_bosc")) {
+      println("[INFO]: USING 16G PMEM RANGE FOR FPGA VERIFICATION!")
+      (resP.alter((site, here, up) => {
+        case PMParameKey => up(PMParameKey).copy(
+          PMAConfigs = Seq(
+            PMAConfigEntry(AddrConfig.mem_nc.head._1 + 0x100_0000_0000L, a = 1, x = true, w = true, r = true),
+            PMAConfigEntry(AddrConfig.mem_nc.head._1),
+            PMAConfigEntry(AddrConfig.pmemRange.lower + 16L * 1024 * 1024 * 1024, c = true, atomic = true, a = 1, x = true, w = true, r = true),
+            PMAConfigEntry(AddrConfig.pmemRange.lower, a = 1, w = true, r = true, x = true),
+            PMAConfigEntry(0)
+          )
+        )
+      }), opts)
+    } else {
+      (resP, opts)
+    }
   }
 }
