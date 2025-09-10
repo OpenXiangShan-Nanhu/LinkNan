@@ -54,16 +54,22 @@ for arg in "$@"; do
     mkdir -p "$release_dir"
     mkdir -p "$env_dir"
     xmake soc -sgr -x bosc_ -N fpga_inno_1 -L medium
-    cd "$package_dir"/software && dtc -I dts -O dtb -o LNSim.dtb LNSim.dts
-    cd "$linknan_dir"
-    mv "$package_dir"/generated-src "$package_dir"/sim "$env_dir"
-    mv "$package_dir" "$release_dir"
+    mv "$package_dir" "${package_dir}_NOCmedium"
+    mv "${package_dir}_NOCmedium" "$release_dir"
 
-    cp -r "$linknan_dir"/scripts/release/Makefile "$release_dir"
-    cp -r "$linknan_dir"/scripts/release/sram_tb.mk "$release_dir"
+    xmake soc -sgr -x bosc_ -N fpga_inno_1 -L extreme
+    mv "$package_dir" "${package_dir}_NOCextreme"
+    mv "${package_dir}_NOCextreme" "$release_dir"
+
+    xmake soc -sgr -x bosc_ -N fpga_inno_1 -C minimal -L extreme
+    mv "$package_dir" "${package_dir}_NOCextreme_COREminimal"
+    mv "${package_dir}_NOCextreme_COREminimal" "$release_dir"
+
+    xmake soc -sgr -x bosc_ -N fpga_inno_1 -L extreme --fake_dram_latency
+    mv "$package_dir" "${package_dir}_NOCextreme_FakeDramLatency"
+    mv "${package_dir}_NOCextreme_FakeDramLatency" "$release_dir"
+
     cp -r "$linknan_dir"/dependencies/difftest "$env_dir"
-    cp -r "$linknan_dir"/scripts/release/sram_tb "$env_dir"
-    cp -r "$temp_nemu_dir" "$nemu_dir"
 
   # ST quad core release for EDA ST verification, should be replaced into multi-core version difftest and nemu.
   elif [ "$arg" = "ST_Quad_Core" ]; then
