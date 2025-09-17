@@ -3,6 +3,7 @@ package lntest.top
 import chisel3.stage.ChiselGeneratorAnnotation
 import chisel3.util.HasBlackBoxInline
 import chisel3.{BlackBox, _}
+import freechips.rocketchip.jtag.JTAGIO
 import linknan.generator.{AddrConfig, Generator}
 import linknan.soc.{LNTop, LinkNanParamsKey}
 import org.chipsalliance.cde.config.Parameters
@@ -80,8 +81,10 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
     val reset_vector = Input(UInt(raw.W))
     val ddr_offset = Input(UInt(raw.W))
     val ext_intr = Input(UInt(soc.io.ext_intr.getWidth.W))
-    val systemjtag = soc.io.jtag.map(_.jtag.cloneType)
-    val systemjtag_reset = Input(AsyncReset())
+    val systemjtag = Option.when(soc.io.jtag.isDefined)(new Bundle {
+      val jtag = Flipped(new JTAGIO(hasTRSTn = false))
+      val reset = Input(AsyncReset())
+    })
   })
   private val _reset = (!io.aresetn).asAsyncReset
   private val resetSync = withClockAndReset(io.aclk, _reset) { ResetGen(2, None) }
@@ -116,18 +119,14 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
     j.mfr_id := 0x11.U
     j.part_number := 0x16.U
     j.version := 4.U
-    j.reset := io.systemjtag_reset
+    j.reset := io.systemjtag.get.reset
   })
-  io.systemjtag.foreach(_ <> soc.io.jtag.get.jtag)
+  io.systemjtag.foreach(_.jtag <> soc.io.jtag.get.jtag)
   soc.dmaIO.foreach(_ := DontCare)
 
   val ddrDrv = Seq(ddrBuf.io.out)
   val cfgDrv = soc.cfgIO.map(AxiUtils.getIntnl)
-  val dmaDrv = soc.dmaIO.filter(_.params.dataBits > 64).zipWithIndex.map({case(a, b) =>
-    val _tmp = Wire(new AxiBundle(a.params.copy(attr = s"dma_$b")))
-    _tmp <> a
-    _tmp
-  })
+  val dmaDrv = soc.dmaIO.filter(_.params.dataBits > 64).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
   val hwaDrv = soc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()

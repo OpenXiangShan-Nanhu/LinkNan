@@ -39,12 +39,12 @@ for arg in "$@"; do
   [ -d "$package_dir" ] && rm -rf "$package_dir"
   [ -d "$release_dir"  ] && rm -rf "$release_dir"
 
-  # FPGA single core only need xmake soc target, xmmake options need grcY.
+  # FPGA single core only need xmake soc target.
   if [ "$arg" = "FPGA_Single_Core" ]; then
-    xmake soc -grcY -N fpga_bosc_1 -L single
+    xmake soc -fgrcY -N fpga_bosc_1 -L single
     mv $package_dir $release_dir
 
-  # FPGA quad core only need xmake soc target, xmmake options need f(full sys) and grcY.
+  # FPGA quad core only need xmake soc target.
   elif [ "$arg" = "FPGA_Quad_Core" ]; then
     xmake soc -fgrcY -N fpga_bosc_4 -L quad
     mv $package_dir $release_dir
