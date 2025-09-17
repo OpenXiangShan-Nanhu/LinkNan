@@ -1,4 +1,5 @@
----@diagnostic disable
+---@diagnostic disable: undefined-global, undefined-field
+
 local new_cmakefile = [[
 cmake_minimum_required(VERSION 3.0.0)
 project(dramsim3)
@@ -136,43 +137,43 @@ add_custom_command(
 ]]
 
 function dramsim(home, build)
-  import("core.base.option")
-  local sim_dir = path.join(os.curdir(), "sim")
-  local new_sim_dir = option.get("sim_dir") or os.getenv("SIM_DIR")
-  if new_sim_dir then sim_dir = path.absolute(new_sim_dir) end
+    import("core.base.option")
+    local sim_dir = path.join(os.curdir(), "sim")
+    local new_sim_dir = option.get("sim_dir") or os.getenv("SIM_DIR")
+    if new_sim_dir then sim_dir = path.absolute(new_sim_dir) end
 
-  local new_home = path.join(sim_dir, "dramsim")
-  os.tryrm(new_home)
-  os.cp(home, new_home)
+    local new_home = path.join(sim_dir, "dramsim")
+    os.tryrm(new_home)
+    os.cp(home, new_home)
 
-  -- Replace the cmake file
-  -- The new cmake file add an option to build the shared library
-  -- Vcs only support compile dramsim3 using shared library
-  io.writefile(path.join(new_home, "CMakeLists.txt"), new_cmakefile)
+    -- Replace the cmake file
+    -- The new cmake file add an option to build the shared library
+    -- Vcs only support compile dramsim3 using shared library
+    io.writefile(path.join(new_home, "CMakeLists.txt"), new_cmakefile)
 
-  local dramsim_build = path.join(new_home, "build")
-  if not os.exists(dramsim_build) then os.mkdir(dramsim_build) end
-  os.cd(dramsim_build)
-  os.execv("cmake", {new_home, "-D", "COSIM=1", "-DCMAKE_C_COMPILER=clang",
-    "-DCMAKE_CXX_COMPILER=clang++", "-DCMAKE_LINKER=clang++",
-    "-DBUILD_SHARED_LIBS=ON",
-    "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
-  })
-  os.execv("make", {"dramsim3", "-j", "8"})
-  os.cd("-")
-  os.cp(path.join(new_home, "libdramsim3.so"), dramsim_build)
+    local dramsim_build = path.join(new_home, "build")
+    if not os.exists(dramsim_build) then os.mkdir(dramsim_build) end
+    os.cd(dramsim_build)
+    os.execv("cmake", { new_home, "-D", "COSIM=1", "-DCMAKE_C_COMPILER=clang",
+        "-DCMAKE_CXX_COMPILER=clang++", "-DCMAKE_LINKER=clang++",
+        "-DBUILD_SHARED_LIBS=ON",
+        "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+    })
+    os.execv("make", { "dramsim3", "-j", "8" })
+    os.cd("-")
+    os.cp(path.join(new_home, "libdramsim3.so"), dramsim_build)
 
-  local src_cfg = path.join(new_home, "configs", "XiangShan-nanhu.ini")
-  local tgt_cfg = path.join(dramsim_build, "XiangShan.ini")
-  local cfg_lines = io.readfile(src_cfg)
-  cfg_lines = cfg_lines .. "cpu_freq = 2000\n"
-  cfg_lines = cfg_lines .. "dram_freq = 1600\n"
-  io.writefile(tgt_cfg, cfg_lines)
+    local src_cfg = path.join(new_home, "configs", "XiangShan-nanhu.ini")
+    local tgt_cfg = path.join(dramsim_build, "XiangShan.ini")
+    local cfg_lines = io.readfile(src_cfg)
+    cfg_lines = cfg_lines .. "cpu_freq = 2000\n"
+    cfg_lines = cfg_lines .. "dram_freq = 1600\n"
+    io.writefile(tgt_cfg, cfg_lines)
 
-  local cxx_flags = " -DWITH_DRAMSIM3"
-  cxx_flags = cxx_flags .. " -I" .. path.join(new_home, "src")
-  cxx_flags = cxx_flags .. format([[ -DDRAMSIM3_CONFIG=%s]], tgt_cfg)
-  cxx_flags = cxx_flags .. format([[ -DDRAMSIM3_OUTDIR=%s]], build)
-  local libfile = path.join(dramsim_build, "libdramsim3.so")
-  return cxx_flags, libfile
+    local cxx_flags = " -DWITH_DRAMSIM3"
+    cxx_flags = cxx_flags .. " -I" .. path.join(new_home, "src")
+    cxx_flags = cxx_flags .. format([[ -DDRAMSIM3_CONFIG=%s]], tgt_cfg)
+    cxx_flags = cxx_flags .. format([[ -DDRAMSIM3_OUTDIR=%s]], build)
+    local libfile = path.join(dramsim_build, "libdramsim3.so")
+    return cxx_flags, libfile
 end
