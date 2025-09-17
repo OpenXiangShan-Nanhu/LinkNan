@@ -80,7 +80,8 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
     val reset_vector = Input(UInt(raw.W))
     val ddr_offset = Input(UInt(raw.W))
     val ext_intr = Input(UInt(soc.io.ext_intr.getWidth.W))
-    val jtag = soc.io.jtag.map(_.cloneType)
+    val systemjtag = soc.io.jtag.map(_.jtag.cloneType)
+    val systemjtag_reset = Input(AsyncReset())
   })
   private val _reset = (!io.aresetn).asAsyncReset
   private val resetSync = withClockAndReset(io.aclk, _reset) { ResetGen(2, None) }
@@ -111,7 +112,13 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
   soc.io.ramctl := DontCare
   soc.io.ci := 0.U
   soc.io.dft.lgc_rst_n := true.B
-  io.jtag.foreach(_ <> soc.io.jtag.get)
+  soc.io.jtag.foreach(j => {
+    j.mfr_id := 0x11.U
+    j.part_number := 0x16.U
+    j.version := 4.U
+    j.reset := io.systemjtag_reset
+  })
+  io.systemjtag.foreach(_ <> soc.io.jtag.get.jtag)
   soc.dmaIO.foreach(_ := DontCare)
 
   val ddrDrv = Seq(ddrBuf.io.out)
