@@ -10,7 +10,7 @@ import org.chipsalliance.diplomacy.DisableMonitors
 import xs.utils.perf.DebugOptionsKey
 import xs.utils.stage.XsStage
 import xs.utils.{FileRegisters, ResetGen}
-import zhujiang.axi.{AxiBufferChain, AxiUtils}
+import zhujiang.axi.{AxiBufferChain, AxiBundle, AxiUtils}
 import zhujiang.{NocIOHelper, ZJRawModule}
 
 class VerilogAddrRemapper(width:Int) extends BlackBox with HasBlackBoxInline {
@@ -116,7 +116,11 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
 
   val ddrDrv = Seq(ddrBuf.io.out)
   val cfgDrv = soc.cfgIO.map(AxiUtils.getIntnl)
-  val dmaDrv = soc.dmaIO.filter(_.params.dataBits > 64).map(AxiUtils.getIntnl)
+  val dmaDrv = soc.dmaIO.filter(_.params.dataBits > 64).zipWithIndex.map({case(a, b) =>
+    val _tmp = Wire(new AxiBundle(a.params.copy(attr = s"dma_$b")))
+    _tmp <> a
+    _tmp
+  })
   val ccnDrv = Seq()
   val hwaDrv = soc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
