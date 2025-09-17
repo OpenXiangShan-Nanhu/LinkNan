@@ -89,7 +89,7 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
 
   private val rtc_div = Module(new FpgaClkDiv10)
   private val ddrXbar = Module(new SimNto1Bridge(soc.ddrIO.map(_.params)))
-  private val portP = ddrXbar.io.downstream.head.params.copy(attr = "_mem_0")
+  private val portP = ddrXbar.io.downstream.head.params.copy(attr = "mem_0")
   private val ddrBuf = Module(new AxiBufferChain(portP, 32))
   for((a, b) <- ddrXbar.io.upstream.zip(soc.ddrIO)) {
     a <> b
