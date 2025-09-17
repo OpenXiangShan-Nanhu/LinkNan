@@ -11,7 +11,7 @@ import xs.utils.{FileRegisters, ResetGen}
 import xs.utils.perf.DebugOptionsKey
 import xs.utils.stage.XsStage
 import zhujiang.{NocIOHelper, ZJParametersKey, ZJRawModule}
-import zhujiang.axi.{AxiBufferChain, AxiBundle, AxiUtils, ExtAxiBundle}
+import zhujiang.axi.{AxiBufferChain, AxiBundle, AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
 
 class VerilogAddrRemapper(width:Int) extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
@@ -87,6 +87,15 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
   val implicitReset = resetSync
 
   private val rtc_div = Module(new FpgaClkDiv10)
+  private val ddrXbar = Module(new SimNto1Bridge(soc.ddrIO.map(_.params)))
+  private val portP = ddrXbar.io.downstream.head.params.copy(attr = "_mem_0")
+  private val ddrBuf = Module(new AxiBufferChain(portP, 32))
+  for((a, b) <- ddrXbar.io.upstream.zip(soc.ddrIO)) {
+    a <> b
+    a.ar.bits.addr := VerilogAddrRemapper(b.araddr, AddrConfig.pmemRange.lower.U(raw.W), io.ddr_offset)
+    a.aw.bits.addr := VerilogAddrRemapper(b.awaddr, AddrConfig.pmemRange.lower.U(raw.W), io.ddr_offset)
+  }
+  ddrBuf.io.in <> ddrXbar.io.downstream.head
   rtc_div.io.CK := io.rtc_clk
 
   soc.io.cluster_clocks := io.core_clk
@@ -105,16 +114,12 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
   soc.io.jtag.foreach(_.reset := true.B.asAsyncReset)
   soc.dmaIO.foreach(_ := DontCare)
 
-  val ddrDrv = soc.ddrIO.map(AxiUtils.getIntnl)
+  val ddrDrv = Seq(ddrBuf.io.out)
   val cfgDrv = soc.cfgIO.map(AxiUtils.getIntnl)
   val dmaDrv = Seq()
   val ccnDrv = Seq()
   val hwaDrv = soc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
-  ddrIO.zip(ddrDrv).foreach({case(a, b) =>
-    a.araddr := VerilogAddrRemapper(b.ar.bits.addr, AddrConfig.pmemRange.lower.U(raw.W), io.ddr_offset)
-    a.awaddr := VerilogAddrRemapper(b.aw.bits.addr, AddrConfig.pmemRange.lower.U(raw.W), io.ddr_offset)
-  })
 }
 
 object FpgaGenerator extends App {
