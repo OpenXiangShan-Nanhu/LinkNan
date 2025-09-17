@@ -70,6 +70,7 @@ for arg in "$@"; do
     mv "${package_dir}_NOCextreme_FakeDramLatency" "$release_dir"
 
     cp -r "$linknan_dir"/dependencies/difftest "$env_dir"
+    cp -r "$temp_nemu_dir" "$nemu_dir"
 
   # ST quad core release for EDA ST verification, should be replaced into multi-core version difftest and nemu.
   elif [ "$arg" = "ST_Quad_Core" ]; then
