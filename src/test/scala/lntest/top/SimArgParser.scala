@@ -63,6 +63,11 @@ object SimArgParser {
             case DebugOptionsKey => up(DebugOptionsKey).copy(AlwaysBasicDiff = true)
           }), tail)
 
+        case "--no-mem" :: tail =>
+          parse(config.alter((site, here, up) => {
+            case LinkNanParamsKey => up(LinkNanParamsKey).copy(removeMem = true)
+          }), tail)
+
         case "--no-core" :: tail =>
           parse(config.alter((site, here, up) => {
             case LinkNanParamsKey => up(LinkNanParamsKey).copy(removeCore = true)

@@ -68,6 +68,7 @@ class SystemExtensionWrapper(slvP:AxiParams, mstP:AxiParams, core:Int) extends B
 class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   override def resetType = Module.ResetType.Asynchronous
   private val debugOpts = p(DebugOptionsKey)
+  private val removeMem = p(LinkNanParamsKey).removeMem
   private val doBlockTest = p(LinkNanParamsKey).removeCore
   private val soc = Module(new LNTop)
 
@@ -83,7 +84,7 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
     val simFinal = Option.when(p(DebugOptionsKey).EnableLuaScoreBoard)(Input(Bool()))
   })
   soc.dmaIO.foreach(_ := DontCare)
-  val ddrDrv = Seq()
+  val ddrDrv = if(removeMem) soc.ddrIO.map(AxiUtils.getIntnl) else Seq()
   val cfgDrv = if(doBlockTest) Seq(extCfgPort) else Seq()
   val dmaDrv = if(doBlockTest) soc.dmaIO.map(AxiUtils.getIntnl) else Seq()
   val ccnDrv = Seq()
@@ -104,6 +105,9 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   })
 
   runIOAutomation()
+  if(removeMem) {
+    ddrIO.foreach(InfoGen.addMaxi)
+  }
   if(doBlockTest) {
     soc.io.ext_intr := 0.U
     dmaIO.foreach(InfoGen.addSaxi)
@@ -119,17 +123,19 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
     connectByName(intCfgPort.get.b, periCfg.b)
   }
 
-  private val memXbar = Module(new SimNto1Bridge(soc.ddrIO.map(_.params)))
-  memXbar.io.upstream.zip(soc.ddrIO).foreach({case(a, b) => a <> b})
-  private val memPort = memXbar.io.downstream.head
-  private val l_simAXIMem = LazyModule(new DummyDramMoudle(memPort.params))
-  private val simAXIMem = Module(l_simAXIMem.module)
-  private val memAxi = simAXIMem.axi.head
-  connectByName(memAxi.aw, memPort.aw)
-  connectByName(memAxi.ar, memPort.ar)
-  connectByName(memAxi.w, memPort.w)
-  connectByName(memPort.r, memAxi.r)
-  connectByName(memPort.b, memAxi.b)
+  if(!removeMem) {
+    val memXbar = Module(new SimNto1Bridge(soc.ddrIO.map(_.params)))
+    memXbar.io.upstream.zip(soc.ddrIO).foreach({ case (a, b) => a <> b })
+    val memPort = memXbar.io.downstream.head
+    val l_simAXIMem = LazyModule(new DummyDramMoudle(memPort.params))
+    val simAXIMem = Module(l_simAXIMem.module)
+    val memAxi = simAXIMem.axi.head
+    connectByName(memAxi.aw, memPort.aw)
+    connectByName(memAxi.ar, memPort.ar)
+    connectByName(memAxi.w, memPort.w)
+    connectByName(memPort.r, memAxi.r)
+    connectByName(memPort.b, memAxi.b)
+  }
 
   private val cntDiv = p(LinkNanParamsKey).rtcDiv
   val cnt = RegInit((cntDiv - 1).U)

@@ -14,6 +14,7 @@ import zhujiang.ZJParametersKey
 case object LinkNanParamsKey extends Field[LinkNanParams]
 
 case class LinkNanParams(
+  removeMem: Boolean = false, // Only use in SimTop
   removeCore: Boolean = false,
   keepL1c: Boolean = false,
   pseudoDynamicDramLatency: Boolean = false,

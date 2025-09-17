@@ -5,31 +5,32 @@ task("soc", function()
         usage = "xmake soc [options]",
         description = "Generate soc rtl",
         options = {
-            { 'a', "all_in_one",         "k",  nil,    "do not split generated rtl" },
-            { 'A', "hardware_assertion", "k",  nil,    "enable hardware assertion" },
-            { 'b', "block_test_l2l3",    "k",  nil,    "leave core interfaces to the top" },
-            { 'k', "keep_l1",            "k",  nil,    "keep dcache interfaces to the top" },
-            { 'c', "clean_difftest",     "k",  nil,    "generate verilog without any difftest components" },
-            { 'd', "dramsim3",           "k",  nil,    "use dramsim3 as simulation main memory" },
-            { nil, "fake_dram_latency",  "k",  nil,    "use pseudo dynamic dram latency" },
-            { 'e', "enable_perf",        "k",  nil,    "generate verilog with perf debug components" },
-            { 'g', "vcs",                "k",  nil,    "alter assertions info to be vcs style" },
-            { 'r', "release",            "k",  nil,    "export release pack" },
-            { 's', "sim",                "k",  nil,    "generate simulation top" },
-            { 'f', "fpga",               "k",  nil,    "generate fpga top" },
-            { 'm', "mbist",              "k",  nil,    "enable mbist" },
-            { 'p', "pldm_verilog",       "k",  nil,    "enable only basic difftest function" },
-            { 'l', "lua_scoreboard",     "k",  nil,    "use lua scoreboard for cache debug" },
-            { 'Y', "legacy",             "k",  nil,    "use XS legacy memory map" },
-            { 'z', "with_tfb",           "k",  nil,    "enable traffic board of ring bus" },
-            { 'x', "prefix",             "kv", "",     "assign a prefix for rtl modules" },
-            { 'J', "jar",                "kv", "",     "use jar to generate artifacts" },
-            { 'C', "core",               "kv", "full", "define cpu core config in soc" },
-            { 'L', "l3",                 "kv", "full", "define L3 config" },
-            { 'N', "noc",                "kv", "full", "define noc config" },
-            { 'S', "socket",             "kv", "sync", "define how cpu cluster connect to noc" },
-            { 'o', "build_dir",          "kv", nil,    "assign build dir" },
-            { 'j', "jobs",               "kv", "16",   "post-compile process jobs" }
+            { 'a', "all_in_one",          "k",  nil,    "do not split generated rtl" },
+            { 'A', "hardware_assertion",  "k",  nil,    "enable hardware assertion" },
+            { 'E', "expose_mem_mst_intf", "k",  nil,    "expose mem master interface in SimTop"},
+            { 'b', "block_test_l2l3",     "k",  nil,    "leave core interfaces to the top" },
+            { 'k', "keep_l1",             "k",  nil,    "keep dcache interfaces to the top" },
+            { 'c', "clean_difftest",      "k",  nil,    "generate verilog without any difftest components" },
+            { 'd', "dramsim3",            "k",  nil,    "use dramsim3 as simulation main memory" },
+            { nil, "fake_dram_latency",   "k",  nil,    "use pseudo dynamic dram latency" },
+            { 'e', "enable_perf",         "k",  nil,    "generate verilog with perf debug components" },
+            { 'g', "vcs",                 "k",  nil,    "alter assertions info to be vcs style" },
+            { 'r', "release",             "k",  nil,    "export release pack" },
+            { 's', "sim",                 "k",  nil,    "generate simulation top" },
+            { 'f', "fpga",                "k",  nil,    "generate fpga top" },
+            { 'm', "mbist",               "k",  nil,    "enable mbist" },
+            { 'p', "pldm_verilog",        "k",  nil,    "enable only basic difftest function" },
+            { 'l', "lua_scoreboard",      "k",  nil,    "use lua scoreboard for cache debug" },
+            { 'Y', "legacy",              "k",  nil,    "use XS legacy memory map" },
+            { 'z', "with_tfb",            "k",  nil,    "enable traffic board of ring bus" },
+            { 'x', "prefix",              "kv", "",     "assign a prefix for rtl modules" },
+            { 'J', "jar",                 "kv", "",     "use jar to generate artifacts" },
+            { 'C', "core",                "kv", "full", "define cpu core config in soc" },
+            { 'L', "l3",                  "kv", "full", "define L3 config" },
+            { 'N', "noc",                 "kv", "full", "define noc config" },
+            { 'S', "socket",              "kv", "sync", "define how cpu cluster connect to noc" },
+            { 'o', "build_dir",           "kv", nil,    "assign build dir" },
+            { 'j', "jobs",                "kv", "16",   "post-compile process jobs" }
         }
     }
     local chisel_opts = {}
@@ -49,6 +50,7 @@ task("soc", function()
             table.join2(chisel_opts, { "-i", "linknan.runMain", "linknan.generator.SocGenerator" })
         end
         if not option.get("all_in_one") or option.get("release") then table.join2(chisel_opts, { "--split-verilog" }) end
+        if option.get("expose_mem_mst_intf") then table.join2(chisel_opts, { "--no-mem" }) end
         if option.get("block_test_l2l3") then table.join2(chisel_opts, { "--no-core" }) end
         if option.get("keep_l1") then table.join2(chisel_opts, { "--keep-l1c" }) end
         if option.get("mbist") then table.join2(chisel_opts, { "--enable-mbist" }) end
