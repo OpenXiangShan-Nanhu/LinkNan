@@ -196,7 +196,7 @@ class FpgaBoscSingleNocConfig(socket: String) extends Config((site, here, up) =>
       NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.P),
       NodeParam(nodeType = NodeType.HF, bankId = 3, hfpId = 1),
-      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(32, 32, "west", "mem_0"))),
+      NodeParam(nodeType = NodeType.S,  axiDevParams = Some(AxiDeviceParams(2, 32, "west", "mem_0"))),
       NodeParam(nodeType = NodeType.M,  axiDevParams = Some(AxiDeviceParams(3, 32, "west"))),
       NodeParam(nodeType = NodeType.HF, bankId = 2, hfpId = 1),
       NodeParam(nodeType = NodeType.HF, bankId = 1, hfpId = 1),
