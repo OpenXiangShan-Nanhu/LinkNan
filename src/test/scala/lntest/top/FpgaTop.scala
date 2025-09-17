@@ -1,17 +1,17 @@
 package lntest.top
 
-import chisel3.{BlackBox, _}
 import chisel3.stage.ChiselGeneratorAnnotation
 import chisel3.util.HasBlackBoxInline
+import chisel3.{BlackBox, _}
 import linknan.generator.{AddrConfig, Generator}
 import linknan.soc.{LNTop, LinkNanParamsKey}
 import org.chipsalliance.cde.config.Parameters
 import org.chipsalliance.diplomacy.DisableMonitors
-import xs.utils.{FileRegisters, ResetGen}
 import xs.utils.perf.DebugOptionsKey
 import xs.utils.stage.XsStage
-import zhujiang.{NocIOHelper, ZJParametersKey, ZJRawModule}
-import zhujiang.axi.{AxiBufferChain, AxiBundle, AxiParams, AxiUtils, BaseAxiXbar, ExtAxiBundle}
+import xs.utils.{FileRegisters, ResetGen}
+import zhujiang.axi.{AxiBufferChain, AxiUtils}
+import zhujiang.{NocIOHelper, ZJRawModule}
 
 class VerilogAddrRemapper(width:Int) extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
@@ -80,6 +80,7 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
     val reset_vector = Input(UInt(raw.W))
     val ddr_offset = Input(UInt(raw.W))
     val ext_intr = Input(UInt(soc.io.ext_intr.getWidth.W))
+    val jtag = soc.io.jtag.map(_.cloneType)
   })
   private val _reset = (!io.aresetn).asAsyncReset
   private val resetSync = withClockAndReset(io.aclk, _reset) { ResetGen(2, None) }
@@ -110,13 +111,12 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
   soc.io.ramctl := DontCare
   soc.io.ci := 0.U
   soc.io.dft.lgc_rst_n := true.B
-  soc.io.jtag.foreach(_ := DontCare)
-  soc.io.jtag.foreach(_.reset := true.B.asAsyncReset)
+  io.jtag.foreach(_ <> soc.io.jtag.get)
   soc.dmaIO.foreach(_ := DontCare)
 
   val ddrDrv = Seq(ddrBuf.io.out)
   val cfgDrv = soc.cfgIO.map(AxiUtils.getIntnl)
-  val dmaDrv = Seq()
+  val dmaDrv = soc.dmaDrv.filter(_.params.dataBits > 64)
   val ccnDrv = Seq()
   val hwaDrv = soc.hwaIO.map(AxiUtils.getIntnl)
   runIOAutomation()
