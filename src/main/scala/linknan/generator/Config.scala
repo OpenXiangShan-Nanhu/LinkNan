@@ -150,6 +150,7 @@ class MinimalNocConfig(socket: String) extends Config((site, here, up) => {
 class FpgaInnoSingleNocConfig(socket: String) extends Config((site, here, up) => {
   case ZJParametersKey => ZJParameters(
     hnxBankOff = AddrConfig.interleaveOffset,
+    asyncParams = AsyncQueueParams(narrow = true),
     nodeParams = Seq(
       NodeParam(nodeType = NodeType.CC, socket = socket),
       NodeParam(nodeType = NodeType.P),
