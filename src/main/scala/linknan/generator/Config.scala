@@ -402,7 +402,7 @@ object ConfigGenerater {
   def parse(args: List[String]):(Parameters, Array[String]) = {
     doParse(args)
     val resP = generate(core, l3, noc, socket)
-    if(noc.contains("fpga_bosc")) {
+    if(noc.contains("fpga")) {
       println("[INFO]: USING 16G PMEM RANGE FOR FPGA VERIFICATION!")
       (resP.alter((site, here, up) => {
         case PMParameKey => up(PMParameKey).copy(
