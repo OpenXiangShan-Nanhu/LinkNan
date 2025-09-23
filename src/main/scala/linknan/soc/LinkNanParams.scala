@@ -17,7 +17,6 @@ case class LinkNanParams(
   removeMem: Boolean = false, // Only use in SimTop
   removeCore: Boolean = false,
   keepL1c: Boolean = false,
-  pseudoDynamicDramLatency: Boolean = false,
   useClint:Boolean = true,
   extraNcMem:Boolean = true,
   prefix:String = "",

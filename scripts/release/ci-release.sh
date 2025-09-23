@@ -65,10 +65,6 @@ for arg in "$@"; do
     mv "$package_dir" "${package_dir}_NOCextreme_COREminimal"
     mv "${package_dir}_NOCextreme_COREminimal" "$release_dir"
 
-    xmake soc -sgr -x bosc_ -N fpga_inno_1 -L extreme --fake_dram_latency
-    mv "$package_dir" "${package_dir}_NOCextreme_FakeDramLatency"
-    mv "${package_dir}_NOCextreme_FakeDramLatency" "$release_dir"
-
     cp -r "$linknan_dir"/dependencies/difftest "$env_dir"
     cp -r "$temp_nemu_dir" "$nemu_dir"
 

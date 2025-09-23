@@ -124,7 +124,6 @@ function simv_comp(num_cores)
                 dramsim3 = option.get("dramsim3"),
                 legacy = option.get("legacy"),
                 jar = option.get("jar"),
-                fake_dram_latency = option.get("fake_dram_latency"),
                 build_dir = build_dir
             })
             local vsrc = {}

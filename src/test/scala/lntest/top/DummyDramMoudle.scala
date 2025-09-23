@@ -62,15 +62,7 @@ class DummyDramMoudle(memParams: AxiParams)(implicit p: Parameters) extends Lazy
   private val pciNode = pciDplmcSlvParams.map(pm => AXI4SlaveNode(Seq(pm)))
   private val xbar = LazyModule(new AXI4Xbar)
   xbar.node :=* mstNode
-  if (p(LinkNanParamsKey).pseudoDynamicDramLatency) {
-    memNode :*= 
-      AXI4Buffer.chainNode(60) :*= 
-      AXI4Delayer(0.25) :*= 
-      AXI4Buffer.chainNode(60) :*= 
-      xbar.node
-  } else {
-    memNode :*= xbar.node
-  }
+  memNode :*= xbar.node
   pciNode.foreach(_ :*= xbar.node)
   lazy val module = new Impl
 

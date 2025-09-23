@@ -7,12 +7,11 @@ task("soc", function()
         options = {
             { 'a', "all_in_one",          "k",  nil,    "do not split generated rtl" },
             { 'A', "hardware_assertion",  "k",  nil,    "enable hardware assertion" },
-            { 'E', "expose_mem_mst_intf", "k",  nil,    "expose mem master interface in SimTop"},
+            { 'E', "expose_mem_mst_intf", "k",  nil,    "expose mem master interface in SimTop" },
             { 'b', "block_test_l2l3",     "k",  nil,    "leave core interfaces to the top" },
             { 'k', "keep_l1",             "k",  nil,    "keep dcache interfaces to the top" },
             { 'c', "clean_difftest",      "k",  nil,    "generate verilog without any difftest components" },
             { 'd', "dramsim3",            "k",  nil,    "use dramsim3 as simulation main memory" },
-            { nil, "fake_dram_latency",   "k",  nil,    "use pseudo dynamic dram latency" },
             { 'e', "enable_perf",         "k",  nil,    "generate verilog with perf debug components" },
             { 'g', "vcs",                 "k",  nil,    "alter assertions info to be vcs style" },
             { 'r', "release",             "k",  nil,    "export release pack" },
@@ -71,9 +70,6 @@ task("soc", function()
         if option.get("hardware_assertion") then table.join2(chisel_opts, { "--enable-hardware-assertion" }) end
         if option.get("sim") and option.get("dramsim3") then table.join2(chisel_opts, { "--dramsim3" }) end
         if option.get("sim") and option.get("pldm_verilog") then table.join2(chisel_opts, { "--no-extra-nc-mem" }) end
-        if option.get("sim") and option.get("fake_dram_latency") then
-            table.join2(chisel_opts, { "--pseudo-dynamic-dram-latency" })
-        end
         if option.get("prefix") ~= "" then table.join2(chisel_opts, { "--prefix", option.get("prefix") }) end
         os.setenv("NOOP_HOME", os.curdir())
 
@@ -132,29 +128,28 @@ task("emu", function()
         usage = "xmake emu [options]",
         description = "Compile with verilator",
         options = {
-            { 'b', "rebuild",           "k",  nil,                                               "forcely rebuild" },
-            { nil, "no_build_chisel",   "k",  nil,                                               "do not build chisel code" },
-            { 's', "sparse_mem",        "k",  nil,                                               "use sparse mem" },
-            { 'd', "dramsim3",          "k",  nil,                                               "use dramsim3" },
-            { 'p', "no_perf",           "k",  nil,                                               "disable perf counter" },
-            { 'n', "no_diff",           "k",  nil,                                               "disable difftest" },
-            { 'f', "fast",              "k",  nil,                                               "disable trace to improve simulation speed" },
-            { 'l', "lua_scoreboard",    "k",  nil,                                               "use lua scoreboard for cache debug" },
-            { 'Y', "legacy",            "k",  nil,                                               "use XS legacy memory map" },
-            { 'G', "bypass_clockgate",  "k",  nil,                                               "force enable all clock gates" },
-            { 'J', "jar",               "kv", "",                                                "use jar to generate artifacts" },
-            { 'h', "dramsim3_home",     "kv", path.join(os.curdir(), "dependencies", "dramsim"), "dramsim3 home dir" },
-            { 't', "threads",           "kv", "16",                                              "simulation threads" },
-            { 'j', "jobs",              "kv", "16",                                              "compilation jobs" },
-            { 'r', "ref",               "kv", "Nemu",                                            "reference model" },
-            { 'C', "core",              "kv", "full",                                            "define cpu core config in soc" },
-            { 'L', "l3",                "kv", "small",                                           "define L3 config" },
-            { 'N', "noc",               "kv", "small",                                           "define noc config" },
-            { 'S', "socket",            "kv", "sync",                                            "define how cpu cluster connect to noc" },
-            { 'o', "build_dir",         "kv", nil,                                               "assign build dir" },
-            { nil, "sim_dir",           "kv", nil,                                               "assign simulation dir" },
-            { nil, "dump_fst",          "k",  nil,                                               "set wave type xxx.fst" },
-            { nil, "fake_dram_latency", "k",  nil,                                               "use pseudo dynamic dram latency" },
+            { 'b', "rebuild",          "k",  nil,                                               "forcely rebuild" },
+            { nil, "no_build_chisel",  "k",  nil,                                               "do not build chisel code" },
+            { 's', "sparse_mem",       "k",  nil,                                               "use sparse mem" },
+            { 'd', "dramsim3",         "k",  nil,                                               "use dramsim3" },
+            { 'p', "no_perf",          "k",  nil,                                               "disable perf counter" },
+            { 'n', "no_diff",          "k",  nil,                                               "disable difftest" },
+            { 'f', "fast",             "k",  nil,                                               "disable trace to improve simulation speed" },
+            { 'l', "lua_scoreboard",   "k",  nil,                                               "use lua scoreboard for cache debug" },
+            { 'Y', "legacy",           "k",  nil,                                               "use XS legacy memory map" },
+            { 'G', "bypass_clockgate", "k",  nil,                                               "force enable all clock gates" },
+            { 'J', "jar",              "kv", "",                                                "use jar to generate artifacts" },
+            { 'h', "dramsim3_home",    "kv", path.join(os.curdir(), "dependencies", "dramsim"), "dramsim3 home dir" },
+            { 't', "threads",          "kv", "16",                                              "simulation threads" },
+            { 'j', "jobs",             "kv", "16",                                              "compilation jobs" },
+            { 'r', "ref",              "kv", "Nemu",                                            "reference model" },
+            { 'C', "core",             "kv", "full",                                            "define cpu core config in soc" },
+            { 'L', "l3",               "kv", "small",                                           "define L3 config" },
+            { 'N', "noc",              "kv", "small",                                           "define noc config" },
+            { 'S', "socket",           "kv", "sync",                                            "define how cpu cluster connect to noc" },
+            { 'o', "build_dir",        "kv", nil,                                               "assign build dir" },
+            { nil, "sim_dir",          "kv", nil,                                               "assign simulation dir" },
+            { nil, "dump_fst",         "k",  nil,                                               "set wave type xxx.fst" },
         }
     }
 
@@ -238,7 +233,6 @@ task("simv", function()
             { nil, "vcs_args",          "kv", nil,                                               "additional arguments for vcs" },
             { nil, "no_initreg_random", "k",  nil,                                               "do not add +vcs+initreg+random to vcs flags" },
             { nil, "initreg_cfg",       "kv", nil,                                               "initreg configuration file for `+vcs+initreg+config+` option" },
-            { nil, "fake_dram_latency", "k",  nil,                                               "use pseudo dynamic dram latency" },
         }
     }
 
@@ -293,24 +287,23 @@ task("pldm", function()
         usage = "xmake pldm [options]",
         description = "Compile with pldm(Cadence Palladium)",
         options = {
-            { 'b', "rebuild",           "k",  nil,     "forcely rebuild" },
-            { nil, "no_build_chisel",   "k",  nil,     "do not build chisel code" },
-            { 'n', "no_diff",           "k",  nil,     "disable difftest" },
-            { nil, "synthesis",         "k",  nil,     "synthesis compilation mode" },
+            { 'b', "rebuild",          "k",  nil,     "forcely rebuild" },
+            { nil, "no_build_chisel",  "k",  nil,     "do not build chisel code" },
+            { 'n', "no_diff",          "k",  nil,     "disable difftest" },
+            { nil, "synthesis",        "k",  nil,     "synthesis compilation mode" },
             -- {'s', "sparse_mem", "k", nil, "use sparse mem"},
-            { 'G', "bypass_clockgate",  "k",  nil,     "force enable all clock gates" },
-            { 'l', "lua_scoreboard",    "k",  nil,     "use lua scoreboard for cache debug" },
-            { 'J', "jar",               "kv", "",      "use jar to generate artifacts" },
-            { 'Y', "legacy",            "k",  nil,     "use XS legacy memory map" },
-            { 'r', "ref",               "kv", "Nemu",  "reference model" },
-            { 'C', "core",              "kv", "full",  "define cpu core config in soc" },
-            { 'L', "l3",                "kv", "small", "define L3 config" },
-            { 'N', "noc",               "kv", "small", "define noc config" },
-            { 'S', "socket",            "kv", "sync",  "define how cpu cluster connect to noc" },
-            { 'o', "build_dir",         "kv", nil,     "assign build dir" },
-            { nil, "sim_dir",           "kv", nil,     "assign simulation dir" },
-            { nil, "use_z1",            "k",  nil,     "use Palladium Z1 environment" },
-            { nil, "fake_dram_latency", "k",  nil,     "use pseudo dynamic dram latency" },
+            { 'G', "bypass_clockgate", "k",  nil,     "force enable all clock gates" },
+            { 'l', "lua_scoreboard",   "k",  nil,     "use lua scoreboard for cache debug" },
+            { 'J', "jar",              "kv", "",      "use jar to generate artifacts" },
+            { 'Y', "legacy",           "k",  nil,     "use XS legacy memory map" },
+            { 'r', "ref",              "kv", "Nemu",  "reference model" },
+            { 'C', "core",             "kv", "full",  "define cpu core config in soc" },
+            { 'L', "l3",               "kv", "small", "define L3 config" },
+            { 'N', "noc",              "kv", "small", "define noc config" },
+            { 'S', "socket",           "kv", "sync",  "define how cpu cluster connect to noc" },
+            { 'o', "build_dir",        "kv", nil,     "assign build dir" },
+            { nil, "sim_dir",          "kv", nil,     "assign simulation dir" },
+            { nil, "use_z1",           "k",  nil,     "use Palladium Z1 environment" },
         }
     }
 

@@ -258,7 +258,6 @@ function pldm_comp(num_cores)
                 noc = option.get("noc"),
                 legacy = option.get("legacy"),
                 jar = option.get("jar"),
-                fake_dram_latency = option.get("fake_dram_latency"),
                 build_dir = build_dir
             })
 

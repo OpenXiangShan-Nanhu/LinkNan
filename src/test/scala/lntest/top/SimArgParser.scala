@@ -85,11 +85,6 @@ object SimArgParser {
             case LinkNanParamsKey => up(LinkNanParamsKey).copy(extraNcMem = false)
           }), tail)
 
-        case "--pseudo-dynamic-dram-latency" :: tail =>
-          parse(config.alter((site, here, up) => {
-            case LinkNanParamsKey => up(LinkNanParamsKey).copy(pseudoDynamicDramLatency = true)
-          }), tail)
-
         case "--lua-scoreboard" :: tail =>
           parse(config.alter((site, here, up) => {
             case DebugOptionsKey => up(DebugOptionsKey).copy(EnableDebug = true, EnableLuaScoreBoard = true, FPGAPlatform = true)
