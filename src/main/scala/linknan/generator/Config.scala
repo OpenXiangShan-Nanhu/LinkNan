@@ -24,7 +24,7 @@ import scala.annotation.tailrec
 
 class BaseConfig extends Config((site, here, up) => {
   case HardwareAssertionKey => HwaParams()
-  case DebugOptionsKey => DebugOptions()
+  case DebugOptionsKey => DebugOptions(ResetGen = true)
   case L2ParamKey => L2Param(hasMbist = false)
   case XSCoreParamsKey => XSCoreParameters(hasMbist = false)
   case LogUtilsOptionsKey => LogUtilsOptions(enableDebug = false, enablePerf = true, fpgaPlatform = false)
