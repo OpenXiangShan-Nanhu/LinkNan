@@ -93,6 +93,7 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
 
   private val rtc_div = Module(new FpgaClkDiv10)
   private val ddrPorts = soc.ddrIO.filterNot(_.params.attr.contains("hs"))
+  private val pcieMst = soc.ddrIO.filter(_.params.attr.contains("hs"))
   soc.ddrIO.filter(_.params.attr.contains("hs")).foreach(_ := DontCare)
   private val ddrXbar = Module(new SimNto1Bridge(ddrPorts.map(_.params)))
   private val portP = ddrXbar.io.downstream.head.params.copy(attr = "mem_0")
@@ -126,7 +127,7 @@ class FpgaTop(implicit p: Parameters) extends ZJRawModule with NocIOHelper with 
   io.systemjtag.foreach(_.jtag <> soc.io.jtag.get.jtag)
   soc.dmaIO.foreach(_ := DontCare)
 
-  val ddrDrv = Seq(ddrBuf.io.out)
+  val ddrDrv = Seq(ddrBuf.io.out) ++ pcieMst.map(AxiUtils.getIntnl)
   val cfgDrv = soc.cfgIO.map(AxiUtils.getIntnl)
   val dmaDrv = soc.dmaIO.filter(_.params.dataBits > 64).map(AxiUtils.getIntnl)
   val ccnDrv = Seq()
