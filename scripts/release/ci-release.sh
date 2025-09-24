@@ -41,7 +41,7 @@ for arg in "$@"; do
 
   # FPGA single core only need xmake soc target.
   if [ "$arg" = "FPGA_Single_Core" ]; then
-    xmake soc -fgrcY -N fpga_bosc_1 -L single
+    xmake soc -fgrcY -N fpga_inno_1 -L single
     mv $package_dir $release_dir
 
   # FPGA quad core only need xmake soc target.

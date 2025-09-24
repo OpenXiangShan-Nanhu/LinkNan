@@ -1,8 +1,8 @@
 #!/bin/bash
 set -ex
 
-if [ $# -gt 1 ] || { [ $# -eq 1 ] && [ "$1" != "fpga_bosc_1" ] && [ "$1" != "fpga_inno_1" ]; }; then
-    echo "Error: Invalid arguments. Usage: $0 [fpga_bosc_1|fpga_inno_1]" >&2
+if [ $# -gt 1 ] || { [ $# -eq 1 ] && [ "$1" != "fpga_inno_1" ]; }; then
+    echo "Error: Invalid arguments. Usage: $0 [fpga_inno_1]" >&2
     exit 1
 fi
 
@@ -41,9 +41,7 @@ find "$am_dir/cases" -name Makefile -execdir make ARCH=riscv64-ln -j \;
 find "$am_dir/cases" -name '*.bin'  -exec cp {} "$case_dir" \;
 
 # 4. generate soc package and env
-if [ "$1" = "fpga_bosc_1" ]; then
-  xmake soc -sgrmAY -x bosc_ -N fpga_bosc_1 -L medium
-elif [ "$1" = "fpga_inno_1" ]; then
+if [ "$1" = "fpga_inno_1" ]; then
   xmake soc -sgrmA -x bosc_ -N fpga_inno_1 -L medium
 else
   xmake soc -sgrmA -x bosc_
@@ -57,10 +55,6 @@ cp -r "$linknan_dir"/scripts/release/Makefile "$release_dir"
 cp -r "$linknan_dir"/scripts/release/sram_tb.mk "$release_dir"
 cp -r "$linknan_dir"/dependencies/difftest "$env_dir"
 cp -r "$linknan_dir"/scripts/release/sram_tb "$env_dir"
-if [ "$1" = "fpga_bosc_1" ]; then
-  sed -i 's/riscv64-nhv5-multi-ref_defconfig/riscv64-nhv5-ref_defconfig/' "$release_dir"/Makefile
-  sed -i 's/-DNUM_CORES=4//' "$release_dir"/Makefile
-fi
 
 # 5. tar and archive
 tar -zcvf "release_${data}_${commit}${suffix}.tar.gz" "release_${data}_${commit}${suffix}"
