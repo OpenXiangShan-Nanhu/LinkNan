@@ -75,6 +75,7 @@ final case class CoreNode(
       Property("status", StringValue(if(id == 0) "okay" else "disabled")),
       Property("compatible", PropertyValues(List(StringValue("bosc,nanhu-v5"), StringValue("riscv")))),
       Property("riscv,isa", StringValue("rv64imafdc")),
+      Property("riscv,isa-base", StringValue("rv64i")),
       Property("riscv,isa-extensions", PropertyValues(List(
         StringValue("i"),
         StringValue("m"),
