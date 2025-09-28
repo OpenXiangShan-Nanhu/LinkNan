@@ -251,6 +251,7 @@ function pldm_comp(num_cores)
                 sim = true,
                 config = option.get("config"),
                 pldm_verilog = true,
+                pldmDDR = option.get("use_ddr_ip") == "2400" or option.get("use_ddr_ip") == "3200",
                 socket = option.get("socket"),
                 lua_scoreboard = option.get("lua_scoreboard"),
                 core = option.get("core"),
@@ -334,14 +335,16 @@ function pldm_comp(num_cores)
         "-F " .. vsrc_f, "-l " .. path.join(comp_dir, "vlan.log")
     }
     local ixcom_flags = {
-        "-clean", "-64", "-ua", "+sv", "+ignoreSimVerCheck", "+xe_alt_xlm",
+        "-clean", "-64", "-ua", "+sv", "+ignoreSimVerCheck", "+xe_alt_xlm", "-timescale 1ps/1ps",
         "-xeCompile compilerOptions=" .. path.join(pldm_scripts_dir, "compilerOptions.qel"),
         "+gfifoDisp+" .. tb_top,
         v_incdir_flags,
         "+dut+" .. tb_top,
         "-v " .. path.join(ixcom_dir, "IXCclkgen.sv"),
         "+tfconfig+" .. path.join(pldm_scripts_dir, "argConfigs.qel"),
-        "-F " .. vsrc_f, "-l " .. path.join(comp_dir, "ixcom.log")
+        "-F " .. vsrc_f,
+        "-f /nfs/home/guanmingxing/linknan-share/ip/pldm.f",
+        "-l " .. path.join(comp_dir, "ixcom.log")
     }
     local macro_flags = {
         "+define+PALLADIUM", "+define+RANDOMIZE_MEM_INIT", "+define+RANDOMIZE_REG_INIT", "+define+RANDOMIZE_DELAY=0",
@@ -378,8 +381,26 @@ function pldm_comp(num_cores)
 
         table.join2(macro_flags, { "+define+SYNTHESIS", "+define+TB_NO_DPIC" })
     else
+        local pldm_clock = "clock_gen"
+        -- Generate pldm clock source file
+        if option.get("use_ddr_ip") == "3200" then
+          pldm_clock = "clock_gen_3200"
+        elseif option.get("use_ddr_ip") == "2400" then
+          pldm_clock = "clock_gen_2400"
+        else
+          pldm_clock = "clock_gen"
+        end
+
+        local pldm_clock_def = path.join(pldm_scripts_dir, pldm_clock .. ".xel")
+        local pldm_clock_src = path.join(comp_dir, pldm_clock .. ".sv")
+
+        os.execv("ixclkgen -input " .. pldm_clock_def .. " -output " .. pldm_clock_src .. " -module " .. pldm_clock)
+
+        table.join2(ixcom_flags, {"+dut+" .. pldm_clock, pldm_clock_src})
+
         -- `+iscDelay+<module>[+<module>]`: enables blocking time delay transformations for DUT modules
-        table.join2(ixcom_flags, { "+iscDelay+" .. tb_top, "-enableLargeSizeMem" })
+        -- table.join2(ixcom_flags, { "+iscDelay+" .. tb_top, "-enableLargeSizeMem" })
+        table.join2(ixcom_flags, {"-enableLargeSizeMem"})
         table.join2(ixcom_flags, { "+rtlCommentPragma", "+tran_relax", "-relativeIXCDIR" })
 
         -- TODO: Optional?
@@ -536,6 +557,7 @@ function pldm_run()
     local pldm_comp_dir = path.join(pldm_sim_dir, "comp")
     local pldm_scripts_dir = path.join(abs_dir, "scripts", "pldm")
     local pldm_run_dir = pldm_case_dir
+    local bin2ddr = "/nfs/home/guanmingxing/linknan-share/scripts/gcpt/bin2ddr/bin2ddr"
     if option.get("run_dir") then pldm_run_dir = path.join(option.get("run_dir"), case_name) end
 
     if not os.exists(pldm_comp_dir) then
@@ -547,10 +569,19 @@ function pldm_run()
     if not os.exists(pldm_run_dir) then os.mkdir(pldm_run_dir) end
 
     os.cd(pldm_run_dir)
+    os.exec(bin2ddr .. " -s -m \"ra,row,ba,col,bg\"" .. " -i " .. image_file .. " -o payload.memh")
+    if not os.exists(path.join(pldm_run_dir, "loadmem.qel")) then os.exec("ln -s " .. path.join(pldm_scripts_dir, "loadmem.qel") .. " .") end
+    if not os.exists(path.join(pldm_run_dir, "run.tcl")) then os.exec("ln -s " .. path.join(pldm_scripts_dir, "run.tcl") .. " .") end
+    if not os.exists(path.join(pldm_run_dir, "run_debug.tcl")) then os.exec("ln -s " .. path.join(pldm_scripts_dir, "run_debug.tcl") .. " .") end
+  
     os.setenv("PLDM_COMP_DIR", pldm_comp_dir)
+    os.setenv("PLDM_SCR_DIR", pldm_scripts_dir)
+
     local xsim_pre_flags = {
         "--xmsim", "-64", "+xcprof", "-profile", "-PROFTHREAD",
         if_debug("", "-sv_lib " .. path.join(pldm_comp_dir, dpi_so_name)),
+        "-sv_lib /nfs/tools/Cadence/MMP2504/utils/cdn_mmp_utils/lib/64bit/libMMP_utils.so",
+        "+MMP_DEBUG_DISPLAY +MMP_DEBUG_DISPLAY_STATE +MMP_DEBUG_DISPLAY_ERROR +MMP_DEBUG_DISPLAY_DATA",
         "-licqueue", -- waitting for license release
         "+diff=" .. path.join(abs_ref_base_dir, option.get("ref")),
         "+workload=" .. image_file,
@@ -563,12 +594,12 @@ function pldm_run()
         xsim_post_flags = {
             "--",
             "-fsdb",
-            "-input " .. path.join(pldm_scripts_dir, "run_debug.tcl"),
+            "-input ./run_debug.tcl",
         }
     else
         xsim_post_flags = {
             "--",
-            "-input " .. path.join(pldm_scripts_dir, "run.tcl"),
+            "-input ./run.tcl",
         }
     end
 

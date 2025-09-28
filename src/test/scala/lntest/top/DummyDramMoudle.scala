@@ -1,6 +1,6 @@
 package lntest.top
 
-import chisel3.Module
+import chisel3._
 import freechips.rocketchip.amba.axi4.{AXI4MasterNode, AXI4MasterParameters, AXI4MasterPortParameters, AXI4SlaveNode, AXI4SlaveParameters, AXI4SlavePortParameters}
 import freechips.rocketchip.amba.axi4.{AXI4Xbar, AXI4Buffer, AXI4Delayer}
 import freechips.rocketchip.diplomacy.{AddressSet, IdRange, RegionType, TransferSizes, BufferParams}
@@ -8,7 +8,7 @@ import freechips.rocketchip.resources.MemoryDevice
 import linknan.generator.AddrConfig
 import org.chipsalliance.diplomacy.lazymodule._
 import linknan.soc.LinkNanParamsKey
-import lntest.peripheral.{AXI4MemorySlave, AXI4RAMWrapper}
+import lntest.peripheral.{AXI4MemorySlave, AXI4RAMWrapper, AXI4DDRWrapper}
 import org.chipsalliance.cde.config.Parameters
 import xs.utils.perf.DebugOptionsKey
 import zhujiang.ZJParametersKey
@@ -69,13 +69,15 @@ class DummyDramMoudle(memParams: AxiParams)(implicit p: Parameters) extends Lazy
   class Impl extends LazyModuleImp(this) {
 
     val axi = mstNode.makeIOs()
+    val mc_init_done = IO(Output(Bool()))
 
     private val l_simAXIMem = AXI4MemorySlave(
       memNode,
       16L * 1024 * 1024 * 1024,
       useBlackBox = true,
       dynamicLatency = p(DebugOptionsKey).UseDRAMSim,
-      pureDram = p(LinkNanParamsKey).removeCore
+      pureDram = p(LinkNanParamsKey).removeCore,
+      pldmDDR = p(DebugOptionsKey).UsePldmDDR
     )
     private val extraMem = pciNode.map(n => LazyModule(new AXI4RAMWrapper(
       slave = n,
@@ -86,5 +88,10 @@ class DummyDramMoudle(memParams: AxiParams)(implicit p: Parameters) extends Lazy
     private val simAXIPci = extraMem.map(m => Module(m.module))
     l_simAXIMem.io_axi4.head <> memNode.in.head._1
     extraMem.foreach(_.io_axi4.head <> pciNode.get.in.head._1)
+    if(p(DebugOptionsKey).UsePldmDDR) {
+      mc_init_done := l_simAXIMem.asInstanceOf[AXI4DDRWrapper].module.mc_init_done
+    } else {
+      mc_init_done := true.B
+    }
   }
 }

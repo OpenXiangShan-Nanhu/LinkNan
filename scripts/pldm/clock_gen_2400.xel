@@ -1,0 +1,5 @@
+clockOption -add {technology CAKE 1}
+clockFrequency -add {tb_top.clock 2GHz}
+clockFrequency -add {tb_top.sim.l_simAXIMem.memory.ram.ddrClockResetGen.mc_clock 600MHz}
+clockFrequency -add {tb_top.sim.l_simAXIMem.memory.ram.ddrClockResetGen.phy_clock 1200MHz}
+clockFrequency -add {tb_top.sim.l_simAXIMem.memory.ram.ddrClockResetGen.apb_clock 100MHz}

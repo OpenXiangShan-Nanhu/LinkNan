@@ -27,6 +27,12 @@ object SimArgParser {
           parse(config.alter((site, here, up) => {
             case DebugOptionsKey => up(DebugOptionsKey).copy(UseDRAMSim = true)
           }), tail)
+        
+        case "--pldmDDR" :: tail =>
+          println("Use PLDM DDR IP")
+          parse(config.alter((site, here, up) => {
+            case DebugOptionsKey => up(DebugOptionsKey).copy(UsePldmDDR = true)
+          }), tail)
 
         case "--no-perf" :: tail =>
           parse(config.alter((site, here, up) => {

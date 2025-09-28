@@ -123,6 +123,9 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
     connectByName(intCfgPort.get.b, periCfg.b)
   }
 
+  val mc_init_done = Wire(Bool())
+  dontTouch(mc_init_done)
+  mc_init_done := true.B
   if(!removeMem) {
     val memXbar = Module(new SimNto1Bridge(soc.ddrIO.map(_.params)))
     memXbar.io.upstream.zip(soc.ddrIO).foreach({ case (a, b) => a <> b })
@@ -135,6 +138,7 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
     connectByName(memAxi.w, memPort.w)
     connectByName(memPort.r, memAxi.r)
     connectByName(memPort.b, memAxi.b)
+    mc_init_done := simAXIMem.mc_init_done
   }
 
   private val cntDiv = p(LinkNanParamsKey).rtcDiv
@@ -145,7 +149,7 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   private val devDiv = RegInit(false.B)
   devDiv := !devDiv
 
-  private val socReset = reset.asAsyncReset.asBool || soc.io.ndreset
+  private val socReset = reset.asAsyncReset.asBool || soc.io.ndreset || ~mc_init_done
   soc.io.rtc_clock := tick
   soc.io.noc_clock := clock
   soc.io.dev_clock := devDiv.asClock
@@ -165,7 +169,7 @@ class SimTop(implicit val p: Parameters) extends Module with NocIOHelper {
   extraDev.foreach(d => {
     soc.io.cluster_clocks.zip(d.io.o_cpu_clk.asBools).foreach({case(a, b) => a := b.asClock})
     soc.io.noc_clock := d.io.o_noc_clk
-    soc.io.reset := (d.io.o_noc_rst.asBool || soc.io.ndreset).asAsyncReset
+    soc.io.reset := (d.io.o_noc_rst.asBool || soc.io.ndreset || ~mc_init_done).asAsyncReset
   })
 
   if(doBlockTest) {

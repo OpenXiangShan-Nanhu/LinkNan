@@ -375,11 +375,14 @@ object AXI4MemorySlave {
     useBlackBox: Boolean = false,
     dynamicLatency: Boolean = false,
     pureDram:Boolean = false,
+    pldmDDR: Boolean = false
   )(implicit p: Parameters): AXI4MemorySlave = {
-    val memory = if(pureDram){
+    val memory = if(pureDram) {
       LazyModule(new AXI4PureDram(slave, memByte, useBlackBox))
     } else if (dynamicLatency) {
       LazyModule(new AXI4MemoryWrapper(slave, memByte, useBlackBox))
+    } else if(pldmDDR) {
+      LazyModule(new AXI4DDRWrapper(slave, memByte, useBlackBox))
     } else {
       LazyModule(new AXI4RAMWrapper(slave, memByte, useBlackBox))
     }

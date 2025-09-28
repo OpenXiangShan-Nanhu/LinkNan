@@ -1,0 +1,2 @@
+memory -load %readmemh tb_top.sim.l_simAXIMem.memory.ram.ddr4.ddr4_udimm_64_i0.ddr4_wide_i0.memcore -file ./payload_0.memh
+memory -load %readmemh tb_top.sim.l_simAXIMem.memory.ram.ddr4.ddr4_udimm_64_i1.ddr4_wide_i0.memcore -file ./payload_1.memh

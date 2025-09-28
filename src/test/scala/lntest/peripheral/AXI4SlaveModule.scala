@@ -55,7 +55,10 @@ class AXI4SlaveModuleImp[T<:Data](outer: AXI4SlaveModule[T])
 {
   val io = IO(new Bundle {
     val extra = if(outer._extra == null) None else Some(outer._extra.cloneType)
+    val init_done = Output(Bool())
   })
+
+  io.init_done := true.B
 
   val (in, edge) = outer.node.in.head
   // do not let MMIO AXI signals optimized out
