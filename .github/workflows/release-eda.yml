@@ -18,7 +18,7 @@ on:
 jobs:
   run:
     name: Weekly LN EDA Release
-    runs-on: [self-hosted, sz-open] 
+    runs-on: self-hosted
     steps:
 
       - name: Checkout repo

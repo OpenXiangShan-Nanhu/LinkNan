@@ -15,7 +15,7 @@ on:
 jobs:
   run:
     name: Weely LN FPGA Release
-    runs-on: [self-hosted, sz-open] 
+    runs-on: self-hosted
     steps:
 
       - name: Checkout repo
