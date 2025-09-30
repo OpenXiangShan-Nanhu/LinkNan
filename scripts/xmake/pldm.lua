@@ -159,6 +159,7 @@ local function load_pldm_z1env()
     set_env("VXE_HOME", "/nfs/tools/Cadence/VXE23.03.s004")
     add_env("PATH", envs.VXE_HOME .. "/bin")
     add_env("LD_LIBRARY_PATH", envs.VXE_HOME .. "/tools.lnx86/lib/64bit")
+    add_env("LD_LIBRARY_PATH", envs.VXE_HOME .. "/share/gift/fsdbWriter")
 
     -- license setup
     set_env("LM_LICENSE_FILE", "5280@node011")
@@ -576,6 +577,10 @@ function pldm_run()
   
     os.setenv("PLDM_COMP_DIR", pldm_comp_dir)
     os.setenv("PLDM_SCR_DIR", pldm_scripts_dir)
+    if option.get("use_ddr_ip") == "2400" or option.get("use_ddr_ip") == "3200" then
+        os.setenv("PLDM_RUN_MEMINIT_SCR", path.join(pldm_scripts_dir, "loadmem.qel"))
+    end
+    
 
     local xsim_pre_flags = {
         "--xmsim", "-64", "+xcprof", "-profile", "-PROFTHREAD",
