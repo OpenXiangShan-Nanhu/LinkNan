@@ -344,9 +344,13 @@ function pldm_comp(num_cores)
         "-v " .. path.join(ixcom_dir, "IXCclkgen.sv"),
         "+tfconfig+" .. path.join(pldm_scripts_dir, "argConfigs.qel"),
         "-F " .. vsrc_f,
-        "-f /nfs/home/guanmingxing/linknan-share/ip/pldm.f",
         "-l " .. path.join(comp_dir, "ixcom.log")
     }
+
+    if option.get("use_ddr_ip") == "2400" or option.get("use_ddr_ip") == "3200" then
+        ixcom_flags = table.join2(ixcom_flags, { "-f /nfs/home/guanmingxing/linknan-share/ip/pldm.f" })
+    end
+
     local macro_flags = {
         "+define+PALLADIUM", "+define+RANDOMIZE_MEM_INIT", "+define+RANDOMIZE_REG_INIT", "+define+RANDOMIZE_DELAY=0",
         "+define+SIM_TOP_MODULE_NAME=" .. tb_top .. ".sim"
