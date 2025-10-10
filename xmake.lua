@@ -340,6 +340,7 @@ task("pldm-run", function()
             { nil, "no_scb",    "k",  nil,                           "disable lua scoreboard" },
             { 'd', "dump",      "k",  nil,                           "dump fsdb waveform file" },
             { nil, "use_z1",    "k",  nil,                           "use Palladium Z1 environment" },
+            { nil, "use_ddr_ip","kv", nil,                           "use PLDM DDR IP"},
         }
     }
 

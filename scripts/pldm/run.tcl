@@ -3,7 +3,6 @@ set DESIGN_NAME "XiangShan-Nanhu"
 # environment variable `PLDM_COMP_DIR` is set by pldm.lua(pldm_run)
 set DESIGN_DIR $env(PLDM_COMP_DIR)
 
-set CUST_INIT_QEL $env(PLDM_RUN_MEMINIT_SCR)
 debug $DESIGN_DIR
 xeset designName $DESIGN_NAME
 
@@ -18,7 +17,9 @@ date
 # swap into emulator
 run -swap
 
-if { $CUST_INIT_QEL != "" } { source $CUST_INIT_QEL }
+if {[info exists env(PLDM_RUN_MEMINIT_SCR)]} {
+  source $env(PLDM_RUN_MEMINIT_SCR)
+}
 
 # run
 run
