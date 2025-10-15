@@ -195,6 +195,7 @@ task("emu-run", function()
             { nil, "dump_fst",       "k",  nil,                           "set wave type xxx.fst" },
             { 'n', "no_diff",        "k",  nil,                           "disable difftest" },
             { nil, "no_scb",         "k",  nil,                           "disable lua scoreboard" },
+            { nil, "emu_args",       "kv", nil,                           "additional arguments for emu" },
         }
     }
 

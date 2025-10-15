@@ -357,6 +357,9 @@ function emu_run()
     else
         sh_str = sh_str .. " --wave-path " .. case_name .. ".vcd"
     end
+    if option.get("emu_args") then
+        sh_str = sh_str .. " " .. option.get("emu_args")
+    end
     sh_str = sh_str .. " ) 2>assert.log |tee run.log"
 
     io.writefile("tmp.sh", sh_str)
