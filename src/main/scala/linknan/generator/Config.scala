@@ -263,6 +263,25 @@ class L2Config(sizeInKiB: Int = 512, ways: Int = 8, slices: Int = 2, mshr:Int = 
   case ZJParametersKey => up(ZJParametersKey).copy(clusterCacheSizeInB = sizeInKiB * 1024)
 })
 
+class L2NoPrefetchConfig(sizeInKiB: Int = 512, ways: Int = 8, slices: Int = 2, mshr:Int = 16) extends Config((site, here, up) => {
+  case L2ParamKey =>
+    val core = up(XSCoreParamsKey)
+    up(L2ParamKey).copy(
+      enableL2Flush = true,
+      tagECC = Some("secded"),
+      dataECC = Some("secded"),
+      enableTagECC = true,
+      enableDataECC = true,
+      mshrs = mshr,
+      dataCheck = None,
+      ways = ways,
+      sets = sizeInKiB * 1024 / ways / slices / up(L2ParamKey).blockBytes,
+      prefetch = Nil,
+    )
+  case XSCoreParamsKey => up(XSCoreParamsKey).copy(L2NBanks = slices)
+  case ZJParametersKey => up(ZJParametersKey).copy(clusterCacheSizeInB = sizeInKiB * 1024)
+})
+
 class L1DConfig(sizeInKiB: Int = 64, ways: Int = 4) extends Config((site, here, up) => {
   case XSCoreParamsKey =>
     up(XSCoreParamsKey).copy(dcacheParametersOpt = Some(DCacheParameters(
@@ -303,6 +322,14 @@ class MinimalCoreConfig extends Config(
   new MinimalNanhuConfig ++ new L2Config(64, 8, 2, 8)
 )
 
+class MemStressTestCoreConfig extends Config(
+  new MemStressConfig ++ new L1DConfig ++ new L2Config
+)
+
+class MemStressNoPrefetchTestCoreConfig extends Config(
+  new MemStressNoPrefetchConfig ++ new L1DConfig ++ new L2NoPrefetchConfig
+)
+
 class FullL3Config extends Config(
   new LLCConfig
 )
@@ -336,6 +363,8 @@ object ConfigGenerater {
       case "full" => new FullCoreConfig
       case "extreme" => new ExtremeCoreConfig
       case "minimal" => new MinimalCoreConfig
+      case "memtest" => new MemStressTestCoreConfig
+      case "nopftest" => new MemStressNoPrefetchTestCoreConfig
       case _ =>
         require(requirement = false, s"not supported core config: $core")
         new MinimalCoreConfig
