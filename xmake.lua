@@ -331,6 +331,7 @@ task("pldm-run", function()
             { 'z', "imagez",    "kv", nil,                           "gz image name" },
             { 'c', "cycles",    "kv", "0",                           "max simulation cycles" },
             { 'w', "workload",  "kv", nil,                           "workload name(.bin/.gz)(fullpath)" },
+            { 'n', "no_diff",   "k",  nil,                           "disable difftest" },
             { 'r', "ref",       "kv", "riscv64-nemu-interpreter-so", "reference model" },
             { nil, "ref_dir",   "kv", "ready-to-run",                "reference model base dir" },
             { nil, "case_dir",  "kv", "ready-to-run",                "image base dir" },

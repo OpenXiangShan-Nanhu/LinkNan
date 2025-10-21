@@ -250,6 +250,7 @@ function pldm_comp(num_cores)
             task.run("soc", {
                 vcs = true,
                 sim = true,
+                clean_difftest = option.get("no_diff"),
                 config = option.get("config"),
                 pldm_verilog = true,
                 pldmDDR = option.get("use_ddr_ip") == "2400" or option.get("use_ddr_ip") == "3200",
@@ -292,11 +293,11 @@ function pldm_comp(num_cores)
         })
     end
 
-    for _, p in ipairs(csrc_dirs) do
-        table.join2(csrc, os.files(path.join(p, "*.cpp")))
-        table.join2(csrc, os.files(path.join(p, "*.c")))
-    end
     if not option.get("no_diff") and not debug then
+        for _, p in ipairs(csrc_dirs) do
+            table.join2(csrc, os.files(path.join(p, "*.cpp")))
+            table.join2(csrc, os.files(path.join(p, "*.c")))
+        end
         local difftest_csrc_difftest = path.join(difftest_csrc, "difftest")
         table.join2(csrc, os.files(path.join(difftest_csrc_difftest, "*.cpp")))
     end
@@ -592,10 +593,14 @@ function pldm_run()
         "-sv_lib /nfs/tools/Cadence/MMP2504/utils/cdn_mmp_utils/lib/64bit/libMMP_utils.so",
         "+MMP_DEBUG_DISPLAY +MMP_DEBUG_DISPLAY_STATE +MMP_DEBUG_DISPLAY_ERROR +MMP_DEBUG_DISPLAY_DATA",
         "-licqueue", -- waitting for license release
-        "+diff=" .. path.join(abs_ref_base_dir, option.get("ref")),
         "+workload=" .. image_file,
         "+max-cycles=" .. option.get("cycles"),
     }
+    if option.get("no_diff") then
+        table.insert(xsim_pre_flags, "+no-diff")
+    else
+        table.insert(xsim_pre_flags, "+diff=" .. path.join(abs_ref_base_dir, option.get("ref")))
+    end
     if flash_file ~= "" then table.insert(xsim_pre_flags, "+flash=" .. flash_file) end
 
     local xsim_post_flags = {}
