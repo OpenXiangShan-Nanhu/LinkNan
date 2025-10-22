@@ -298,8 +298,8 @@ function pldm_comp(num_cores)
             table.join2(csrc, os.files(path.join(p, "*.cpp")))
             table.join2(csrc, os.files(path.join(p, "*.c")))
         end
-        local difftest_csrc_difftest = path.join(difftest_csrc, "difftest")
-        table.join2(csrc, os.files(path.join(difftest_csrc_difftest, "*.cpp")))
+    else
+        table.join2(csrc, os.files(path.join(difftest_csrc, "src", "test", "csrc", "vcs")))
     end
 
     if option.get("lua_scoreboard") then
@@ -429,6 +429,10 @@ function pldm_comp(num_cores)
                     "-I" .. ixcom_dir, "-I" .. simtool_dir,
                     "-DNUM_CORES=" .. num_cores
                 }
+
+                if option.get("no_diff") then
+                    table.insert(pldm_cflags, "-DCONFIG_NO_DIFFTEST")
+                end
 
                 if option.get("lua_scoreboard") then
                     local verilua_home = assert(os.getenv("VERILUA_HOME"),

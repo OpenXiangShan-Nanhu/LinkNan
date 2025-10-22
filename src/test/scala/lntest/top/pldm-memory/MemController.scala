@@ -59,7 +59,7 @@ class MC_DFIBundle(
 }
 
 class DWC_ddr_umctl2(
-  ID_WIDTH: Int = 5,
+  ID_WIDTH: Int = 16,
   ADDR_WIDTH: Int = 37,
   LEN_WIDTH: Int = 8,
   LOCK_WIDTH: Int = 1,
