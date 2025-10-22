@@ -239,8 +239,7 @@ function pldm_comp(num_cores)
     local csrc_dirs = if_debug({}, {
         design_gen_dir,
         path.join(difftest_csrc, "vcs"),
-        path.join(difftest_csrc, "common"),
-        path.join(difftest_csrc, "plugin", "spikedasm"),
+        path.join(difftest_csrc, "common")
     })
 
     if not option.get("no_build_chisel") and not debug then
@@ -293,13 +292,14 @@ function pldm_comp(num_cores)
         })
     end
 
-    if not option.get("no_diff") and not debug then
-        for _, p in ipairs(csrc_dirs) do
-            table.join2(csrc, os.files(path.join(p, "*.cpp")))
-            table.join2(csrc, os.files(path.join(p, "*.c")))
-        end
-    else
-        table.join2(csrc, os.files(path.join(difftest_csrc, "src", "test", "csrc", "vcs")))
+    for _, p in ipairs(csrc_dirs) do
+        table.join2(csrc, os.files(path.join(p, "*.cpp")))
+        table.join2(csrc, os.files(path.join(p, "*.c")))
+    end
+
+    if not option.get("no_diff") then
+        table.join2(csrc, os.files(path.join(difftest_csrc, "difftest", "*.cpp")))
+        table.join2(csrc, os.files(path.join(difftest_csrc, "plugin", "spikedasm", "*.cpp")))
     end
 
     if option.get("lua_scoreboard") then
@@ -429,7 +429,7 @@ function pldm_comp(num_cores)
                     "-I" .. ixcom_dir, "-I" .. simtool_dir,
                     "-DNUM_CORES=" .. num_cores
                 }
-
+                
                 if option.get("no_diff") then
                     table.insert(pldm_cflags, "-DCONFIG_NO_DIFFTEST")
                 end
@@ -583,7 +583,7 @@ function pldm_run()
     if not os.exists(path.join(pldm_run_dir, "loadmem.qel")) then os.exec("ln -s " .. path.join(pldm_scripts_dir, "loadmem.qel") .. " .") end
     if not os.exists(path.join(pldm_run_dir, "run.tcl")) then os.exec("ln -s " .. path.join(pldm_scripts_dir, "run.tcl") .. " .") end
     if not os.exists(path.join(pldm_run_dir, "run_debug.tcl")) then os.exec("ln -s " .. path.join(pldm_scripts_dir, "run_debug.tcl") .. " .") end
-  
+
     os.setenv("PLDM_COMP_DIR", pldm_comp_dir)
     os.setenv("PLDM_SCR_DIR", pldm_scripts_dir)
     if option.get("use_ddr_ip") == "2400" or option.get("use_ddr_ip") == "3200" then
@@ -600,11 +600,13 @@ function pldm_run()
         "+workload=" .. image_file,
         "+max-cycles=" .. option.get("cycles"),
     }
+
     if option.get("no_diff") then
         table.insert(xsim_pre_flags, "+no-diff")
     else
         table.insert(xsim_pre_flags, "+diff=" .. path.join(abs_ref_base_dir, option.get("ref")))
     end
+    
     if flash_file ~= "" then table.insert(xsim_pre_flags, "+flash=" .. flash_file) end
 
     local xsim_post_flags = {}
