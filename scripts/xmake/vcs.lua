@@ -6,6 +6,7 @@ import("core.base.task")
 
 local tb_top = "tb_top"
 local cov_param = "line+cond+fsm+tgl"
+local use_libdifftest = os.getenv("USE_DIFFSO")
 
 ---@param num_cores integer
 function simv_comp(num_cores)
@@ -231,7 +232,10 @@ function simv_comp(num_cores)
         end
     end
 
-    local cxx_ldflags = "-Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz -lzstd"
+    local cxx_ldflags = ""
+    if not use_libdifftest then
+        cxx_ldflags = "-Wl,--no-as-needed -lpthread -lSDL2 -ldl -lz -lzstd"
+    end
 
     local dramsim_so = ""
     if option.get("dramsim3") then
@@ -241,6 +245,38 @@ function simv_comp(num_cores)
             " -L" .. path.directory(dramsim_so) ..
             " -Wl,-rpath," .. path.directory(dramsim_so) ..
             " -ldramsim3"
+    end
+
+    -- Generate libdifftest.so
+    local libdifftest_dir = path.join(comp_dir, "libdifftest")
+    local libdifftest_so = path.join(libdifftest_dir, "libdifftest.so")
+    if use_libdifftest then
+        local cc = os.getenv("CC") or "gcc"
+
+        local vcs_home = assert(os.getenv("VCS_HOME"), "[vcs.lua] [simv_comp] error: VCS_HOME is not set")
+        local vcs_include = path.join(vcs_home, "include")
+        assert(
+            os.exists(path.join(vcs_include, "svdpi.h")),
+            "[vcs.lua] [simv_comp] error: svdpi.h is not found in %s",
+            vcs_include
+        )
+
+        local debug_opt = "-g"
+        if not os.exists(libdifftest_dir) then
+            os.mkdir(libdifftest_dir)
+        end
+
+        cc = "ccache " .. cc
+
+        local ofiles = {}
+        local other_flags = " -I " .. vcs_include .. " " .. debug_opt .. " "
+        for _, cfile in ipairs(csrc) do
+            local ofile = path.join(libdifftest_dir, path.basename(cfile) .. ".o")
+            os.exec(cc .. " " .. other_flags .. " -fPIC " .. cxx_flags .. " -c " .. cfile .. " -o " .. ofile)
+            ofiles[#ofiles + 1] = ofile
+        end
+
+        os.exec(cc .. " -m64 -shared " .. table.concat(ofiles, " ") .. " -o " .. libdifftest_so .. " " .. cxx_ldflags)
     end
 
     local vcs_flags = "-cm_dir " .. path.join(comp_dir, "simv")
@@ -269,10 +305,17 @@ function simv_comp(num_cores)
     if option.get("dramsim3") then
         vcs_flags = vcs_flags .. " +define+WITH_DRAMSIM3"
     end
-    vcs_flags = vcs_flags .. " -CFLAGS \"" .. cxx_flags .. "\""
-    vcs_flags = vcs_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""
+
+    if use_libdifftest then
+        vcs_flags = vcs_flags .. " -CFLAGS " .. format([["-ldifftest -L%s"]], libdifftest_dir)
+        vcs_flags = vcs_flags .. " -LDFLAGS " .. format([["-Wl,-rpath,%s -Wl,-no-as-needed"]], libdifftest_dir)
+    else
+        vcs_flags = vcs_flags .. " -CFLAGS \"" .. cxx_flags .. "\""
+        vcs_flags = vcs_flags .. " -LDFLAGS \"" .. cxx_ldflags .. "\""
+        vcs_flags = vcs_flags .. " -f " .. csrc_filelist_path
+    end
+
     vcs_flags = vcs_flags .. " -f " .. vsrc_filelist_path
-    vcs_flags = vcs_flags .. " -f " .. csrc_filelist_path
     vcs_flags = vcs_flags .. " +incdir+" .. design_gen_dir
     if option.get("lua_scoreboard") then
         vcs_flags = vcs_flags .. " +define+MANUALLY_CALL_DPI_EXPORTER_TICK"
@@ -417,6 +460,12 @@ function simv_run()
     os.ln(path.join(simv_comp_dir, "simv.daidir"), daidir)
     os.cd(simv_run_dir)
 
+    local libdifftest_dir = path.join(simv_comp_dir, "libdifftest")
+    local libdifftest_so = path.join(libdifftest_dir, "libdifftest.so")
+    if use_libdifftest then
+        assert(os.exists(libdifftest_so), "[vcs.lua] [simv_run] libdifftest.so does not exist")
+    end
+
     -- Run simulation with prefix command
     -- e.g.
     --    RUN_PREFIX="gdb --args" xmake simv-run <...>
@@ -461,6 +510,9 @@ function simv_run()
             num_threads = option.get("fgp_threads")
         end
         sh_str = sh_str .. format(" -fgp=num_threads:%s,num_fsdb_threads:%s", num_threads, num_threads)
+    end
+    if use_libdifftest then
+        sh_str = sh_str .. " -sv_lib " .. libdifftest_so:gsub("%.so$", "")
     end
     sh_str = sh_str .. " +vcs+lic+wait"
     sh_str = sh_str .. " +max-cycles=" .. option.get("cycles")
